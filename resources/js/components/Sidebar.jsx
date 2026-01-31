@@ -4,52 +4,106 @@ import useAuthStore from '../store/useAuthStore';
 import { 
     Home, FileText, MapPin, ClipboardList, 
     Newspaper, FolderOpen, Image, 
-    User, Award, Users, LogOut 
+    User, Award, Users, LogOut,
+    LayoutDashboard, PlusCircle, BarChart2,
+    Calendar, Settings, TrendingUp, Shield, Star,
+    Building, School
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { logout } = useAuthStore();
+    const { logout, user } = useAuthStore();
     const location = useLocation();
 
     const isActive = (path) => location.pathname.startsWith(path);
 
     const menuGroups = [
         {
-            title: 'DASHBOARD',
+            title: 'Main',
             items: [
-                { name: 'Dashboard', path: '/dashboard', icon: <Home size={18} /> },
+                { name: 'Dashboard', icon: <LayoutDashboard size={18} />, path: '/dashboard' },
             ]
         },
         {
-            title: 'PROGRAM KEGIATAN',
+            title: 'Penelitian & Pengabdian',
             items: [
-                { name: 'Proposal', path: '/proposals', icon: <FileText size={18} /> },
-                { name: 'KKN', path: '/kkn', icon: <MapPin size={18} /> },
-                { name: 'Laporan', path: '/reports', icon: <ClipboardList size={18} /> },
+                { name: 'Daftar Proposal', icon: <FileText size={18} />, path: '/proposals' },
+                { name: 'Review Proposal', icon: <Star size={18} />, path: '/reviews' },
             ]
         },
         {
-            title: 'CMS & PUBLIKASI',
+            title: 'KKN (Kuliah Kerja Nyata)',
+            items: user?.role === 'mahasiswa' 
+                ? [
+                    { name: 'Status KKN Saya', icon: <ClipboardList size={18} />, path: '/kkn/status' },
+                  ]
+                : [
+                    { name: 'Pendaftaran', icon: <Users size={18} />, path: '/kkn/registration' },
+                    { name: 'Lokasi KKN', icon: <MapPin size={18} />, path: '/kkn/locations' },
+                    { name: 'Peserta KKN', icon: <Users size={18} />, path: '/kkn/participants' },
+                    { name: 'Laporan', icon: <BarChart2 size={18} />, path: '/reports' },
+                  ]
+        },
+    ];
+
+    if (user?.role === 'admin') {
+        // Master Data (Excluding Users)
+        menuGroups.push({
+            title: 'Master Data',
             items: [
-                { name: 'Berita', path: '/cms/posts', icon: <Newspaper size={18} /> },
-                { name: 'Dokumen', path: '/cms/documents', icon: <FolderOpen size={18} /> },
-                { name: 'Galeri', path: '/cms/galleries', icon: <Image size={18} /> },
+                { name: 'Fakultas', icon: <Building size={18} />, path: '/master/faculties' },
+                { name: 'Program Studi', icon: <School size={18} />, path: '/master/study-programs' },
+                { name: 'Tahun Anggaran', icon: <Calendar size={18} />, path: '/master/fiscal-years' },
+                { name: 'Skema Hibah', icon: <Settings size={18} />, path: '/master/schemes' },
+            ]
+        });
+
+        // User Management Group
+        menuGroups.push({
+            title: 'Manajemen Pengguna',
+            items: [
+                { name: 'Daftar Staff / Dosen', icon: <Users size={18} />, path: '/master/users' },
+                // { name: 'Daftar Mahasiswa', icon: <Users size={18} />, path: '/master/students' }, // Merged with Peserta KKN
+
+                { name: 'Struktur Organisasi', icon: <Users size={18} />, path: '/admin/organization' },
+                { name: 'Hak Akses (Role)', icon: <Shield size={18} />, path: '/admin/roles' },
+            ]
+        });
+    }
+
+    if (user?.role === 'reviewer') {
+        menuGroups.push({
+            title: 'Reviewer Area',
+            items: [
+                { name: 'Review Usulan', icon: <Star size={18} />, path: '/reviews' },
+            ]
+        });
+    }
+
+    menuGroups.push(
+        {
+            title: 'CMS & Informasi',
+            items: [
+                { name: 'Berita & Artikel', icon: <Newspaper size={18} />, path: '/cms/posts' },
+                { name: 'Dokumen', icon: <FileText size={18} />, path: '/cms/documents' },
+                { name: 'Galeri', icon: <Image size={18} />, path: '/cms/galleries' },
+                { name: 'Manajemen Menu', icon: <FolderOpen size={18} />, path: '/admin/menus' },
             ]
         },
         {
-            title: 'PROFIL & DATA',
+            title: 'Profil',
             items: [
-                { name: 'Profil Saya', path: '/profile', icon: <User size={18} /> },
-                { name: 'Kinerja (Scholar)', path: '/profile/stats', icon: <Award size={18} /> },
-                { name: 'Struktur Organisasi', path: '/organization', icon: <Users size={18} /> },
+                { name: 'Profil Saya', icon: <User size={18} />, path: '/profile' },
+                { name: 'Kinerja Dosen', icon: <TrendingUp size={18} />, path: '/profile/stats' },
+                { name: 'Organisasi', icon: <Users size={18} />, path: '/organization' },
             ]
         }
-    ];
+    );
 
     return (
         <div className="w-64 bg-[#004d40] text-white min-h-screen flex flex-col shadow-xl flex-shrink-0">
             {/* Brand */}
-            <div className="h-16 flex items-center px-6 bg-[#00251a] border-b border-green-800">
+            <div className="h-16 flex items-center px-6 bg-[#00251a] border-b border-green-800 space-x-3">
+                 <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="UIM Logo" className="h-10 w-10 object-contain" />
                 <span className="text-xl font-bold tracking-wider">LPPM UIM</span>
             </div>
 

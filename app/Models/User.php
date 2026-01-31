@@ -12,7 +12,15 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
+
+    // Backward compatibility for frontend checking user.role
+    protected $appends = ['role'];
+
+    public function getRoleAttribute()
+    {
+        return $this->roles->first()?->name ?? 'mahasiswa';
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -23,8 +31,6 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'nidn',
-        'npm',
         'role',
     ];
 
@@ -70,10 +76,16 @@ class User extends Authenticatable implements JWTSubject
             'password' => 'hashed',
         ];
     }
-    public function profile()
+    public function mahasiswaProfile()
     {
-        return $this->hasOne(Profile::class);
+        return $this->hasOne(MahasiswaProfile::class);
     }
+
+    public function dosenProfile()
+    {
+        return $this->hasOne(DosenProfile::class);
+    }
+
 
     public function scholarStats()
     {
@@ -83,5 +95,15 @@ class User extends Authenticatable implements JWTSubject
     public function posts()
     {
         return $this->hasMany(Post::class, 'created_by');
+    }
+
+    public function kknRegistration()
+    {
+        return $this->hasOne(KknRegistration::class, 'student_id');
+    }
+
+    public function organizationMember()
+    {
+        return $this->hasOne(OrganizationMember::class);
     }
 }

@@ -11,17 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Profiles
-        Schema::create('profiles', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('prodi')->nullable();
-            $table->string('fakultas')->nullable();
-            $table->string('scopus_id')->nullable();
-            $table->string('sinta_id')->nullable();
-            $table->string('google_scholar_id')->nullable();
-            $table->timestamps();
-        });
+        // 1. Profiles table removed (split into mahasiswa_profiles and dosen_profiles)
 
         // 2. Posts (News, Announcements)
         Schema::create('posts', function (Blueprint $table) {
@@ -51,7 +41,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->json('content'); // Rich text/JSON content
-            $table->enum('type', ['about', 'history', 'vision']);
+            $table->string('type')->index(); // Changed from enum to string for flexibility
             $table->timestamps();
         });
     }
@@ -64,6 +54,6 @@ return new class extends Migration
         Schema::dropIfExists('pages');
         Schema::dropIfExists('documents');
         Schema::dropIfExists('posts');
-        Schema::dropIfExists('profiles');
+        // Schema::dropIfExists('profiles'); // Removed
     }
 };

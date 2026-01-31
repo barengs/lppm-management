@@ -39,6 +39,7 @@ return new class extends Migration
             $table->string('location')->nullable(); // For KKN
             $table->text('abstract')->nullable();
             $table->string('file_proposal')->nullable();
+            $table->decimal('budget', 15, 2)->default(0);
             $table->enum('status', ['draft', 'submitted', 'review', 'accepted', 'rejected'])->default('draft');
             $table->timestamps();
         });

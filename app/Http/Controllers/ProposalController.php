@@ -35,13 +35,20 @@ class ProposalController extends Controller
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'title' => 'required|string|max:255',
             'abstract' => 'required|string',
-            'location' => 'nullable|string', // KKN manual input
-            'kkn_location_id' => 'nullable|exists:kkn_locations,id', // KKN plotting
-            'dpl_id' => 'nullable|exists:users,id', // KKN DPL
+            'budget' => 'required|numeric|min:0',
+            'file_proposal' => 'required|file|mimes:pdf|max:10240', // Max 10MB JSON, PDF
+            'location' => 'nullable|string',
+            // 'kkn_location_id' => 'nullable|exists:kkn_locations,id', 
+            // 'dpl_id' => 'nullable|exists:users,id', 
         ]);
 
         $validated['user_id'] = auth('api')->id();
         $validated['status'] = 'draft';
+
+        if ($request->hasFile('file_proposal')) {
+            $path = $request->file('file_proposal')->store('proposals', 'public');
+            $validated['file_proposal'] = $path;
+        }
 
         $proposal = Proposal::create($validated);
 

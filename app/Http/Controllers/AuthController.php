@@ -39,9 +39,53 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    public function register(Request $request) {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|string|in:dosen,mahasiswa,reviewer',
+            'identity_number' => 'nullable|string', // NIDN or NPM
+            'prodi' => 'nullable|string',
+            'fakultas' => 'nullable|string',
+        ]);
+
+        $user = \App\Models\User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
+            'role' => $validated['role'],
+        ]);
+
+        // Create Profile based on Role
+        if ($validated['role'] === 'mahasiswa') {
+            $user->mahasiswaProfile()->create([
+                'npm' => $validated['identity_number'] ?? null,
+                'prodi' => $validated['prodi'] ?? null,
+                'fakultas' => $validated['fakultas'] ?? null,
+            ]);
+        } else {
+            // Dosen & Reviewer use DosenProfile
+            $user->dosenProfile()->create([
+                'nidn' => $validated['identity_number'] ?? null,
+                'prodi' => $validated['prodi'] ?? null,
+                'fakultas' => $validated['fakultas'] ?? null,
+            ]);
+        }
+
+        $token = auth('api')->login($user);
+
+        return $this->respondWithToken($token);
+    }
+
+    /**
+     * Get the authenticated User.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function me()
     {
-        return response()->json(auth('api')->user());
+        return response()->json(auth('api')->user()->load(['mahasiswaProfile', 'dosenProfile'])); 
     }
 
     /**

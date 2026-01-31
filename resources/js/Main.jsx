@@ -1,39 +1,134 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import useInactivityTracker from './hooks/useInactivityTracker';
+import Lockscreen from './components/Lockscreen';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateProposal from './pages/proposals/Create';
-import KknIndex from './pages/kkn/Index';
+import ReviewIndex from './pages/reviews/Index';
+import PostDetail from './pages/PostDetail';
+import AgendaDetail from './pages/AgendaDetail';
+import PublicDocuments from './pages/public/Documents';
+import PublicSurvey from './pages/public/Survey';
+import PostCategory from './pages/public/PostCategory';
+import InfoDetail from './pages/public/InfoDetail';
+import PublicKknRegister from './pages/public/KknRegister';
+import PublicOrganization from './pages/public/OrganizationChart';
+import PageDetail from './pages/public/PageDetail';
+import StudentRegister from './pages/StudentRegister';
+
 import ReportsIndex from './pages/reports/Index';
 import PostsIndex from './pages/cms/Posts';
+import CmsPostDetail from './pages/cms/PostDetail';
 import DocumentsIndex from './pages/cms/Documents';
 import GalleriesIndex from './pages/cms/Galleries';
 import ProfileIndex from './pages/profile/Index';
 import StatsIndex from './pages/profile/Stats';
+import FiscalYearsIndex from './pages/admin/fiscal_years/Index';
+import SchemesIndex from './pages/admin/schemes/Index';
+import UsersIndex from './pages/admin/users/Index';
+import FacultiesIndex from './pages/admin/master/Faculties';
+import StudyProgramsIndex from './pages/admin/master/StudyPrograms';
+
+import OrganizationAdminIndex from './pages/admin/organization/Index';
+import RolesIndex from './pages/admin/roles/Index';
+import MenuIndex from './pages/admin/menus/Index';
+import MenuBuilder from './pages/admin/menus/Builder';
+
 import OrganizationIndex from './pages/profile/Organization';
+import KknLocationsIndex from './pages/kkn/Locations';
+import KknStudentRegistration from './pages/kkn/Registration';
+import KknParticipantsIndex from './pages/kkn/Participants';
+import StudentKknStatus from './pages/student/KknStatus';
+
+// Student KKN Dashboard Components
+import StudentKknDashboard from './pages/student/kkn/StudentKknDashboard';
+import StudentKknRegistration from './pages/student/kkn/StudentKknRegistration';
+import StudentKknStatusPage from './pages/student/kkn/StudentKknStatus';
+import StudentKknGroup from './pages/student/kkn/StudentKknGroup';
+
 import PrivateRoute from './components/PrivateRoute';
 import useAuthStore from './store/useAuthStore';
-
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 
 export default function Main() {
-    const { fetchUser } = useAuthStore();
+    const { fetchUser, isAuthenticated, isLocked, lockScreen, unlockScreen, logout, user } = useAuthStore();
+
+    // Inactivity tracker - only active when authenticated
+    useInactivityTracker(
+        () => lockScreen(),           // Lock after 30 minutes
+        () => logout(),                // Logout after 60 minutes
+        isLocked || !isAuthenticated   // Don't track when locked or not authenticated
+    );
 
     useEffect(() => {
         fetchUser();
     }, []);
 
+    // Handle unlock
+    const handleUnlock = async (email) => {
+        await unlockScreen(email);
+    };
+
+    // Show lockscreen if locked
+    if (isLocked && isAuthenticated) {
+        return (
+            <>
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="colored"
+                />
+                <Lockscreen 
+                    user={user} 
+                    onUnlock={handleUnlock} 
+                    onLogout={logout}
+                />
+            </>
+        );
+    }
+
     return (
         <BrowserRouter>
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
             <Routes>
                 {/* Public Layout Routes */}
                 <Route path="/" element={<PublicLayout />}>
                     <Route index element={<Home />} />
                     <Route path="login" element={<Login />} />
-                    {/* Add other public routes here like /about, /news etc */}
+                    <Route path="posts/:slug" element={<PostDetail />} />
+                    <Route path="agendas/:id" element={<AgendaDetail />} />
+                    <Route path="documents" element={<PublicDocuments />} />
+                    <Route path="survey" element={<PublicSurvey />} />
+                    <Route path="posts/category/:category" element={<PostCategory />} />
+                    <Route path="info/:slug" element={<InfoDetail />} />
+                    <Route path="kkn/register" element={<PublicKknRegister />} />
+                    <Route path="about/organization" element={<PublicOrganization />} />
+                    <Route path="pages/:slug" element={<PageDetail />} />
+                    <Route path="register" element={<StudentRegister />} />
                 </Route>
                 
                 {/* Authenticated Admin Routes */}
@@ -44,13 +139,41 @@ export default function Main() {
                         <Route path="proposals/create" element={<CreateProposal />} />
                         
                         {/* Program Activity */}
-                        <Route path="kkn" element={<KknIndex />} />
                         <Route path="reports" element={<ReportsIndex />} />
+                        <Route path="reviews" element={<ReviewIndex />} />
+                        
+                        
+                        {/* Student KKN Dashboard */}
+                        <Route path="dashboard/kkn" element={<StudentKknDashboard />} />
+                        <Route path="dashboard/kkn/register" element={<StudentKknRegistration />} />
+                        <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
+                        <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
+
+                        {/* KKN Module (Admin/Legacy) */}
+                        <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
+                        <Route path="kkn/locations" element={<KknLocationsIndex />} />
+                        <Route path="kkn/registration" element={<KknStudentRegistration />} />
+                        <Route path="kkn/status" element={<StudentKknStatus />} />
+                        <Route path="kkn/participants" element={<KknParticipantsIndex />} />
 
                         {/* CMS */}
                         <Route path="cms/posts" element={<PostsIndex />} />
+                        <Route path="cms/posts/:id" element={<CmsPostDetail />} />
                         <Route path="cms/documents" element={<DocumentsIndex />} />
                         <Route path="cms/galleries" element={<GalleriesIndex />} />
+
+                        {/* Master Data (Admin Only) */}
+                        <Route path="master/faculties" element={<FacultiesIndex />} />
+                        <Route path="master/study-programs" element={<StudyProgramsIndex />} />
+                        <Route path="master/fiscal-years" element={<FiscalYearsIndex />} />
+                        <Route path="master/schemes" element={<SchemesIndex />} />
+                        <Route path="master/users" element={<UsersIndex />} />
+                        
+                        {/* User Management */}
+                        <Route path="admin/organization" element={<OrganizationAdminIndex />} />
+                        <Route path="admin/roles" element={<RolesIndex />} />
+                        <Route path="admin/menus" element={<MenuIndex />} />
+                        <Route path="admin/menus/:id" element={<MenuBuilder />} />
 
                         {/* Profile */}
                         <Route path="profile" element={<ProfileIndex />} />

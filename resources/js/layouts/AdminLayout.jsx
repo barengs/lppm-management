@@ -21,7 +21,7 @@ export default function AdminLayout() {
                     </button>
                     <div className="ml-auto flex items-center">
                         <div className="flex items-center space-x-2">
-                             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border border-green-200">
                                 {user?.name?.charAt(0) || 'U'}
                             </div>
                             <span className="text-sm font-medium text-gray-700 hidden md:block">

@@ -14,8 +14,22 @@ class ProfileController extends Controller
     public function me()
     {
         $user = auth('api')->user();
-        return response()->json($user->load(['profile', 'scholarStats']));
+        
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
+        // Load appropriate profile based on user role with nested relations
+        $user->load([
+            'mahasiswaProfile.faculty', 
+            'mahasiswaProfile.studyProgram',
+            'dosenProfile', 
+            'scholarStats'
+        ]);
+        
+        return response()->json($user);
     }
+
 
     /**
      * Update the authenticated user's profile.

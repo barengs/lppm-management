@@ -17,6 +17,7 @@ class Proposal extends Model
         'location',
         'abstract',
         'file_proposal',
+        'budget',
         'status',
     ];
 

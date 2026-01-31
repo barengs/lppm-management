@@ -16,6 +16,7 @@ class Post extends Model
         'content',
         'category',
         'thumbnail',
+        'video_url',
         'is_published',
         'created_by',
     ];

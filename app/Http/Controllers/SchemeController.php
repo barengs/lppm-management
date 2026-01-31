@@ -32,10 +32,27 @@ class SchemeController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Update the specified resource in storage.
      */
-    public function show(Scheme $scheme)
+    public function update(Request $request, Scheme $scheme)
     {
+        $validated = $request->validate([
+            'name' => 'string|max:255',
+            'type' => 'in:research,abmas,kkn',
+            'max_budget' => 'numeric',
+            'guideline_file' => 'nullable|string'
+        ]);
+
+        $scheme->update($validated);
         return response()->json($scheme);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Scheme $scheme)
+    {
+        $scheme->delete();
+        return response()->noContent();
     }
 }

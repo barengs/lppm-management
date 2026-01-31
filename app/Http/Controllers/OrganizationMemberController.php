@@ -9,7 +9,11 @@ class OrganizationMemberController extends Controller
 {
     public function index()
     {
-        return response()->json(OrganizationMember::orderBy('order_index')->get());
+        $members = OrganizationMember::with('user')
+            ->orderBy('order_index')
+            ->get();
+            
+        return response()->json($members);
     }
 
     public function store(Request $request)

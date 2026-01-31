@@ -13,7 +13,15 @@ export default function Login() {
         e.preventDefault();
         const success = await login(email, password);
         if (success) {
-            navigate('/dashboard');
+            // Get user from store after successful login
+            const { user } = useAuthStore.getState();
+            
+            // Redirect mahasiswa to KKN dashboard, others to main dashboard
+            if (user?.role === 'mahasiswa') {
+                navigate('/dashboard/kkn');
+            } else {
+                navigate('/dashboard');
+            }
         }
     };
 
@@ -21,8 +29,9 @@ export default function Login() {
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-blue-600">LPPM UIM</h1>
-                    <p className="text-gray-600 mt-2">Sign in to your account</p>
+                     <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="UIM Logo" className="h-20 w-20 mx-auto mb-4 object-contain" />
+                    <h1 className="text-3xl font-bold text-green-700">LPPM UIM</h1>
+                    <p className="text-gray-600 mt-2">Sistem Informasi Penelitian & Pengabdian</p>
                 </div>
 
                 {error && (

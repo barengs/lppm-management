@@ -1,11 +1,52 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import useAuthStore from '../store/useAuthStore';
+import api from '../utils/api';
 
 export default function PublicLayout() {
+    const { isAuthenticated, user, fetchUser } = useAuthStore();
     const [dropdown, setDropdown] = React.useState(null);
+    const [primaryMenu, setPrimaryMenu] = React.useState([]);
 
-    const handleMouseEnter = (name) => setDropdown(name);
+    React.useEffect(() => {
+        fetchUser();
+        api.get('/public/menus/primary')
+            .then(res => setPrimaryMenu(res.data.items))
+            .catch(err => console.error(err));
+    }, []);
+
+    const handleMouseEnter = (id) => setDropdown(id);
     const handleMouseLeave = () => setDropdown(null);
+
+    const renderMenuItem = (item) => {
+        const hasChildren = item.children && item.children.length > 0;
+        
+        if (hasChildren) {
+            return (
+                <div key={item.id} className="relative group" onMouseEnter={() => handleMouseEnter(item.id)} onMouseLeave={handleMouseLeave}>
+                    <button className="flex items-center hover:text-yellow-300 py-4 focus:outline-none uppercase">
+                        {item.title}
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    {dropdown === item.id && (
+                        <div className="absolute left-0 mt-0 w-56 bg-white text-gray-800 shadow-xl rounded-b-md border-t-2 border-yellow-400 animate-fade-in-down">
+                            {item.children.map(child => (
+                                <Link key={child.id} to={child.url} className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">
+                                    {child.title}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <Link key={item.id} to={item.url} className="hover:text-yellow-300 py-4 uppercase">
+                {item.title}
+            </Link>
+        );
+    };
 
     return (
         <div className="min-h-screen flex flex-col font-sans">
@@ -13,7 +54,7 @@ export default function PublicLayout() {
             <div className="bg-white py-2 border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
                     <div className="flex items-center space-x-4">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Logo_UIM.png/600px-Logo_UIM.png" alt="Logo" className="h-12" />
+                        <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-16 w-16 object-contain" />
                          <div>
                             <h1 className="text-xl font-bold text-blue-900 tracking-tight">LPPM UIM</h1>
                             <p className="text-xs text-gray-500 font-medium tracking-wide">Lembaga Penelitian dan Pengabdian kepada Masyarakat</p>
@@ -29,60 +70,25 @@ export default function PublicLayout() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center h-12 space-x-6 text-sm font-medium">
                         
-                        {/* Beranda */}
-                        <Link to="/" className="hover:text-yellow-300 py-4">BERANDA</Link>
-
-                        {/* Program Kegiatan */}
-                        <div className="relative group" onMouseEnter={() => handleMouseEnter('program')} onMouseLeave={handleMouseLeave}>
-                            <button className="flex items-center hover:text-yellow-300 py-4 focus:outline-none">
-                                PROGRAM KEGIATAN
-                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                            {dropdown === 'program' && (
-                                <div className="absolute left-0 mt-0 w-56 bg-white text-gray-800 shadow-xl rounded-b-md border-t-2 border-yellow-400 animate-fade-in-down">
-                                    <Link to="/research" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Penelitian</Link>
-                                    <Link to="/kkn" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Kuliah Kerja Nyata</Link>
-                                    <Link to="/abmas" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Pengabdian Masyarakat</Link>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Kebijakan */}
-                        <div className="relative group" onMouseEnter={() => handleMouseEnter('kebijakan')} onMouseLeave={handleMouseLeave}>
-                            <button className="flex items-center hover:text-yellow-300 py-4 focus:outline-none">
-                                KEBIJAKAN
-                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                            {dropdown === 'kebijakan' && (
-                                <div className="absolute left-0 mt-0 w-64 bg-white text-gray-800 shadow-xl rounded-b-md border-t-2 border-yellow-400 animate-fade-in-down">
-                                    <Link to="/policies/quality" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Kebijakan Mutu</Link>
-                                    <Link to="/policies/guidelines" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Panduan Penelitian & Pengabdian</Link>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Prosedur */}
-                        <Link to="/procedures" className="hover:text-yellow-300 py-4">PROSEDUR & ATURAN</Link>
-
-                        {/* Tentang */}
-                        <div className="relative group" onMouseEnter={() => handleMouseEnter('tentang')} onMouseLeave={handleMouseLeave}>
-                            <button className="flex items-center hover:text-yellow-300 py-4 focus:outline-none">
-                                TENTANG
-                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                            {dropdown === 'tentang' && (
-                                <div className="absolute left-0 mt-0 w-56 bg-white text-gray-800 shadow-xl rounded-b-md border-t-2 border-yellow-400 animate-fade-in-down">
-                                    <Link to="/about/vision-mission" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Visi Misi</Link>
-                                    <Link to="/about/organization" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Struktur Organisasi</Link>
-                                    <Link to="/contact" className="block px-4 py-3 hover:bg-gray-100 hover:text-green-600 transition">Hubungi Kami</Link>
-                                </div>
-                            )}
-                        </div>
+                        {/* Dynamic Menu Rendering */}
+                        {primaryMenu.length > 0 ? primaryMenu.map(item => renderMenuItem(item)) : (
+                            /* Fallback Skeleton or default */
+                            <div className="text-green-300 text-xs">Loading menu...</div>
+                        )}
 
                         <div className="flex-grow"></div>
-                        <Link to="/login" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow">
-                            LOGIN
-                        </Link>
+                        {isAuthenticated ? (
+                            <div className="flex items-center space-x-4">
+                                <span className="text-green-100 text-xs hidden md:inline-block">Halo, {user?.name || 'User'}</span>
+                                <Link to="/dashboard" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow flex items-center">
+                                    DASHBOARD
+                                </Link>
+                            </div>
+                        ) : (
+                            <Link to="/login" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow">
+                                LOGIN
+                            </Link>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -97,7 +103,7 @@ export default function PublicLayout() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center mb-4 space-x-3">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Logo_UIM.png/600px-Logo_UIM.png" alt="Logo" className="h-10 brightness-0 invert" />
+                             <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-12 w-12 object-contain brightness-0 invert" />
                              <span className="text-xl font-bold">LPPM UIM</span>
                         </div>
                         <p className="text-sm text-gray-300 leading-relaxed max-w-md">
@@ -113,10 +119,10 @@ export default function PublicLayout() {
                     <div>
                         <h3 className="text-lg font-bold mb-6 text-yellow-400">TAUTAN PENTING</h3>
                         <ul className="space-y-3 text-sm text-gray-300">
-                            <li><a href="#" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Universitas Islam Madura</a></li>
-                            <li><a href="#" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">SINTA Kemdikbud</a></li>
-                            <li><a href="#" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">GARUDA</a></li>
-                            <li><a href="#" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Google Scholar</a></li>
+                            <li><a href="https://uim.ac.id" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Universitas Islam Madura</a></li>
+                            <li><a href="https://sinta.kemdiktisaintek.go.id/" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">SINTA Kemdikbud</a></li>
+                            <li><a href="https://garuda.kemdiktisaintek.go.id/" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">GARUDA</a></li>
+                            <li><a href="https://scholar.google.com" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Google Scholar</a></li>
                         </ul>
                     </div>
                     <div>
