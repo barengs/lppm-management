@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../../store/useAuthStore';
 import { PlusCircle, Edit, Trash2, Upload, Download } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 import { toast } from 'react-toastify';
 
 export default function UsersIndex() {
@@ -134,6 +135,62 @@ export default function UsersIndex() {
         }
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+            cell: ({ row }) => (
+                <div>
+                    <div className="text-sm font-medium text-gray-900">{row.original.name}</div>
+                    <div className="text-sm text-gray-500">{row.original.email}</div>
+                </div>
+            )
+        },
+        {
+            accessorKey: 'role',
+            header: 'Role',
+            cell: ({ row }) => {
+                const colors = {
+                    admin: 'bg-red-100 text-red-800',
+                    dosen: 'bg-blue-100 text-blue-800',
+                    reviewer: 'bg-yellow-100 text-yellow-800',
+                    tendik: 'bg-green-100 text-green-800'
+                };
+                return (
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors[row.original.role] || 'bg-gray-100 text-gray-800'}`}>
+                        {row.original.role ? row.original.role.toUpperCase() : '-'}
+                    </span>
+                );
+            }
+        },
+        {
+            accessorKey: 'info',
+            header: 'Info',
+            cell: ({ row }) => (
+                <div className="text-sm text-gray-500">
+                    {row.original.dosen_profile?.nidn && <div>NIDN: {row.original.dosen_profile.nidn}</div>}
+                    {row.original.dosen_profile?.prodi && <div>Prodi: {row.original.dosen_profile.prodi}</div>}
+                    {row.original.dosen_profile?.fakultas && <div>Fakultas: {row.original.dosen_profile.fakultas}</div>}
+                </div>
+            )
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-900" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-900" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -154,46 +211,19 @@ export default function UsersIndex() {
                 </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Info</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((user) => (
-                            <tr key={user.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                    <div className="text-sm text-gray-500">{user.email}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        ${user.role === 'admin' ? 'bg-red-100 text-red-800' : 
-                                          user.role === 'dosen' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {user.dosen_profile?.nidn && <div>NIDN: {user.dosen_profile.nidn}</div>}
-                                    {user.dosen_profile?.prodi && <div>Prodi: {user.dosen_profile.prodi}</div>}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => handleEdit(user)} className="text-blue-600 hover:text-blue-900 mr-4">
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-900">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={users} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Search users...',
+                        emptyMessage: 'No users found'
+                    }} 
+                />
             </div>
 
             {/* Modal */}

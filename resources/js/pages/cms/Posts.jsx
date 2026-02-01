@@ -5,6 +5,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import useAuthStore from '../../store/useAuthStore';
 import { Newspaper, Plus, Edit, Trash2, CheckCircle, XCircle, Eye } from 'lucide-react';
+import DataTable from '../../components/DataTable';
 
 export default function PostsIndex() {
     const { token } = useAuthStore();
@@ -99,6 +100,67 @@ export default function PostsIndex() {
         ],
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'title',
+            header: 'Judul',
+            cell: ({ row }) => (
+                <div>
+                    <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
+                    <div className="text-xs text-gray-400">{new Date(row.original.created_at).toLocaleDateString()}</div>
+                </div>
+            )
+        },
+        {
+            accessorKey: 'category',
+            header: 'Kategori',
+            cell: ({ row }) => <span className="text-gray-500 capitalize">{row.original.category}</span>
+        },
+        {
+            accessorKey: 'is_published',
+            header: 'Status',
+            cell: ({ row }) => (
+                row.original.is_published ? (
+                    <span className="flex items-center text-green-600 text-xs font-semibold"><CheckCircle size={14} className="mr-1"/> Published</span>
+                ) : (
+                    <span className="flex items-center text-gray-500 text-xs font-semibold"><XCircle size={14} className="mr-1"/> Draft</span>
+                )
+            )
+        },
+        {
+            id: 'actions',
+            header: 'Action',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => {
+                        setFormData({ 
+                            title: row.original.title, 
+                            category: row.original.category, 
+                            content: row.original.content, 
+                            is_published: row.original.is_published, 
+                            thumbnail: row.original.thumbnail || '' 
+                        });
+                        setThumbnailFile(null);
+                        setPreviewUrl(null);
+                        setSelectedId(row.original.id);
+                        setIsEditing(true);
+                        setShowModal(true);
+                    }} className="text-blue-600 hover:text-blue-800" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    
+                    <Link to={`/cms/posts/${row.original.id}`} className="text-gray-600 hover:text-green-600 inline-block" title="View">
+                        <Eye size={16} />
+                    </Link>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -119,56 +181,19 @@ export default function PostsIndex() {
                 </button>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {posts.map(post => (
-                            <tr key={post.id}>
-                                <td className="px-6 py-4">
-                                    <div className="text-sm font-medium text-gray-900">{post.title}</div>
-                                    <div className="text-xs text-gray-400">{new Date(post.created_at).toLocaleDateString()}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{post.category}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {post.is_published ? (
-                                        <span className="flex items-center text-green-600 text-xs font-semibold"><CheckCircle size={14} className="mr-1"/> Published</span>
-                                    ) : (
-                                        <span className="flex items-center text-gray-500 text-xs font-semibold"><XCircle size={14} className="mr-1"/> Draft</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                    <button onClick={() => {
-                                        setFormData({ 
-                                            title: post.title, 
-                                            category: post.category, 
-                                            content: post.content, 
-                                            is_published: post.is_published, 
-                                            thumbnail: post.thumbnail || '' 
-                                        });
-                                        setThumbnailFile(null);
-                                        setPreviewUrl(null);
-                                        setSelectedId(post.id);
-                                        setIsEditing(true);
-                                        setShowModal(true);
-                                    }} className="text-blue-600 mr-3"><Edit size={16} /></button>
-                                    
-                                    <Link to={`/cms/posts/${post.id}`} className="text-gray-600 hover:text-green-600 mr-3 inline-block">
-                                        <Eye size={16} />
-                                    </Link>
-                                    <button onClick={() => handleDelete(post.id)} className="text-red-600"><Trash2 size={16} /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={posts} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Cari berita...',
+                        emptyMessage: 'Tidak ada berita'
+                    }} 
+                />
             </div>
 
             {/* Modal */}

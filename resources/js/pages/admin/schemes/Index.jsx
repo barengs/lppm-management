@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../../store/useAuthStore';
 import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 
 export default function SchemesIndex() {
     const { token } = useAuthStore();
@@ -64,6 +65,39 @@ export default function SchemesIndex() {
         setShowModal(true);
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.name}</span>
+        },
+        {
+            accessorKey: 'type',
+            header: 'Type',
+            cell: ({ row }) => <span className="text-gray-500 uppercase">{row.original.type}</span>
+        },
+        {
+            accessorKey: 'max_budget',
+            header: 'Max Budget',
+            cell: ({ row }) => <span className="text-gray-900">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(row.original.max_budget)}</span>
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-900" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-900" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -80,36 +114,19 @@ export default function SchemesIndex() {
                 </button>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Budget</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {schemes.map((scheme) => (
-                            <tr key={scheme.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{scheme.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{scheme.type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(scheme.max_budget)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => handleEdit(scheme)} className="text-blue-600 hover:text-blue-900 mr-4">
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={() => handleDelete(scheme.id)} className="text-red-600 hover:text-red-900">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={schemes} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Search schemes...',
+                        emptyMessage: 'No schemes found'
+                    }} 
+                />
             </div>
 
             {/* Modal */}

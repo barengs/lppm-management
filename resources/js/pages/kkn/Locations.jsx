@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../store/useAuthStore';
 
 import { MapPin, Plus, Edit, Trash2, Upload, Download } from 'lucide-react';
 import LocationMapPicker from '../../components/LocationMapPicker';
 import { toast } from 'react-toastify';
+import DataTable from '../../components/DataTable';
 
 export default function KknLocationsIndex() {
     const { token } = useAuthStore();
@@ -178,6 +179,86 @@ export default function KknLocationsIndex() {
         }
     };
 
+    // Define columns for DataTable
+    const columns = useMemo(
+        () => [
+            {
+                accessorKey: 'name',
+                header: 'Nama Lokasi',
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium text-gray-900">{row.original.name}</div>
+                        <div className="text-xs text-gray-500">
+                            Lat: {row.original.latitude}, Long: {row.original.longitude}
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                id: 'region',
+                header: 'Wilayah',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">
+                        {row.original.district?.name}, {row.original.city?.name}, {row.original.province?.name}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'fiscal_year.year',
+                header: 'Tahun',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">{row.original.fiscal_year?.year}</div>
+                ),
+            },
+            {
+                accessorKey: 'quota',
+                header: 'Kuota',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">{row.original.quota}</div>
+                ),
+            },
+            {
+                id: 'actions',
+                header: 'Aksi',
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setFormData({ 
+                                    name: row.original.name, 
+                                    quota: row.original.quota, 
+                                    description: row.original.description || '', 
+                                    fiscal_year_id: row.original.fiscal_year_id,
+                                    province_id: row.original.province_id,
+                                    city_id: row.original.city_id,
+                                    district_id: row.original.district_id,
+                                    village_id: row.original.village_id,
+                                    latitude: row.original.latitude,
+                                    longitude: row.original.longitude
+                                });
+                                setSelectedId(row.original.id);
+                                setIsEditing(true);
+                                setShowModal(true);
+                            }} 
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Edit"
+                        >
+                            <Edit size={16} />
+                        </button>
+                        <button 
+                            onClick={() => handleDelete(row.original.id)} 
+                            className="text-red-600 hover:text-red-900"
+                            title="Hapus"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                ),
+            },
+        ],
+        []
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -198,53 +279,19 @@ export default function KknLocationsIndex() {
                 </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lokasi</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wilayah</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kuota</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {locations.map(loc => (
-                            <tr key={loc.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {loc.name}
-                                    <div className="text-xs text-gray-500">Lat: {loc.latitude}, Long: {loc.longitude}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {loc.district?.name}, {loc.city?.name}, {loc.province?.name}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{loc.fiscal_year?.year}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{loc.quota}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                    <button onClick={() => {
-                                        setFormData({ 
-                                            name: loc.name, 
-                                            quota: loc.quota, 
-                                            description: loc.description || '', 
-                                            fiscal_year_id: loc.fiscal_year_id,
-                                            province_id: loc.province_id,
-                                            city_id: loc.city_id,
-                                            district_id: loc.district_id,
-                                            village_id: loc.village_id,
-                                            latitude: loc.latitude,
-                                            longitude: loc.longitude
-                                        });
-                                        setSelectedId(loc.id);
-                                        setIsEditing(true);
-                                        setShowModal(true);
-                                    }} className="text-blue-600 mr-3"><Edit size={16} /></button>
-                                    <button onClick={() => handleDelete(loc.id)} className="text-red-600"><Trash2 size={16} /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable
+                    data={locations}
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Cari berdasarkan nama lokasi, wilayah, atau tahun...',
+                        emptyMessage: 'Tidak ada lokasi KKN ditemukan',
+                    }}
+                />
             </div>
 
              {showModal && (

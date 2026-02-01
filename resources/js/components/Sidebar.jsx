@@ -39,6 +39,7 @@ export default function Sidebar() {
                 : [
                     { name: 'Pendaftaran', icon: <Users size={18} />, path: '/kkn/registration' },
                     { name: 'Lokasi KKN', icon: <MapPin size={18} />, path: '/kkn/locations' },
+                    { name: 'Posko KKN', icon: <Home size={18} />, path: '/kkn/postos' },
                     { name: 'Peserta KKN', icon: <Users size={18} />, path: '/kkn/participants' },
                     { name: 'Laporan', icon: <BarChart2 size={18} />, path: '/reports' },
                   ]
@@ -66,6 +67,7 @@ export default function Sidebar() {
 
                 { name: 'Struktur Organisasi', icon: <Users size={18} />, path: '/admin/organization' },
                 { name: 'Hak Akses (Role)', icon: <Shield size={18} />, path: '/admin/roles' },
+                { name: 'Manajemen Menu', icon: <FolderOpen size={18} />, path: '/admin/menus' },
             ]
         });
     }
@@ -85,8 +87,7 @@ export default function Sidebar() {
             items: [
                 { name: 'Berita & Artikel', icon: <Newspaper size={18} />, path: '/cms/posts' },
                 { name: 'Dokumen', icon: <FileText size={18} />, path: '/cms/documents' },
-                { name: 'Galeri', icon: <Image size={18} />, path: '/cms/galleries' },
-                { name: 'Manajemen Menu', icon: <FolderOpen size={18} />, path: '/admin/menus' },
+                { name: 'Galeri', icon: <Image size={18} />, path: '/cms/galleries' }
             ]
         },
         {
@@ -100,9 +101,9 @@ export default function Sidebar() {
     );
 
     return (
-        <div className="w-64 bg-[#004d40] text-white min-h-screen flex flex-col shadow-xl flex-shrink-0">
+        <div className="w-64 bg-[#004d40] text-white h-full flex flex-col shadow-xl flex-shrink-0">
             {/* Brand */}
-            <div className="h-16 flex items-center px-6 bg-[#00251a] border-b border-green-800 space-x-3">
+            <div className="h-16 flex-shrink-0 flex items-center px-6 bg-[#00251a] border-b border-green-800 space-x-3">
                  <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="UIM Logo" className="h-10 w-10 object-contain" />
                 <span className="text-xl font-bold tracking-wider">LPPM UIM</span>
             </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../store/useAuthStore';
 import { FileText, Plus, Trash2, Download, Edit } from 'lucide-react';
+import DataTable from '../../components/DataTable';
 
 export default function DocumentsIndex() {
     const { token } = useAuthStore();
@@ -99,6 +100,56 @@ export default function DocumentsIndex() {
     const isPdf = (path) => path?.toLowerCase().endsWith('.pdf');
     const isImage = (path) => /\.(jpg|jpeg|png|webp)$/i.test(path);
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'title',
+            header: 'Judul Dokumen',
+            cell: ({ row }) => (
+                <div>
+                    <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
+                    <div className="flex items-center space-x-3 mt-1">
+                        {row.original.file_path && (
+                            <a href={row.original.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline flex items-center">
+                                <Download size={12} className="mr-1" /> Download
+                            </a>
+                        )}
+                        <button onClick={() => handlePreview(row.original)} className="text-xs text-gray-500 hover:text-green-600 flex items-center">
+                            <FileText size={12} className="mr-1" /> Preview
+                        </button>
+                    </div>
+                </div>
+            )
+        },
+        {
+            accessorKey: 'description',
+            header: 'Deskripsi',
+            cell: ({ row }) => <span className="text-sm text-gray-500 truncate block max-w-xs">{row.original.description || '-'}</span>
+        },
+        {
+            accessorKey: 'type',
+            header: 'Tipe',
+            cell: ({ row }) => {
+                const types = { guide: 'Panduan', template: 'Template', sk: 'SK / Legal' };
+                return <span className="text-sm text-gray-500 capitalize">{types[row.original.type] || row.original.type}</span>
+            }
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-800" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
              <div className="flex justify-between items-center">
@@ -110,42 +161,19 @@ export default function DocumentsIndex() {
                 </button>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Dokumen</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {documents.map(doc => (
-                            <tr key={doc.id}>
-                                <td className="px-6 py-4">
-                                    <div className="text-sm font-medium text-gray-900">{doc.title}</div>
-                                    <div className="flex items-center space-x-3 mt-1">
-                                        {doc.file_path && (
-                                            <a href={doc.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline flex items-center">
-                                                <Download size={12} className="mr-1" /> Download
-                                            </a>
-                                        )}
-                                        <button onClick={() => handlePreview(doc)} className="text-xs text-gray-500 hover:text-green-600 flex items-center">
-                                            <FileText size={12} className="mr-1" /> Preview
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{doc.description || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{doc.type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm flex justify-end">
-                                    <button onClick={() => handleEdit(doc)} className="text-blue-600 hover:text-blue-800 mr-2"><Edit size={16} /></button>
-                                    <button onClick={() => handleDelete(doc.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={documents} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Cari dokumen...',
+                        emptyMessage: 'Tidak ada dokumen'
+                    }} 
+                />
             </div>
 
             {/* Upload/Edit Modal */}

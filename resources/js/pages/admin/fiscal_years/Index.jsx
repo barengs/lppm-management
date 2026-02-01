@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../../store/useAuthStore';
 import { PlusCircle, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 
 export default function FiscalYearsIndex() {
     const { token } = useAuthStore();
@@ -65,6 +66,44 @@ export default function FiscalYearsIndex() {
         setShowModal(true);
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'year',
+            header: 'Year',
+            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.year}</span>
+        },
+        {
+            accessorKey: 'is_active',
+            header: 'Status',
+            cell: ({ row }) => (
+                row.original.is_active ? (
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        Active
+                    </span>
+                ) : (
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                        Inactive
+                    </span>
+                )
+            )
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-900" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-900" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -81,42 +120,19 @@ export default function FiscalYearsIndex() {
                 </button>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {years.map((fy) => (
-                            <tr key={fy.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{fy.year}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {fy.is_active ? (
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Active
-                                        </span>
-                                    ) : (
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            Inactive
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => handleEdit(fy)} className="text-blue-600 hover:text-blue-900 mr-4">
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={() => handleDelete(fy.id)} className="text-red-600 hover:text-red-900">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={years} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Search years...',
+                        emptyMessage: 'No fiscal years found'
+                    }} 
+                />
             </div>
 
             {/* Modal */}

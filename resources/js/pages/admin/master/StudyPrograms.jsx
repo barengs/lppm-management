@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../../store/useAuthStore';
 import { School, Plus, Trash2, Edit, Upload, Download } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 
 export default function StudyPrograms() {
     const { token } = useAuthStore();
@@ -127,6 +128,52 @@ export default function StudyPrograms() {
         }
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'code',
+            header: 'Kode',
+            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.code}</span>
+        },
+        {
+            accessorKey: 'level',
+            header: 'Jenjang',
+            cell: ({ row }) => (
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    row.original.level === 'S1' ? 'bg-blue-100 text-blue-800' : 
+                    row.original.level === 'S2' ? 'bg-purple-100 text-purple-800' : 
+                    'bg-gray-100 text-gray-800'
+                }`}>
+                    {row.original.level}
+                </span>
+            )
+        },
+        {
+            accessorKey: 'name',
+            header: 'Nama Program Studi',
+            cell: ({ row }) => <span className="text-gray-700">{row.original.name}</span>
+        },
+        {
+            accessorKey: 'faculty.name',
+            header: 'Fakultas',
+            cell: ({ row }) => <span className="text-gray-500">{row.original.faculty?.name || '-'}</span>
+        },
+        {
+            id: 'actions',
+            header: 'Aksi',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-800" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Hapus">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
              <div className="flex justify-between items-center">
@@ -143,32 +190,19 @@ export default function StudyPrograms() {
                 </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenjang</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Prodi</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fakultas</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {studyPrograms.map(prodi => (
-                            <tr key={prodi.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{prodi.code}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{prodi.level}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{prodi.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prodi.faculty?.name || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                    <button onClick={() => handleEdit(prodi)} className="text-blue-600 hover:text-blue-800 mr-2"><Edit size={16} /></button>
-                                    <button onClick={() => handleDelete(prodi.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={studyPrograms} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Cari program studi...',
+                        emptyMessage: 'Tidak ada data program studi'
+                    }} 
+                />
             </div>
 
             {/* Modal */}

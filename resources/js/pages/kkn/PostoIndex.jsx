@@ -1,0 +1,318 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../../utils/api';
+import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
+import DataTable from '../../components/DataTable';
+
+export default function PostoIndex() {
+    const [postos, setPostos] = useState([]);
+    const [fiscalYears, setFiscalYears] = useState([]);
+    const [locations, setLocations] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filters, setFilters] = useState({
+        fiscal_year_id: '',
+        status: '',
+        location_id: '',
+    });
+
+    useEffect(() => {
+        fetchData();
+    }, [filters]);
+
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [postosRes, fiscalYearsRes, locationsRes] = await Promise.all([
+                api.get('/kkn/postos', { params: filters }),
+                api.get('/fiscal-years'),
+                api.get('/kkn-locations'),
+            ]);
+
+            setPostos(postosRes.data);
+            setFiscalYears(fiscalYearsRes.data);
+            setLocations(locationsRes.data);
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+            toast.error('Gagal memuat data posko');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus posko ini?')) return;
+
+        try {
+            await api.delete(`/kkn/postos/${id}`);
+            toast.success('Posko berhasil dihapus');
+            fetchData();
+        } catch (error) {
+            console.error('Failed to delete posto:', error);
+            toast.error('Gagal menghapus posko');
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        const badges = {
+            draft: 'bg-gray-100 text-gray-800',
+            active: 'bg-green-100 text-green-800',
+            completed: 'bg-blue-100 text-blue-800',
+        };
+        const labels = {
+            draft: 'Draft',
+            active: 'Aktif',
+            completed: 'Selesai',
+        };
+        return (
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${badges[status]}`}>
+                {labels[status]}
+            </span>
+        );
+    };
+
+    // Define columns for DataTable
+    const columns = useMemo(
+        () => [
+            {
+                accessorKey: 'name',
+                header: 'Nama Posko',
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium text-gray-900">{row.original.name}</div>
+                        <div className="text-xs text-gray-500">
+                            {row.original.location?.name}
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'fiscal_year.year',
+                header: 'Tahun',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">{row.original.fiscal_year?.year}</div>
+                ),
+            },
+            {
+                accessorKey: 'dpl.name',
+                header: 'DPL',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">
+                        {row.original.dpl?.name || '-'}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'member_count',
+                header: 'Anggota',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">
+                        {row.original.member_count} orang
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'status',
+                header: 'Status',
+                cell: ({ row }) => getStatusBadge(row.original.status),
+            },
+            {
+                accessorKey: 'start_date',
+                header: 'Periode',
+                cell: ({ row }) => (
+                    <div className="text-sm text-gray-900">
+                        {row.original.start_date && row.original.end_date
+                            ? `${new Date(row.original.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(row.original.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                            : '-'}
+                    </div>
+                ),
+            },
+            {
+                id: 'actions',
+                header: 'Aksi',
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <Link
+                            to={`/kkn/postos/${row.original.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Lihat detail"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Link>
+                        <Link
+                            to={`/kkn/postos/${row.original.id}/edit`}
+                            className="text-green-600 hover:text-green-900"
+                            title="Edit"
+                        >
+                            <Edit className="w-4 h-4" />
+                        </Link>
+                        <button
+                            onClick={() => handleDelete(row.original.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Hapus"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                ),
+            },
+        ],
+        []
+    );
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="mb-4 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Manajemen Posko KKN</h1>
+                        <p className="mt-1 text-sm text-gray-600">
+                            Kelola posko KKN, anggota, dan struktur kepengurusan
+                        </p>
+                    </div>
+                    <Link
+                        to="/kkn/postos/create"
+                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Buat Posko Baru
+                    </Link>
+                </div>
+
+                {/* Filters */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Tahun Ajaran
+                            </label>
+                            <select
+                                value={filters.fiscal_year_id}
+                                onChange={(e) => setFilters({ ...filters, fiscal_year_id: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            >
+                                <option value="">Semua Tahun</option>
+                                {fiscalYears.map((fy) => (
+                                    <option key={fy.id} value={fy.id}>
+                                        {fy.year}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Status
+                            </label>
+                            <select
+                                value={filters.status}
+                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            >
+                                <option value="">Semua Status</option>
+                                <option value="draft">Draft</option>
+                                <option value="active">Aktif</option>
+                                <option value="completed">Selesai</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Lokasi
+                            </label>
+                            <select
+                                value={filters.location_id}
+                                onChange={(e) => setFilters({ ...filters, location_id: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            >
+                                <option value="">Semua Lokasi</option>
+                                {locations.map((loc) => (
+                                    <option key={loc.id} value={loc.id}>
+                                        {loc.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <MapPin className="h-8 w-8 text-green-600" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">Total Posko</p>
+                                <p className="text-2xl font-bold text-gray-900">{postos.length}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <Users className="h-8 w-8 text-blue-600" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">Total Anggota</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {postos.reduce((sum, p) => sum + (p.member_count || 0), 0)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <Calendar className="h-8 w-8 text-yellow-600" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">Posko Aktif</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {postos.filter((p) => p.status === 'active').length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <CheckCircle className="h-8 w-8 text-purple-600" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">Posko Lengkap</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {postos.filter((p) => p.is_complete).length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* DataTable */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <DataTable
+                        data={postos}
+                        columns={columns}
+                        options={{
+                            enableGlobalFilter: true,
+                            enableSorting: true,
+                            enablePagination: true,
+                            initialPageSize: 10,
+                            searchPlaceholder: 'Cari posko berdasarkan nama, lokasi, atau DPL...',
+                            emptyMessage: 'Tidak ada posko ditemukan',
+                        }}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}

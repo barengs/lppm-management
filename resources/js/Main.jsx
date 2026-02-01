@@ -45,6 +45,12 @@ import KknStudentRegistration from './pages/kkn/Registration';
 import KknParticipantsIndex from './pages/kkn/Participants';
 import StudentKknStatus from './pages/student/KknStatus';
 
+// KKN Posko Management
+import PostoIndex from './pages/kkn/PostoIndex';
+import PostoForm from './pages/kkn/PostoForm';
+import PostoDetail from './pages/kkn/PostoDetail';
+import PostoAddMember from './pages/kkn/PostoAddMember';
+
 // Student KKN Dashboard Components
 import StudentKknDashboard from './pages/student/kkn/StudentKknDashboard';
 import StudentKknRegistration from './pages/student/kkn/StudentKknRegistration';
@@ -155,6 +161,13 @@ export default function Main() {
                         <Route path="kkn/registration" element={<KknStudentRegistration />} />
                         <Route path="kkn/status" element={<StudentKknStatus />} />
                         <Route path="kkn/participants" element={<KknParticipantsIndex />} />
+                        
+                        {/* KKN Posko Management (Admin) */}
+                        <Route path="kkn/postos" element={<PostoIndex />} />
+                        <Route path="kkn/postos/create" element={<PostoForm />} />
+                        <Route path="kkn/postos/:id" element={<PostoDetail />} />
+                        <Route path="kkn/postos/:id/edit" element={<PostoForm />} />
+                        <Route path="kkn/postos/:id/members/add" element={<PostoAddMember />} />
 
                         {/* CMS */}
                         <Route path="cms/posts" element={<PostsIndex />} />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthStore from '../../../store/useAuthStore';
 import { Users, Plus, Edit, Trash2, Upload } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 
 export default function OrganizationIndex() {
     const { token } = useAuthStore();
@@ -80,6 +81,39 @@ export default function OrganizationIndex() {
         setIsSubmitting(false);
     };
 
+    // DataTable Columns
+    const columns = React.useMemo(() => [
+        {
+            accessorKey: 'order_index',
+            header: 'Order',
+            cell: ({ row }) => <span className="text-gray-500">{row.original.order_index}</span>
+        },
+        {
+            accessorKey: 'name',
+            header: 'Nama',
+            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.name}</span>
+        },
+        {
+            accessorKey: 'position',
+            header: 'Jabatan',
+            cell: ({ row }) => <span className="text-gray-500">{row.original.position}</span>
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <button onClick={() => handleEditClick(row.original)} className="text-blue-600 hover:text-blue-900" title="Edit">
+                        <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDeleteClick(row.original.id)} className="text-red-600 hover:text-red-900" title="Delete">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -94,35 +128,20 @@ export default function OrganizationIndex() {
                 </button>
             </div>
 
-            {isLoading ? (
-                <div className="text-center py-10 text-gray-500">Loading structure...</div>
-            ) : (
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jabatan</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {members.map((member) => (
-                                <tr key={member.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.order_index}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.position}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleEditClick(member)} className="text-blue-600 hover:text-blue-900 mr-3"><Edit size={16} /></button>
-                                        <button onClick={() => handleDeleteClick(member.id)} className="text-red-600 hover:text-red-900"><Trash2 size={16} /></button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            <div className="bg-white shadow rounded-lg p-4">
+                <DataTable 
+                    data={members} 
+                    columns={columns}
+                    options={{
+                        enableGlobalFilter: true,
+                        enableSorting: true,
+                        enablePagination: true,
+                        initialPageSize: 10,
+                        searchPlaceholder: 'Cari anggota...',
+                        emptyMessage: 'Tidak ada data anggota'
+                    }} 
+                />
+            </div>
 
             {/* Modal */}
             {showModal && (

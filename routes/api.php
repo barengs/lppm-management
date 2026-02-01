@@ -83,6 +83,26 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('kkn-locations', App\Http\Controllers\KknLocationController::class);
     Route::apiResource('kkn-registrations', App\Http\Controllers\KknRegistrationController::class);
     
+    // KKN Posko Management (Admin)
+    Route::prefix('kkn/postos')->group(function () {
+        Route::get('/', [App\Http\Controllers\KknPostoController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\KknPostoController::class, 'store']);
+        Route::get('/available-students', [App\Http\Controllers\KknPostoController::class, 'availableStudents']);
+        Route::get('/{id}', [App\Http\Controllers\KknPostoController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\KknPostoController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\KknPostoController::class, 'destroy']);
+        Route::patch('/{id}/status', [App\Http\Controllers\KknPostoController::class, 'updateStatus']);
+        
+        // Member Management
+        Route::get('/{id}/members', [App\Http\Controllers\KknPostoController::class, 'members']);
+        Route::post('/{id}/members', [App\Http\Controllers\KknPostoController::class, 'addMember']);
+        Route::put('/{id}/members/{memberId}', [App\Http\Controllers\KknPostoController::class, 'updateMember']);
+        Route::delete('/{id}/members/{memberId}', [App\Http\Controllers\KknPostoController::class, 'removeMember']);
+        
+        // Bulk Operations
+        Route::post('/{id}/assign-students', [App\Http\Controllers\KknPostoController::class, 'bulkAssignStudents']);
+    });
+    
     // Admin KKN Registration Management
     Route::prefix('admin/kkn-registrations')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\KknRegistrationController::class, 'index']);
@@ -94,7 +114,13 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/{id}/note', [App\Http\Controllers\Admin\KknRegistrationController::class, 'addNote']);
     });
     
-    // Student KKN Registration
+    // Student KKN Dashboard
+    Route::prefix('dashboard/kkn')->group(function () {
+        Route::get('/my-posto', [App\Http\Controllers\KknPostoController::class, 'myPosto']);
+        Route::get('/my-posto/members', [App\Http\Controllers\KknPostoController::class, 'myPostoMembers']);
+    });
+    
+    // Student KKN Registration (Legacy - kept for compatibility)
     Route::prefix('student/kkn')->group(function () {
         Route::get('/status', [App\Http\Controllers\Student\KknController::class, 'status']);
         Route::get('/profile', [App\Http\Controllers\Student\KknController::class, 'profile']);
