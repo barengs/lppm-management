@@ -68,17 +68,16 @@ class DatabaseSeeder extends Seeder
         $mahasiswa->assignRole('mahasiswa');
 
         // Seed Faculties and Study Programs
+        // Seed Faculties and Study Programs
         $this->call(FacultyStudyProgramSeeder::class);
         $this->call(MasterDataSeeder::class);
         $this->call(LandingPageSeeder::class);
         $this->call(InfoCardSeeder::class);
-        $this->call(MenuSeeder::class);
         $this->call([
             ProvincesSeeder::class,
             CitiesSeeder::class,
             DistrictsSeeder::class,
             VillagesSeeder::class,
-            PageSeeder::class,
             RolePermissionSeeder::class,
             OrganizationSeeder::class,
             PageSeeder::class,

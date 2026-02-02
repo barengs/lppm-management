@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Faculty;
 use App\Models\StudyProgram;
 
@@ -14,8 +15,11 @@ class FacultyStudyProgramSeeder extends Seeder
     public function run(): void
     {
         // Clear existing data
+        // Clear existing data
+        Schema::disableForeignKeyConstraints();
         StudyProgram::truncate();
         Faculty::truncate();
+        Schema::enableForeignKeyConstraints();
 
         // Fakultas Agama Islam
         $fai = Faculty::create([
