@@ -138,7 +138,7 @@ export default function ReportsIndex() {
     return (
         <div className="flex h-[calc(100vh-theme(spacing.32))] gap-6 overflow-hidden">
             {/* Left Sidebar: Posto List */}
-            <div className="w-80 bg-white border rounded-xl flex flex-col shadow-sm">
+            <div className="w-80 bg-white border rounded-lg flex flex-col shadow-sm">
                 <div className="p-4 border-b">
                     <h2 className="font-bold text-gray-800 mb-3">Daftar Kelompok</h2>
                     <div className="relative">
@@ -188,7 +188,7 @@ export default function ReportsIndex() {
             </div>
 
             {/* Main Content: Reports */}
-            <div className="flex-1 bg-white border rounded-xl shadow-sm flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white border rounded-lg shadow-sm flex flex-col overflow-hidden">
                 {selectedPosto ? (
                     <>
                         {/* Header */}
@@ -249,7 +249,7 @@ export default function ReportsIndex() {
                                                 {report.week}
                                             </div>
 
-                                            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                                            <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                                                 <div className="p-5 border-b bg-gray-50/50 flex justify-between items-start">
                                                     <div>
                                                         <h3 className="font-bold text-gray-900 text-lg">{report.title}</h3>
@@ -373,7 +373,7 @@ export default function ReportsIndex() {
                                                                     href={`/storage/${att.file_path}`} 
                                                                     target="_blank" 
                                                                     rel="noopener noreferrer"
-                                                                    className="flex items-center p-4 border rounded-xl hover:border-blue-400 hover:shadow-md transition-all group bg-gray-50 hover:bg-white"
+                                                                    className="flex items-center p-4 border rounded-lg hover:border-blue-400 hover:shadow-md transition-all group bg-gray-50 hover:bg-white"
                                                                 >
                                                                     <div className="bg-white p-3 rounded-lg border mr-4 text-blue-600 group-hover:text-blue-700 shadow-sm">
                                                                         <FileText size={20} />
@@ -422,7 +422,7 @@ export default function ReportsIndex() {
                                                                         `}></div>
                                                                     </div>
 
-                                                                    <div className="bg-green-50/50 border border-green-100 rounded-xl p-4 transition-all hover:bg-green-50 hover:border-green-200">
+                                                                    <div className="bg-green-50/50 border border-green-100 rounded-lg p-4 transition-all hover:bg-green-50 hover:border-green-200">
                                                                         <div className="flex justify-between items-start mb-1">
                                                                             <div>
                                                                                 <span className={`inline-flex items-center px-0 py-0 rounded text-xs font-bold uppercase mb-0.5
