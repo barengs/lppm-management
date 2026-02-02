@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('kkn_locations', function (Blueprint $table) {
-            $table->char('province_id', 2)->nullable()->after('description');
-            $table->char('city_id', 4)->nullable()->after('province_id');
-            $table->char('district_id', 7)->nullable()->after('city_id');
-            $table->char('village_id', 10)->nullable()->after('district_id');
+            $table->unsignedBigInteger('province_id')->nullable()->after('description');
+            $table->unsignedBigInteger('city_id')->nullable()->after('province_id');
+            $table->unsignedBigInteger('district_id')->nullable()->after('city_id');
+            $table->unsignedBigInteger('village_id')->nullable()->after('district_id');
             $table->decimal('latitude', 10, 8)->nullable()->after('village_id');
             $table->decimal('longitude', 11, 8)->nullable()->after('latitude');
 
