@@ -16,6 +16,11 @@ class RoleController extends Controller
         return response()->json(Role::with('permissions')->orderBy('name')->get());
     }
 
+    public function permissions()
+    {
+        return response()->json(Permission::orderBy('name')->get());
+    }
+
     /**
      * Store a newly created resource in storage.
      */

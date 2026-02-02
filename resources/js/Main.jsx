@@ -36,6 +36,7 @@ import StudyProgramsIndex from './pages/admin/master/StudyPrograms';
 
 import OrganizationAdminIndex from './pages/admin/organization/Index';
 import RolesIndex from './pages/admin/roles/Index';
+import PermissionsIndex from './pages/admin/permissions/Index';
 import MenuIndex from './pages/admin/menus/Index';
 import MenuBuilder from './pages/admin/menus/Builder';
 
@@ -56,6 +57,8 @@ import StudentKknDashboard from './pages/student/kkn/StudentKknDashboard';
 import StudentKknRegistration from './pages/student/kkn/StudentKknRegistration';
 import StudentKknStatusPage from './pages/student/kkn/StudentKknStatus';
 import StudentKknGroup from './pages/student/kkn/StudentKknGroup';
+import StudentKknGuidance from './pages/student/kkn/StudentKknGuidance';
+import StudentKknReports from './pages/student/kkn/StudentKknReports';
 
 import PrivateRoute from './components/PrivateRoute';
 import useAuthStore from './store/useAuthStore';
@@ -153,7 +156,10 @@ export default function Main() {
                         <Route path="dashboard/kkn" element={<StudentKknDashboard />} />
                         <Route path="dashboard/kkn/register" element={<StudentKknRegistration />} />
                         <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
+                        <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
                         <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
+                        <Route path="dashboard/kkn/guidance" element={<StudentKknGuidance />} />
+                        <Route path="dashboard/kkn/reports" element={<StudentKknReports />} />
 
                         {/* KKN Module (Admin/Legacy) */}
                         <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
@@ -185,6 +191,7 @@ export default function Main() {
                         {/* User Management */}
                         <Route path="admin/organization" element={<OrganizationAdminIndex />} />
                         <Route path="admin/roles" element={<RolesIndex />} />
+                        <Route path="admin/permissions" element={<PermissionsIndex />} />
                         <Route path="admin/menus" element={<MenuIndex />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />
 

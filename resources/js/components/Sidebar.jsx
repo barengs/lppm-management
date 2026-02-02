@@ -1,133 +1,145 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
+import useSidebarStore from '../store/useSidebarStore';
 import { 
     Home, FileText, MapPin, ClipboardList, 
     Newspaper, FolderOpen, Image, 
     User, Award, Users, LogOut,
     LayoutDashboard, PlusCircle, BarChart2,
     Calendar, Settings, TrendingUp, Shield, Star,
-    Building, School
+    Building, School, MessageSquare, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export default function Sidebar() {
     const { logout, user } = useAuthStore();
+    const { isCollapsed, toggleSidebar } = useSidebarStore();
     const location = useLocation();
 
     const isActive = (path) => location.pathname.startsWith(path);
 
-    const menuGroups = [
+    // Helper to check permission
+    const can = (permission) => {
+        if (!permission) return true;
+        if (user?.role === 'admin') return true;
+        return user?.granted_permissions?.includes(permission);
+    };
+
+    // Menu Definition
+    const rawMenuGroups = [
         {
             title: 'Main',
             items: [
-                { name: 'Dashboard', icon: <LayoutDashboard size={18} />, path: '/dashboard' },
+                { 
+                    name: 'Dashboard', 
+                    icon: <LayoutDashboard size={20} />, 
+                    path: user?.role === 'mahasiswa' ? '/dashboard/kkn' : '/dashboard' 
+                },
             ]
         },
         {
             title: 'Penelitian & Pengabdian',
             items: [
-                { name: 'Daftar Proposal', icon: <FileText size={18} />, path: '/proposals' },
-                { name: 'Review Proposal', icon: <Star size={18} />, path: '/reviews' },
+                { name: 'Daftar Proposal', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
             ]
         },
         {
             title: 'KKN (Kuliah Kerja Nyata)',
-            items: user?.role === 'mahasiswa' 
-                ? [
-                    { name: 'Status KKN Saya', icon: <ClipboardList size={18} />, path: '/kkn/status' },
-                  ]
-                : [
-                    { name: 'Pendaftaran', icon: <Users size={18} />, path: '/kkn/registration' },
-                    { name: 'Lokasi KKN', icon: <MapPin size={18} />, path: '/kkn/locations' },
-                    { name: 'Posko KKN', icon: <Home size={18} />, path: '/kkn/postos' },
-                    { name: 'Peserta KKN', icon: <Users size={18} />, path: '/kkn/participants' },
-                    { name: 'Laporan', icon: <BarChart2 size={18} />, path: '/reports' },
-                  ]
+            items: [
+                 { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
+                 { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
+                 { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
+                 { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
+                 { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
+                 // Student/Dosen Only (Requires My Posto context)
+                 ...(user?.role !== 'admin' ? [
+                    { name: 'Bimbingan', icon: <MessageSquare size={20} />, path: '/dashboard/kkn/guidance', permission: 'kkn_guidance.view' },
+                    { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
+                 ] : []),
+                 // Admin/Dosen Monitoring
+                 { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
+            ]
         },
-    ];
-
-    if (user?.role === 'admin') {
-        // Master Data (Excluding Users)
-        menuGroups.push({
+        {
             title: 'Master Data',
+            permission: 'faculties.view', 
             items: [
-                { name: 'Fakultas', icon: <Building size={18} />, path: '/master/faculties' },
-                { name: 'Program Studi', icon: <School size={18} />, path: '/master/study-programs' },
-                { name: 'Tahun Anggaran', icon: <Calendar size={18} />, path: '/master/fiscal-years' },
-                { name: 'Skema Hibah', icon: <Settings size={18} />, path: '/master/schemes' },
+                { name: 'Fakultas', icon: <Building size={20} />, path: '/master/faculties', permission: 'faculties.view' },
+                { name: 'Program Studi', icon: <School size={20} />, path: '/master/study-programs', permission: 'study_programs.view' },
+                { name: 'Tahun Anggaran', icon: <Calendar size={20} />, path: '/master/fiscal-years', permission: 'fiscal_years.view' },
+                { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
+                { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
             ]
-        });
-
-        // User Management Group
-        menuGroups.push({
-            title: 'Manajemen Pengguna',
+        },
+        {
+            title: 'Manajemen Sistem',
             items: [
-                { name: 'Daftar Staff / Dosen', icon: <Users size={18} />, path: '/master/users' },
-                // { name: 'Daftar Mahasiswa', icon: <Users size={18} />, path: '/master/students' }, // Merged with Peserta KKN
-
-                { name: 'Struktur Organisasi', icon: <Users size={18} />, path: '/admin/organization' },
-                { name: 'Hak Akses (Role)', icon: <Shield size={18} />, path: '/admin/roles' },
-                { name: 'Manajemen Menu', icon: <FolderOpen size={18} />, path: '/admin/menus' },
+                { name: 'Struktur Organisasi', icon: <Users size={20} />, path: '/admin/organization', permission: 'organization.view' },
+                { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
+                { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
+                { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
             ]
-        });
-    }
-
-    if (user?.role === 'reviewer') {
-        menuGroups.push({
-            title: 'Reviewer Area',
-            items: [
-                { name: 'Review Usulan', icon: <Star size={18} />, path: '/reviews' },
-            ]
-        });
-    }
-
-    menuGroups.push(
+        },
         {
             title: 'CMS & Informasi',
             items: [
-                { name: 'Berita & Artikel', icon: <Newspaper size={18} />, path: '/cms/posts' },
-                { name: 'Dokumen', icon: <FileText size={18} />, path: '/cms/documents' },
-                { name: 'Galeri', icon: <Image size={18} />, path: '/cms/galleries' }
+                { name: 'Berita & Artikel', icon: <Newspaper size={20} />, path: '/cms/posts', permission: 'posts.view' },
+                { name: 'Dokumen', icon: <FileText size={20} />, path: '/cms/documents', permission: 'documents.view' },
+                { name: 'Galeri', icon: <Image size={20} />, path: '/cms/galleries', permission: 'galleries.view' }
             ]
         },
         {
             title: 'Profil',
             items: [
-                { name: 'Profil Saya', icon: <User size={18} />, path: '/profile' },
-                { name: 'Kinerja Dosen', icon: <TrendingUp size={18} />, path: '/profile/stats' },
-                { name: 'Organisasi', icon: <Users size={18} />, path: '/organization' },
+                { name: 'Profil Saya', icon: <User size={20} />, path: '/profile' },
+                { name: 'Kinerja Dosen', icon: <TrendingUp size={20} />, path: '/profile/stats' },
+                { name: 'Organisasi', icon: <Users size={20} />, path: '/organization', permission: 'organization.view' },
             ]
         }
-    );
+    ];
+
+    // Filter Groups and Items
+    const menuGroups = rawMenuGroups.map(group => {
+        const filteredItems = group.items.filter(item => can(item.permission));
+        if (filteredItems.length === 0) return null;
+        return { ...group, items: filteredItems };
+    }).filter(group => group !== null);
+
 
     return (
-        <div className="w-64 bg-[#004d40] text-white h-full flex flex-col shadow-xl flex-shrink-0">
+        <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-[#004d40] text-white h-full flex flex-col shadow-xl transition-all duration-300`}>
             {/* Brand */}
-            <div className="h-16 flex-shrink-0 flex items-center px-6 bg-[#00251a] border-b border-green-800 space-x-3">
+            <div className={`h-16 flex-shrink-0 flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-6 space-x-3'} bg-[#00251a] border-b border-green-800 transition-all duration-300`}>
                  <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="UIM Logo" className="h-10 w-10 object-contain" />
-                <span className="text-xl font-bold tracking-wider">LPPM UIM</span>
+                {!isCollapsed && <span className="text-xl font-bold tracking-wider whitespace-nowrap">LPPM UIM</span>}
             </div>
 
             {/* Menu */}
-            <div className="flex-grow py-4 overflow-y-auto">
+            <div className="flex-grow py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-800 hover:scrollbar-thumb-green-700">
                 {menuGroups.map((group, groupIdx) => (
                     <div key={groupIdx} className="mb-6">
-                        <h3 className="px-6 text-xs font-semibold text-green-200 uppercase tracking-wider mb-2">
-                            {group.title}
-                        </h3>
+                        {!isCollapsed && (
+                            <h3 className="px-6 text-xs font-semibold text-green-200 uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden">
+                                {group.title}
+                            </h3>
+                        )}
+                        {/* Divider for collapsed mode to separate groups visually */}
+                        {isCollapsed && groupIdx > 0 && <div className="mx-4 border-t border-green-800 my-2"></div>}
+                        
                         <ul>
                             {group.items.map((item, itemIdx) => (
-                                <li key={itemIdx}>
+                                <li key={itemIdx} title={isCollapsed ? item.name : ''}>
                                     <Link
                                         to={item.path}
-                                        className={`flex items-center px-6 py-2 text-sm font-medium transition-colors ${
+                                        className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} py-2.5 text-sm font-medium transition-colors ${
                                             isActive(item.path) 
-                                                ? 'bg-green-700 text-white border-r-4 border-yellow-400' 
+                                                ? 'bg-green-700 text-white ' + (!isCollapsed ? 'border-r-4 border-yellow-400' : 'bg-opacity-100 rounded-lg mx-2')
                                                 : 'text-gray-300 hover:bg-green-800 hover:text-white'
                                         }`}
                                     >
-                                        <span className="mr-3">{item.icon}</span>
-                                        {item.name}
+                                        <span className={`${!isCollapsed ? 'mr-3' : ''}`}>{item.icon}</span>
+                                        {!isCollapsed && <span>{item.name}</span>}
                                     </Link>
                                 </li>
                             ))}
@@ -140,10 +152,11 @@ export default function Sidebar() {
             <div className="p-4 border-t border-green-800 bg-[#00251a]">
                 <button
                     onClick={logout}
-                    className="flex w-full items-center px-2 py-2 text-sm font-medium text-red-300 hover:bg-green-900 hover:text-red-200 rounded-md transition-colors"
+                    className={`flex w-full items-center ${isCollapsed ? 'justify-center' : ''} px-2 py-2 text-sm font-medium text-red-300 hover:bg-green-900 hover:text-red-200 rounded-md transition-colors`}
+                    title={isCollapsed ? 'Logout' : ''}
                 >
-                    <LogOut size={18} className="mr-3" />
-                    Logout
+                    <LogOut size={20} className={`${!isCollapsed ? 'mr-3' : ''}`} />
+                    {!isCollapsed && <span>Logout</span>}
                 </button>
             </div>
         </div>

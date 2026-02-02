@@ -20,6 +20,7 @@ class MahasiswaProfile extends Model
         'date_of_birth',
         'address',
         'phone',
+        'avatar',
     ];
 
     public function user()

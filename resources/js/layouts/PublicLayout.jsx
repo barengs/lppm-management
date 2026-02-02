@@ -51,8 +51,19 @@ export default function PublicLayout() {
     return (
         <div className="min-h-screen flex flex-col font-sans">
             {/* Top Bar */}
-            <div className="bg-white py-2 border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div className="bg-white py-4 border-b border-gray-200 relative overflow-hidden">
+                {/* Batik Pattern Background */}
+                 <div 
+                    className="absolute inset-0 opacity-10 pointer-events-none mix-blend-multiply top-0 left-0 w-full h-full"
+                    style={{
+                        backgroundImage: "url('/images/batik-pattern.png')",
+                        backgroundSize: '400px',
+                        backgroundRepeat: 'repeat',
+                        backgroundPosition: 'center'
+                    }}
+                ></div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center relative z-10">
                     <div className="flex items-center space-x-4">
                         <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-16 w-16 object-contain" />
                          <div>
@@ -144,7 +155,7 @@ export default function PublicLayout() {
                     </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-                    &copy; {new Date().getFullYear()} Lembaga Penelitian dan Pengabdian Masyarakat Universitas Islam Madura. Developed by UIM Dev Team.
+                    &copy; {new Date().getFullYear()} Lembaga Penelitian dan Pengabdian Masyarakat Universitas Islam Madura. Developed by <a href="https://unggul.id" target="_blank" rel="noopener noreferrer" className="text-yellow-500 hover:text-yellow-400">PT. Unggul Mediatama Indonesia</a>
                 </div>
             </footer>
         </div>

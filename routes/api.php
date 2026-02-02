@@ -64,6 +64,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('users/import', [App\Http\Controllers\UserController::class, 'import']);
     Route::apiResource('users', App\Http\Controllers\UserController::class); // Staff & Dosen
     Route::apiResource('students', App\Http\Controllers\StudentController::class); // Mahasiswa Only
+    Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
     Route::apiResource('roles', App\Http\Controllers\RoleController::class);
     
     Route::apiResource('proposals', App\Http\Controllers\ProposalController::class);
@@ -112,6 +113,17 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/{id}/reject', [App\Http\Controllers\Admin\KknRegistrationController::class, 'reject']);
         Route::post('/{id}/revise', [App\Http\Controllers\Admin\KknRegistrationController::class, 'requestRevision']);
         Route::post('/{id}/note', [App\Http\Controllers\Admin\KknRegistrationController::class, 'addNote']);
+    });
+    
+    // KKN Reporting & Guidance
+    Route::apiResource('kkn-reports', App\Http\Controllers\KknReportController::class);
+    Route::put('kkn-reports/{id}/status', [App\Http\Controllers\KknReportController::class, 'updateStatus']); // Review
+
+    Route::prefix('kkn-guidance')->group(function () {
+        Route::get('/', [App\Http\Controllers\KknGuidanceController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\KknGuidanceController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\KknGuidanceController::class, 'show']);
+        Route::post('/{id}/messages', [App\Http\Controllers\KknGuidanceController::class, 'storeMessage']);
     });
     
     // Student KKN Dashboard

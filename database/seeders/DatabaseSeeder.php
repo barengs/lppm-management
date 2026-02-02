@@ -78,7 +78,11 @@ class DatabaseSeeder extends Seeder
             CitiesSeeder::class,
             DistrictsSeeder::class,
             VillagesSeeder::class,
-            PageSeeder::class
+            PageSeeder::class,
+            RolePermissionSeeder::class,
+            OrganizationSeeder::class,
+            PageSeeder::class,
+            MenuSeeder::class,
         ]);
     }
 }

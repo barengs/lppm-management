@@ -57,6 +57,9 @@ class AuthController extends Controller
             'role' => $validated['role'],
         ]);
 
+        // Assign Spatie Role
+        $user->assignRole($validated['role']);
+
         // Create Profile based on Role
         if ($validated['role'] === 'mahasiswa') {
             $user->mahasiswaProfile()->create([

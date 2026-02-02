@@ -15,11 +15,28 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
 
     // Backward compatibility for frontend checking user.role
-    protected $appends = ['role'];
+    protected $appends = ['role', 'granted_permissions', 'avatar'];
 
     public function getRoleAttribute()
     {
         return $this->roles->first()?->name ?? 'mahasiswa';
+    }
+
+    public function getGrantedPermissionsAttribute()
+    {
+        return $this->getAllPermissions()->pluck('name');
+    }
+
+    // Accessor for avatar to fetch from profile
+    public function getAvatarAttribute()
+    {
+        if ($this->dosenProfile && $this->dosenProfile->avatar) {
+            return $this->dosenProfile->avatar;
+        }
+        if ($this->mahasiswaProfile && $this->mahasiswaProfile->avatar) {
+            return $this->mahasiswaProfile->avatar;
+        }
+        return null;
     }
 
     /**

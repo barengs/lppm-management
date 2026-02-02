@@ -16,7 +16,13 @@ class KknPostoController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth('api')->user();
         $query = KknPosto::with(['location', 'fiscalYear', 'dpl', 'members']);
+
+        // RESTRICT: Dosen only sees their supervised Postos
+        if ($user && $user->role === 'dosen') {
+            $query->where('dpl_id', $user->id);
+        }
 
         // Filters - use filled() to ignore empty strings
         if ($request->filled('fiscal_year_id')) {
@@ -368,11 +374,18 @@ class KknPostoController extends Controller
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
         ]);
 
-        // Get approved registrations for this year that are not yet assigned to any posto
+        // Get approved registrations for this year
+        // Filter out students who are already assigned to ANY posto in this fiscal year (checking kkn_posto_members table)
+        
+        $assignedStudentIds = KknPostoMember::whereHas('posto', function($q) use ($validated) {
+            $q->where('fiscal_year_id', $validated['fiscal_year_id']);
+        })->pluck('student_id');
+
         $query = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram'])
             ->where('fiscal_year_id', $validated['fiscal_year_id'])
             ->where('status', 'approved')
-            ->whereNull('kkn_posto_id');
+            ->whereNull('kkn_posto_id') // Keep this for redundancy
+            ->whereNotIn('student_id', $assignedStudentIds); // Strict check against member table
 
         // Optionally filter by location if provided
         if (!empty($validated['kkn_location_id'])) {
@@ -461,28 +474,51 @@ class KknPostoController extends Controller
     /**
      * Get student's posto (Student)
      */
+    /**
+     * Get student's (or DPL's) posto
+     */
     public function myPosto()
     {
         $user = auth('api')->user();
 
-        if ($user->role !== 'mahasiswa') {
-            return response()->json(['message' => 'Hanya mahasiswa yang dapat mengakses endpoint ini'], 403);
+        if ($user->role === 'mahasiswa') {
+             // Find student's posto membership
+            $membership = KknPostoMember::with([
+                'posto.location',
+                'posto.fiscalYear',
+                'posto.dpl',
+            ])->where('student_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if (!$membership) {
+                return response()->json(['message' => 'Anda belum tergabung dalam posko'], 404);
+            }
+
+            $posto = $membership->posto;
+            $position = $membership->position;
+            $positionName = $membership->position_name;
+            $joinedAt = $membership->joined_at;
+
+        } elseif ($user->role === 'dosen') {
+             // Find posto managed by DPL
+             // DPL should see their posto regardless of status (even draft)
+             $posto = KknPosto::with(['location', 'fiscalYear', 'dpl'])
+                ->where('dpl_id', $user->id)
+                // ->where('status', '!=', 'draft') // Removed to allow access to draft postos
+                ->latest()
+                ->first();
+             
+             if (!$posto) {
+                 return response()->json(['message' => 'Anda belum ditunjuk sebagai DPL untuk posko manapun'], 404);
+             }
+
+             $position = 'dpl';
+             $positionName = 'Dosen Pembimbing Lapangan';
+             $joinedAt = $posto->created_at; 
+        } else {
+             return response()->json(['message' => 'Role tidak memiliki akses ke endpoint ini'], 403);
         }
-
-        // Find student's posto membership
-        $membership = KknPostoMember::with([
-            'posto.location',
-            'posto.fiscalYear',
-            'posto.dpl',
-        ])->where('student_id', $user->id)
-            ->where('status', 'active')
-            ->first();
-
-        if (!$membership) {
-            return response()->json(['message' => 'Anda belum tergabung dalam posko'], 404);
-        }
-
-        $posto = $membership->posto;
 
         return response()->json([
             'posto' => [
@@ -496,37 +532,52 @@ class KknPostoController extends Controller
                 'end_date' => $posto->end_date,
                 'description' => $posto->description,
             ],
-            'my_position' => $membership->position,
-            'my_position_name' => $membership->position_name,
-            'joined_at' => $membership->joined_at,
+            'my_position' => $position,
+            'my_position_name' => $positionName,
+            'joined_at' => $joinedAt,
         ]);
     }
 
     /**
      * Get posto members (Student)
      */
+    /**
+     * Get posto members (Student or DPL)
+     */
     public function myPostoMembers()
     {
         $user = auth('api')->user();
 
-        if ($user->role !== 'mahasiswa') {
-            return response()->json(['message' => 'Hanya mahasiswa yang dapat mengakses endpoint ini'], 403);
-        }
+        $postoId = null;
 
-        // Find student's posto
-        $membership = KknPostoMember::where('student_id', $user->id)
-            ->where('status', 'active')
-            ->first();
-
-        if (!$membership) {
-            return response()->json(['message' => 'Anda belum tergabung dalam posko'], 404);
+        if ($user->role === 'mahasiswa') {
+            $membership = KknPostoMember::where('student_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+            
+            if (!$membership) {
+                return response()->json(['message' => 'Anda belum tergabung dalam posko'], 404);
+            }
+            $postoId = $membership->kkn_posto_id;
+        } elseif ($user->role === 'dosen') {
+             $posto = KknPosto::where('dpl_id', $user->id)
+                // ->where('status', '!=', 'draft') // Removed
+                ->latest()
+                ->first();
+             
+             if (!$posto) {
+                 return response()->json(['message' => 'Anda belum ditunjuk sebagai DPL posko'], 404);
+             }
+             $postoId = $posto->id;
+        } else {
+             return response()->json(['message' => 'Role tidak memiliki akses ke endpoint ini'], 403);
         }
 
         $members = KknPostoMember::with([
             'student.mahasiswaProfile.faculty',
             'student.mahasiswaProfile.studyProgram'
         ])
-            ->where('kkn_posto_id', $membership->kkn_posto_id)
+            ->where('kkn_posto_id', $postoId)
             ->where('status', 'active')
             ->get()
             ->map(function ($member) {

@@ -109,7 +109,7 @@ export default function PublicDocuments() {
                 </div>
             </div>
 
-            {/* Content Grid */}
+            {/* Content Table */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {loading ? (
                     <div className="text-center py-20">
@@ -117,41 +117,65 @@ export default function PublicDocuments() {
                         <p className="text-gray-500 uppercase tracking-widest text-xs">Memuat data...</p>
                     </div>
                 ) : filteredDocs.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredDocs.map((doc) => (
-                            <div key={doc.id} className="group bg-white p-6 border rounded-xl hover:shadow-lg hover:border-green-600 transition-all relative flex flex-col h-full cursor-pointer" onClick={() => openDetail(doc)}>
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className={`p-3 rounded-full ${
-                                         doc.type === 'guide' ? 'bg-blue-50 text-blue-600' :
-                                         doc.type === 'template' ? 'bg-green-50 text-green-600' :
-                                         'bg-purple-50 text-purple-600'
-                                    }`}>
-                                        <FileText size={24} strokeWidth={1.5} />
-                                    </div>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${
-                                        doc.type === 'guide' ? 'border-blue-100 text-blue-800 bg-blue-50' :
-                                        doc.type === 'template' ? 'border-green-100 text-green-800 bg-green-50' :
-                                        'border-purple-100 text-purple-800 bg-purple-50'
-                                    }`}>
-                                        {getTypeLabel(doc.type)}
-                                    </span>
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight group-hover:text-green-700 transition-colors line-clamp-2">
-                                    {doc.title}
-                                </h3>
-                                <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
-                                    {doc.description || 'Tidak ada deskripsi.'}
-                                </p>
-                                <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(doc.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}
-                                    </span>
-                                    <span className="text-green-600 text-xs font-bold uppercase tracking-widest flex items-center group-hover:underline">
-                                        Lihat Detail
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                                        <th className="px-6 py-4">Nama Dokumen</th>
+                                        <th className="px-6 py-4 w-40">Kategori</th>
+                                        <th className="px-6 py-4 w-40">Tanggal</th>
+                                        <th className="px-6 py-4 w-24 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredDocs.map((doc) => (
+                                        <tr 
+                                            key={doc.id} 
+                                            onClick={() => openDetail(doc)}
+                                            className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-start">
+                                                    <div className={`p-2 rounded-lg mr-4 shrink-0 ${
+                                                         doc.type === 'guide' ? 'bg-blue-50 text-blue-600' :
+                                                         doc.type === 'template' ? 'bg-green-50 text-green-600' :
+                                                         'bg-purple-50 text-purple-600'
+                                                    }`}>
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors mb-1">
+                                                            {doc.title}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-500 line-clamp-1 max-w-[500px]">
+                                                            {doc.description || 'Tidak ada deskripsi.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                                                    doc.type === 'guide' ? 'border-blue-100 text-blue-800 bg-blue-50' :
+                                                    doc.type === 'template' ? 'border-green-100 text-green-800 bg-green-50' :
+                                                    'border-purple-100 text-purple-800 bg-purple-50'
+                                                }`}>
+                                                    {getTypeLabel(doc.type)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(doc.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition-all">
+                                                    <Search size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 ) : (
                     <div className="py-20 text-center border border-dashed border-gray-300 rounded-xl">
