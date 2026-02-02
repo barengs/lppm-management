@@ -93,7 +93,10 @@ export default function Sidebar() {
             title: 'Profil',
             items: [
                 { name: 'Profil Saya', icon: <User size={20} />, path: '/profile' },
-                { name: 'Kinerja Dosen', icon: <TrendingUp size={20} />, path: '/profile/stats' },
+                // Only show Kinerja Dosen if user is a lecturer
+                ...(user?.role === 'dosen' ? [
+                    { name: 'Kinerja Dosen', icon: <TrendingUp size={20} />, path: '/profile/stats' }
+                ] : []),
                 { name: 'Organisasi', icon: <Users size={20} />, path: '/organization', permission: 'organization.view' },
             ]
         }

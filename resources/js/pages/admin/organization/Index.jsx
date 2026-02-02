@@ -91,7 +91,7 @@ export default function OrganizationIndex() {
         {
             accessorKey: 'name',
             header: 'Nama',
-            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.name}</span>
+            cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.user?.name || row.original.name || '-'}</span>
         },
         {
             accessorKey: 'position',

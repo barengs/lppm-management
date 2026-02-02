@@ -138,15 +138,15 @@ export default function ReportsIndex() {
     return (
         <div className="flex h-[calc(100vh-theme(spacing.32))] gap-6 overflow-hidden">
             {/* Left Sidebar: Posto List */}
-            <div className="w-80 bg-white border rounded-lg flex flex-col shadow-sm">
-                <div className="p-4 border-b">
+            <div className="w-80 bg-white border border-gray-200 rounded-lg flex flex-col shadow-sm">
+                <div className="p-4 border-b border-gray-200">
                     <h2 className="font-bold text-gray-800 mb-3">Daftar Kelompok</h2>
                     <div className="relative">
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                         <input 
                             type="text"
                             placeholder="Cari Posko..."
-                            className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 transition-all"
+                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -188,11 +188,11 @@ export default function ReportsIndex() {
             </div>
 
             {/* Main Content: Reports */}
-            <div className="flex-1 bg-white border rounded-lg shadow-sm flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col overflow-hidden">
                 {selectedPosto ? (
                     <>
                         {/* Header */}
-                        <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm z-10 shrink-0">
+                        <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10 shrink-0">
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900">{selectedPosto.name}</h1>
                                 <div className="text-sm text-gray-500 flex items-center mt-1">
@@ -232,7 +232,7 @@ export default function ReportsIndex() {
                                     Memuat data laporan...
                                 </div>
                             ) : reports.length === 0 ? (
-                                <div className="text-center py-10 bg-white rounded-lg border border-dashed">
+                                <div className="text-center py-10 bg-white rounded-lg border border-gray-200 border-dashed">
                                     <FileText className="mx-auto text-gray-300 mb-3" size={48} />
                                     <p className="text-gray-500 font-medium">Belum ada {activeTab === 'weekly' ? 'laporan mingguan' : 'laporan akhir'} yang dikumpulkan.</p>
                                 </div>
