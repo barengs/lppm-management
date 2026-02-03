@@ -77,6 +77,22 @@ export default function StudentKknGuidance() {
         setIsLoading(false);
     };
 
+    // Real-time Listener
+    useEffect(() => {
+        if (!selectedTopic || !window.Echo) return;
+
+        const channel = window.Echo.private(`guidance.${selectedTopic.id}`);
+        
+        channel.listen('GuidanceMessageSent', (e) => {
+            console.log('New Message Event:', e);
+            setMessages(prev => [...prev, e.message]);
+        });
+
+        return () => {
+            channel.stopListening('GuidanceMessageSent');
+        };
+    }, [selectedTopic]);
+
     // Auto-scroll to bottom
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

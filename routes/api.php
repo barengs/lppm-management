@@ -17,6 +17,8 @@ Route::group([
 
 
 // Public Routes
+Broadcast::routes(['middleware' => ['auth:api']]); // Ensure API auth is used for broadcasting
+
 Route::get('posts/public', [App\Http\Controllers\PostController::class, 'index']);
 Route::get('documents/public', [App\Http\Controllers\DocumentController::class, 'index']);
 Route::get('organization-members/public', [App\Http\Controllers\OrganizationMemberController::class, 'index']);
@@ -78,6 +80,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('profile/update', [App\Http\Controllers\ProfileController::class, 'update']);
     Route::post('profile/stats', [App\Http\Controllers\ProfileController::class, 'updateStats']);
 
+    // Notifications
+    Route::get('notifications', [App\Http\Controllers\NotificationController::class, 'index']);
+    Route::patch('notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
+    Route::patch('notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+
     // KKN Module
     Route::get('kkn-locations/template', [App\Http\Controllers\KknLocationController::class, 'downloadTemplate']);
     Route::post('kkn-locations/import', [App\Http\Controllers\KknLocationController::class, 'import']);
@@ -86,6 +93,8 @@ Route::middleware(['auth:api'])->group(function () {
     
     // KKN Posko Management (Admin)
     Route::prefix('kkn/postos')->group(function () {
+        Route::get('/template', [App\Http\Controllers\KknPostoController::class, 'downloadTemplate']);
+        Route::post('/import', [App\Http\Controllers\KknPostoController::class, 'import']);
         Route::get('/', [App\Http\Controllers\KknPostoController::class, 'index']);
         Route::post('/', [App\Http\Controllers\KknPostoController::class, 'store']);
         Route::get('/available-students', [App\Http\Controllers\KknPostoController::class, 'availableStudents']);

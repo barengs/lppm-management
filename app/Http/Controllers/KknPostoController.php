@@ -57,6 +57,53 @@ class KknPostoController extends Controller
     }
 
     /**
+     * Import Postos from Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xls,xlsx'
+        ]);
+
+        try {
+            DB::beginTransaction();
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\KknPostoImport, $request->file('file'));
+            DB::commit();
+
+            return response()->json(['message' => 'Data posko berhasil diimport']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal import data: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Download Template
+     */
+    public function downloadTemplate()
+    {
+        // Simple CSV template generation
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="template_import_posko.csv"',
+        ];
+
+        $columns = ['nama_posko', 'lokasi_id', 'nama_lokasi', 'tahun_ajaran', 'kapasitas_laki', 'kapasitas_perempuan', 'deskripsi'];
+        
+        $callback = function() use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            // Example row
+            fputcsv($file, ['Posko Desa A', '1', 'Desa Maju Jaya', date('Y'), '10', '10', 'Deskripsi posko...']);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Create new posto (Admin)
      */
     public function store(Request $request)

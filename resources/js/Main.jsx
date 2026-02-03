@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateProposal from './pages/proposals/Create';
 import ReviewIndex from './pages/reviews/Index';
+import ProposalsIndex from './pages/proposals/Index';
 import PostDetail from './pages/PostDetail';
 import AgendaDetail from './pages/AgendaDetail';
 import PublicDocuments from './pages/public/Documents';
@@ -147,7 +148,7 @@ export default function Main() {
                 <Route element={<PrivateRoute />}>
                      <Route path="/" element={<AdminLayout />}>
                         <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="proposals" element={<Dashboard />} /> {/* Reuse Dashboard for list */}
+                        <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
                         <Route path="proposals/create" element={<CreateProposal />} />
                         
                         {/* Program Activity */}

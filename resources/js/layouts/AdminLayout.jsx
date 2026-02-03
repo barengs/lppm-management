@@ -2,9 +2,10 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import DateTimePeriod from '../components/DateTimePeriod';
+import NotificationDropdown from '../components/NotificationDropdown';
 import useAuthStore from '../store/useAuthStore';
 import useSidebarStore from '../store/useSidebarStore';
-import { Menu } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 
 export default function AdminLayout() {
     const { user } = useAuthStore();
@@ -41,6 +42,7 @@ export default function AdminLayout() {
                     </div>
                     
                     <div className="flex items-center">
+                        <NotificationDropdown />
                         <div className="flex items-center space-x-2">
                              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border border-green-200">
                                 {user?.name?.charAt(0) || 'U'}

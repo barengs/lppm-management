@@ -119,7 +119,39 @@ class KknGuidanceController extends Controller
             'message' => $request->message,
             'attachments' => count($attachmentPaths) > 0 ? $attachmentPaths : null,
         ]);
+        
+        $msg->load('user');
 
-        return response()->json($msg->load('user'), 201);
+        // Broadcast Event for Chat Realtime
+        broadcast(new \App\Events\GuidanceMessageSent($msg))->toOthers();
+
+        // Notify Recipients
+        // If sender is DPL (Dosen), notify Topic Creator (Student)
+        // If sender is Student, notify DPL
+        
+        $recipients = collect();
+        
+        // Add Topic Creator if not sender
+        if ($topic->user_id !== Auth::id()) {
+             $recipients->push($topic->user);
+        }
+        
+        // Add DPL if not sender (and ensure DPL is linked to Posto)
+        $dplId = $topic->posto->dpl_id;
+        if ($dplId && $dplId !== Auth::id()) {
+             $dpl = \App\Models\User::find($dplId);
+             if ($dpl) {
+                 $recipients->push($dpl);
+             }
+        }
+        
+        // Unique recipients
+        $recipients = $recipients->unique('id');
+        
+        if ($recipients->isNotEmpty()) {
+             \Illuminate\Support\Facades\Notification::send($recipients, new \App\Notifications\NewGuidanceMessage($msg));
+        }
+
+        return response()->json($msg, 201);
     }
 }

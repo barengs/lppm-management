@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
-import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle, Upload, Download, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
 
@@ -15,6 +15,42 @@ export default function PostoIndex() {
         status: '',
         location_id: '',
     });
+
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [isImporting, setIsImporting] = useState(false);
+
+    const handleDownloadTemplate = () => {
+        window.open('/api/kkn/postos/template', '_blank');
+    };
+
+    const handleImport = async (e) => {
+        e.preventDefault();
+        if (!importFile) {
+            toast.error('Pilih file terlebih dahulu');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', importFile);
+
+        setIsImporting(true);
+        try {
+            await api.post('/kkn/postos/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success('Import berhasil');
+            setIsImportModalOpen(false);
+            setImportFile(null);
+            fetchData(); // Refresh data
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Gagal import data');
+        } finally {
+            setIsImporting(false);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -186,7 +222,77 @@ export default function PostoIndex() {
                         <Plus className="w-5 h-5 mr-2" />
                         Buat Posko Baru
                     </Link>
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="ml-2 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Upload className="w-5 h-5 mr-2" />
+                        Import Excel
+                    </button>
                 </div>
+
+                {/* Import Modal */}
+                {isImportModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-900">Import Data Posko</h3>
+                                <button onClick={() => setIsImportModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handleImport}>
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-600 mb-2">
+                                        Unduh template file import di sini:
+                                    </p>
+                                    <button 
+                                        type="button"
+                                        onClick={handleDownloadTemplate}
+                                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
+                                    >
+                                        <Download size={16} /> Download Template (.csv)
+                                    </button>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        File Excel / CSV
+                                    </label>
+                                    <input 
+                                        type="file" 
+                                        accept=".xlsx,.xls,.csv"
+                                        onChange={e => setImportFile(e.target.files[0])}
+                                        className="block w-full text-sm text-gray-500
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-full file:border-0
+                                            file:text-sm file:font-semibold
+                                            file:bg-blue-50 file:text-blue-700
+                                            hover:file:bg-blue-100"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsImportModalOpen(false)}
+                                        className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isImporting}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300 flex items-center gap-2"
+                                    >
+                                        {isImporting ? 'Mengimport...' : 'Import Sekarang'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
