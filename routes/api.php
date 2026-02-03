@@ -139,6 +139,15 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/reupload', [App\Http\Controllers\Student\KknController::class, 'reupload']);
     });
 
+    // KKN Assessment (Grading & Certificate)
+    Route::prefix('kkn-grades')->group(function () {
+        Route::get('/export', [App\Http\Controllers\KknGradeController::class, 'exportPdf']); // Admin Export
+        Route::get('/', [App\Http\Controllers\KknGradeController::class, 'index']); // Staff Index
+        Route::post('/', [App\Http\Controllers\KknGradeController::class, 'store']); // Staff Grade
+        Route::get('/my-grade', [App\Http\Controllers\KknGradeController::class, 'myGrade']); // Student View
+        Route::get('/certificate/download', [App\Http\Controllers\KknGradeController::class, 'downloadCertificate']); // Student Download
+    });
+
     // Architecture Refinements
     Route::apiResource('reports', App\Http\Controllers\ReportController::class);
     Route::apiResource('galleries', App\Http\Controllers\GalleryController::class);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../utils/api';
 import useAuthStore from '../../../store/useAuthStore';
-import { CheckCircle, Clock, XCircle, AlertCircle, FileText, Users, MapPin, Calendar } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, AlertCircle, FileText, Users, MapPin, Calendar, Award } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function StudentKknDashboard() {
@@ -211,6 +211,26 @@ export default function StudentKknDashboard() {
                                 <h3 className="font-semibold text-gray-900">Dokumen</h3>
                                 <p className="text-sm text-gray-600 mt-1">
                                     {registration ? 'Lihat & kelola dokumen' : 'Belum ada dokumen'}
+                                </p>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Assessment Card */}
+                    <Link
+                        to="/dashboard/kkn/assessment"
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${
+                            !registration || registration.status !== 'approved' ? 'opacity-50 pointer-events-none' : ''
+                        }`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-yellow-100 rounded-lg">
+                                <Award className="w-6 h-6 text-yellow-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900">Nilai & Sertifikat</h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    {registration?.status === 'approved' ? 'Lihat nilai & unduh sertifikat' : 'Tersedia setelah selesai'}
                                 </p>
                             </div>
                         </div>

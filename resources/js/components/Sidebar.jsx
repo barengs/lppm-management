@@ -58,6 +58,7 @@ export default function Sidebar() {
                     { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
                  ] : []),
                  // Admin/Dosen Monitoring
+                 { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
                  { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
             ]
         },

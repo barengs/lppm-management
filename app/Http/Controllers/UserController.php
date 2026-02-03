@@ -39,7 +39,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,dosen,reviewer,tendik,staff_kkn',
+            'role' => 'required|exists:roles,name', // Allow any valid role
             'avatar' => 'nullable|image|max:2048', // 2MB Max
             // Profile fields
             'nidn' => 'nullable|string|unique:dosen_profiles,nidn',
@@ -63,9 +63,8 @@ class UserController extends Controller
 
             $user = User::create($userData);
             
-            // Explicitly load role from 'web' guard
-            $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
-            $user->assignRole($role);
+            // Assign role by name, let Spatie handle guard
+            $user->assignRole($validated['role']);
 
             $avatarPath = null;
             if ($request->hasFile('avatar')) {
@@ -120,7 +119,7 @@ class UserController extends Controller
             'name' => 'string|max:255',
             'email' => 'email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
-            'role' => 'in:admin,dosen,reviewer,tendik,staff_kkn',
+            'role' => 'exists:roles,name', // Allow any valid role
             'avatar' => 'nullable|image|max:2048',
             'nidn' => ['nullable', 'string', \Illuminate\Validation\Rule::unique('dosen_profiles')->ignore($user->dosenProfile->id ?? null)],
             'prodi' => 'nullable|string',
@@ -142,8 +141,8 @@ class UserController extends Controller
             $user->save();
             
             if (isset($validated['role'])) {
-                $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
-                $user->syncRoles($role);
+                // Pass string directly, Spatie handles guard resolution
+                $user->syncRoles($validated['role']);
             }
 
             // Handle Avatar Logic

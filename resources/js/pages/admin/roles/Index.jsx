@@ -137,11 +137,7 @@ export default function RolesIndex() {
             header: 'Nama Role',
             cell: ({ row }) => <span className="font-medium text-gray-900 capitalize">{row.original.name}</span>
         },
-        {
-            accessorKey: 'guard_name',
-            header: 'Guard',
-            cell: ({ row }) => <span className="text-gray-500 text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">{row.original.guard_name}</span>
-        },
+
         {
             id: 'permissions_count',
             header: 'Hak Akses',
@@ -221,10 +217,16 @@ export default function RolesIndex() {
                                         placeholder="e.g. staff_keuangan"
                                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) => {
+                                            // Auto-convert to lowercase and replace spaces with underscore
+                                            const val = e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                                            setName(val);
+                                        }}
                                         disabled={isEditing && ['admin', 'dosen', 'mahasiswa', 'reviewer'].includes(name)}
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Gunakan huruf kecil, tanpa spasi.</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Format: Huruf kecil, angka, dan underscore (_). Spasi otomatis diubah menjadi underscore.
+                                    </p>
                                 </div>
 
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">

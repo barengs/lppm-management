@@ -59,6 +59,9 @@ import StudentKknStatusPage from './pages/student/kkn/StudentKknStatus';
 import StudentKknGroup from './pages/student/kkn/StudentKknGroup';
 import StudentKknGuidance from './pages/student/kkn/StudentKknGuidance';
 import StudentKknReports from './pages/student/kkn/StudentKknReports';
+import StudentKknAssessment from './pages/student/kkn/StudentKknAssessment';
+
+import KknAssessment from './pages/kkn/Assessment';
 
 import PrivateRoute from './components/PrivateRoute';
 import useAuthStore from './store/useAuthStore';
@@ -160,6 +163,7 @@ export default function Main() {
                         <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
                         <Route path="dashboard/kkn/guidance" element={<StudentKknGuidance />} />
                         <Route path="dashboard/kkn/reports" element={<StudentKknReports />} />
+                        <Route path="dashboard/kkn/assessment" element={<StudentKknAssessment />} />
 
                         {/* KKN Module (Admin/Legacy) */}
                         <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
@@ -174,6 +178,9 @@ export default function Main() {
                         <Route path="kkn/postos/:id" element={<PostoDetail />} />
                         <Route path="kkn/postos/:id/edit" element={<PostoForm />} />
                         <Route path="kkn/postos/:id/members/add" element={<PostoAddMember />} />
+                        
+                        {/* KKN Assessment (Admin/Staff) */}
+                        <Route path="kkn/assessment" element={<KknAssessment />} />
 
                         {/* CMS */}
                         <Route path="cms/posts" element={<PostsIndex />} />

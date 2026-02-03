@@ -22,6 +22,19 @@ export default function UsersIndex() {
     const [editId, setEditId] = useState(null);
     const [activeTab, setActiveTab] = useState('account'); // account | profile
 
+    const [roles, setRoles] = useState([]);
+
+    const fetchRoles = async () => {
+        try {
+            const response = await axios.get('/api/roles', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setRoles(response.data);
+        } catch (error) {
+            console.error("Failed to fetch roles", error);
+        }
+    };
+
     const fetchUsers = async () => {
         try {
             const response = await axios.get('/api/users', {
@@ -35,6 +48,7 @@ export default function UsersIndex() {
     };
 
     useEffect(() => {
+        fetchRoles();
         fetchUsers();
     }, []);
 
@@ -374,11 +388,12 @@ export default function UsersIndex() {
                                                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 bg-white"
                                             >
-                                                <option value="dosen">Dosen</option>
-                                                <option value="reviewer">Reviewer</option>
-                                                <option value="admin">Admin</option>
-                                                <option value="tendik">Tendik</option>
-                                                <option value="staff_kkn">Staff KKN</option>
+                                                <option value="" disabled>Pilih Role...</option>
+                                                {roles.map(role => (
+                                                    <option key={role.id} value={role.name}>
+                                                        {role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' ')}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className="col-span-2">
