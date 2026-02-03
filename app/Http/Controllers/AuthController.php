@@ -48,6 +48,7 @@ class AuthController extends Controller
             'identity_number' => 'nullable|string', // NIDN or NPM
             'prodi' => 'nullable|string',
             'fakultas' => 'nullable|string',
+            'jacket_size' => 'nullable|string|in:S,M,L,XL,XXL,XXXL',
         ]);
 
         $user = \App\Models\User::create([
@@ -66,6 +67,7 @@ class AuthController extends Controller
                 'npm' => $validated['identity_number'] ?? null,
                 'prodi' => $validated['prodi'] ?? null,
                 'fakultas' => $validated['fakultas'] ?? null,
+                'jacket_size' => $validated['jacket_size'] ?? null,
             ]);
         } else {
             // Dosen & Reviewer use DosenProfile

@@ -30,6 +30,7 @@ export default function KknStudentRegistration() {
         gender: user?.mahasiswa_profile?.gender || '',
         place_of_birth: user?.mahasiswa_profile?.place_of_birth || '',
         date_of_birth: user?.mahasiswa_profile?.date_of_birth || '',
+        jacket_size: user?.mahasiswa_profile?.jacket_size || '',
     });
     const [files, setFiles] = useState({
         krs_file: null,
@@ -119,6 +120,7 @@ export default function KknStudentRegistration() {
         formData.append('gender', profileData.gender);
         formData.append('place_of_birth', profileData.place_of_birth);
         formData.append('date_of_birth', profileData.date_of_birth);
+        formData.append('jacket_size', profileData.jacket_size);
 
         // Registration Data (location is optional now)
         formData.append('fiscal_year_id', selectedFy);
@@ -259,6 +261,16 @@ export default function KknStudentRegistration() {
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
                                 <textarea name="address" rows="3" value={profileData.address} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required></textarea>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos</label>
+                                <select name="jacket_size" value={profileData.jacket_size} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
+                                    <option value="">Pilih Ukuran</option>
+                                    {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
+                                        <option key={size} value={size}>{size}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                         <div className="flex justify-end mt-6">

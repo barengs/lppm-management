@@ -49,6 +49,7 @@ class KknRegistrationController extends Controller
             'gender' => 'required|in:L,P',
             'place_of_birth' => 'required|string',
             'date_of_birth' => 'required|date',
+            'jacket_size' => 'required|in:S,M,L,XL,XXL,XXXL',
             
             // Documents
             'krs_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
@@ -91,6 +92,7 @@ class KknRegistrationController extends Controller
                 'gender' => $validated['gender'],
                 'place_of_birth' => $validated['place_of_birth'],
                 'date_of_birth' => $validated['date_of_birth'],
+                'jacket_size' => $validated['jacket_size'],
             ]
         );
 

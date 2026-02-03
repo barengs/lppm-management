@@ -21,6 +21,7 @@ class MahasiswaProfile extends Model
         'address',
         'phone',
         'avatar',
+        'jacket_size',
     ];
 
     public function user()

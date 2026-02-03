@@ -109,6 +109,18 @@ export default function ProfileIndex() {
                                         {profileData.prodi || '-'}
                                     </div>
                                 </div>
+                                {/* Jacket Size for Students */}
+                                {user.role === 'mahasiswa' && (
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Ukuran Jaket/Kaos</div>
+                                        <div className="font-medium text-gray-900 flex items-center">
+                                            <span className="inline-flex items-center justify-center h-6 w-6 rounded bg-green-100 text-green-800 text-xs font-bold mr-2">
+                                                {profileData.jacket_size || '-'}
+                                            </span>
+                                            {profileData.jacket_size ? 'Ukuran Terpilih' : 'Belum Dipilih'}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
