@@ -18,11 +18,14 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log("Dashboard mounted. Token exists:", !!token);
         const fetchStats = async () => {
+            console.log("Fetching dashboard stats...");
             try {
                 const response = await axios.get('/api/dashboard/stats', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+                console.log("Stats received:", response.data);
                 setStats(response.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -32,10 +35,11 @@ export default function Dashboard() {
         };
 
         if (token) fetchStats();
+        else console.log("No token available, skipping stats fetch");
     }, [token]);
 
     const StatCard = ({ title, value, icon, color }) => (
-        <div className={`bg-white rounded-lg shadow p-6 border-l-4 ${color}`}>
+        <div className={`bg-white shadow p-6 border-l-4 ${color}`}>
             <div className="flex items-center">
                 <div className={`p-3 rounded-full ${color.replace('border-', 'bg-').replace('600', '100').replace('500', '100')} mr-4`}>
                     {icon}
@@ -53,7 +57,7 @@ export default function Dashboard() {
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="bg-white shadow rounded-lg p-6 border-l-4 border-green-600">
+            <div className="bg-white shadow p-6 border-l-4 border-green-600">
                 <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-gray-600">
                     Selamat datang, <span className="font-semibold text-green-700">{user?.name}</span>
@@ -92,7 +96,7 @@ export default function Dashboard() {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Participants Chart */}
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Peserta KKN per Periode</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
@@ -109,7 +113,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Locations Chart */}
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Lokasi KKN per Periode</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
@@ -126,7 +130,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Abmas Chart */}
-                <div className="bg-white p-6 rounded-lg shadow lg:col-span-2">
+                <div className="bg-white p-6 shadow lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Pengabdian Masyarakat (Abmas) per Periode</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">

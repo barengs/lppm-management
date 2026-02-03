@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\JournalConsultationController;
+use App\Http\Controllers\KknRegistrationController;
 
 Route::group([
     'middleware' => 'api',
@@ -80,6 +82,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('profile/update', [App\Http\Controllers\ProfileController::class, 'update']);
     Route::post('profile/stats', [App\Http\Controllers\ProfileController::class, 'updateStats']);
 
+    Route::post('profile/stats', [App\Http\Controllers\ProfileController::class, 'updateStats']);
+
+    // Dashboard Stats
+    Route::get('dashboard/stats', [App\Http\Controllers\DashboardController::class, 'stats']);
+
     // Notifications
     Route::get('notifications', [App\Http\Controllers\NotificationController::class, 'index']);
     Route::patch('notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
@@ -89,15 +96,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('kkn-locations/template', [App\Http\Controllers\KknLocationController::class, 'downloadTemplate']);
     Route::post('kkn-locations/import', [App\Http\Controllers\KknLocationController::class, 'import']);
     Route::apiResource('kkn-locations', App\Http\Controllers\KknLocationController::class);
-    Route::apiResource('kkn-registrations', App\Http\Controllers\KknRegistrationController::class);
+    Route::apiResource('kkn-registrations', KknRegistrationController::class);
     
     // KKN Posko Management (Admin)
     Route::prefix('kkn/postos')->group(function () {
-        Route::get('/template', [App\Http\Controllers\KknPostoController::class, 'downloadTemplate']);
-        Route::post('/import', [App\Http\Controllers\KknPostoController::class, 'import']);
-        Route::get('/', [App\Http\Controllers\KknPostoController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\KknPostoController::class, 'store']);
-        Route::get('/available-students', [App\Http\Controllers\KknPostoController::class, 'availableStudents']);
         Route::get('/{id}', [App\Http\Controllers\KknPostoController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\KknPostoController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\KknPostoController::class, 'destroy']);
@@ -113,9 +115,18 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/{id}/assign-students', [App\Http\Controllers\KknPostoController::class, 'bulkAssignStudents']);
     });
     
+    // Journal Consultation (Cek Jurnal)
+    Route::get('journals', [JournalConsultationController::class, 'index']);
+    Route::post('journals', [JournalConsultationController::class, 'store']);
+    Route::get('journals/{id}', [JournalConsultationController::class, 'show']);
+    Route::post('journals/{id}/messages', [JournalConsultationController::class, 'storeMessage']);
+    Route::put('journals/{id}/status', [JournalConsultationController::class, 'updateStatus']);
+
+    // KKN Registrations
+    Route::get('kkn-registrations', [KknRegistrationController::class, 'index']);
+    
     // Admin KKN Registration Management
     Route::prefix('admin/kkn-registrations')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\KknRegistrationController::class, 'index']);
         Route::get('/statistics', [App\Http\Controllers\Admin\KknRegistrationController::class, 'statistics']);
         Route::get('/{id}', [App\Http\Controllers\Admin\KknRegistrationController::class, 'show']);
         Route::post('/{id}/approve', [App\Http\Controllers\Admin\KknRegistrationController::class, 'approve']);

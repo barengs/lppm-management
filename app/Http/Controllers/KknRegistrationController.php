@@ -52,9 +52,11 @@ class KknRegistrationController extends Controller
             'jacket_size' => 'required|in:S,M,L,XL,XXL,XXXL',
             
             // Documents
-            'krs_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'health_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'transcript_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            // Documents (Legacy fields kept nullable/ignored, new dynamic array validation below)
+            'documents' => 'array',
+            'documents.*.name' => 'required|string',
+            'documents.*.file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -96,28 +98,61 @@ class KknRegistrationController extends Controller
             ]
         );
 
-        // 3. Handle File Uploads
-        $documents = [];
-        if ($request->hasFile('krs_file')) {
-            $documents['krs'] = $request->file('krs_file')->store('kkn_documents', 'public');
-        }
-        if ($request->hasFile('health_file')) {
-            $documents['health'] = $request->file('health_file')->store('kkn_documents', 'public');
-        }
-        if ($request->hasFile('transcript_file')) {
-            $documents['transcript'] = $request->file('transcript_file')->store('kkn_documents', 'public');
-        }
+        // 3. Handle File Uploads (Photos)
         if ($request->hasFile('photo')) {
-            $documents['photo'] = $request->file('photo')->store('kkn_photos', 'public');
+             $photoPath = $request->file('photo')->store('kkn_photos', 'public');
+             // Save photo path to profile? Or is it part of registration?
+             // Assuming it's part of registration 'documents' JSON before, now maybe just ignore or save to profile?
+             // Since we are refactoring, let's say 'photo' is for profile.
+             $user->mahasiswaProfile()->update(['photo' => $photoPath]); 
+             // Or if we must keep it in registration, we can add it to documents table as 'photo'.
+             // Let's treat photo as a special document in the new table for consistency.
         }
 
+        // Create Registration
         $data = [
             'student_id' => $user->id,
             'kkn_location_id' => $validated['kkn_location_id'] ?? null,
             'fiscal_year_id' => $validated['fiscal_year_id'],
             'status' => 'pending',
-            'documents' => $documents,
+            // 'documents' => $documents, // JSON column deprecated
         ];
+        
+        $reg = KknRegistration::create($data);
+
+        // 4. Handle Dynamic Documents
+        // Expecting request to have array: documents[index][id], documents[index][name], documents[index][file]
+        if ($request->has('documents')) {
+            $docs = $request->documents;
+            // $docs comes as array of shape: [ {name: 'KRS', file: uploadedFileObject, ...} ]
+            // Note: In FormData, file arrays are tricky.
+            // Better strategy: Input names like documents[0][name], documents[0][file]
+            
+            foreach ($docs as $index => $docData) {
+                if ($request->hasFile("documents.{$index}.file")) {
+                    $file = $request->file("documents.{$index}.file");
+                    $path = $file->store('kkn_documents', 'public');
+                    
+                    $reg->kknRegistrationDocuments()->create([
+                        'name' => $docData['name'] ?? 'Dokumen',
+                        'file_path' => $path,
+                        'file_type' => $file->extension(),
+                        'doc_type' => $docData['type'] ?? 'custom', // required/custom
+                    ]);
+                }
+            }
+        }
+        
+        // Handle standalone photo as a document too if sent separately
+        if ($request->hasFile('photo')) {
+             $path = $request->file('photo')->store('kkn_photos', 'public');
+             $reg->kknRegistrationDocuments()->create([
+                'name' => 'Pas Foto',
+                'file_path' => $path,
+                'file_type' => $request->file('photo')->extension(),
+                'doc_type' => 'required_photo',
+            ]);
+        }
 
         $reg = KknRegistration::create($data);
         return response()->json($reg, 201);

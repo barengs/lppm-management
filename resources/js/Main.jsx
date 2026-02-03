@@ -62,6 +62,11 @@ import StudentKknGuidance from './pages/student/kkn/StudentKknGuidance';
 import StudentKknReports from './pages/student/kkn/StudentKknReports';
 import StudentKknAssessment from './pages/student/kkn/StudentKknAssessment';
 
+// Journal Consultation
+import JournalIndex from './pages/journal/Index';
+import JournalCreate from './pages/journal/Create';
+import JournalShow from './pages/journal/Show';
+
 import KknAssessment from './pages/kkn/Assessment';
 
 import PrivateRoute from './components/PrivateRoute';
@@ -154,6 +159,11 @@ export default function Main() {
                         {/* Program Activity */}
                         <Route path="reports" element={<ReportsIndex />} />
                         <Route path="reviews" element={<ReviewIndex />} />
+                        
+                        {/* Journal Consultation */}
+                        <Route path="journals" element={<JournalIndex />} />
+                        <Route path="journals/create" element={<JournalCreate />} />
+                        <Route path="journals/:id" element={<JournalShow />} />
                         
                         
                         {/* Student KKN Dashboard */}

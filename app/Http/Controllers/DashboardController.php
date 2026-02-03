@@ -27,8 +27,21 @@ class DashboardController extends Controller
                 ];
             });
 
-        // 2. Jumlah Dosen (Active)
-        $lecturerCount = User::where('role', 'dosen')->count();
+        // 2. Jumlah Dosen (Active) - Mengambil user dengan role 'dosen' (via Spatie)
+        // Dan memastikan bukan staff (redundant jika role terpisah, tapi sesuai request)
+        \Illuminate\Support\Facades\Log::info('Counting lecturers...');
+        
+        // Debugging Spatie Guard issue
+        $lecturerCount = User::role('dosen')->count();
+        \Illuminate\Support\Facades\Log::info('Lecturer Count (Spatie Scope): ' . $lecturerCount);
+        
+        if ($lecturerCount === 0) {
+             // Fallback manual query if scope fails due to guard
+             $lecturerCount = User::whereHas('roles', function($q) {
+                 $q->where('name', 'dosen');
+             })->count();
+             \Illuminate\Support\Facades\Log::info('Lecturer Count (Manual whereHas): ' . $lecturerCount);
+        }
 
         // 3. Jumlah Lokasi KKN per Periode (Based on Postos created)
         // We count distinct locations used in postos for each fiscal year

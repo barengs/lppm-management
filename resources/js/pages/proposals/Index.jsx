@@ -28,7 +28,7 @@ export default function ProposalsIndex() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6 flex justify-between items-center border-l-4 border-green-600">
+            <div className="bg-white shadow p-6 flex justify-between items-center border-l-4 border-green-600">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Daftar Proposal</h1>
                     <p className="text-gray-600">Kelola proposal penelitian dan pengabdian masyarakat Anda.</p>
@@ -42,7 +42,7 @@ export default function ProposalsIndex() {
                 </Link>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="bg-white shadow rounded-sm overflow-hidden">
                 {loading ? (
                     <div className="p-10 text-center text-gray-500">Memuat data...</div>
                 ) : proposals.length === 0 ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import api from '../../utils/api'; 
 import useAuthStore from '../../store/useAuthStore';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
@@ -32,12 +32,20 @@ export default function KknStudentRegistration() {
         date_of_birth: user?.mahasiswa_profile?.date_of_birth || '',
         jacket_size: user?.mahasiswa_profile?.jacket_size || '',
     });
-    const [files, setFiles] = useState({
-        krs_file: null,
-        transcript_file: null,
-        health_file: null,
-        photo: null,
-    });
+    const [documents, setDocuments] = useState([
+        { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
+        { id: 'transkrip', name: 'Transkrip Nilai Sementara', file: null, required: true, type: 'required' },
+        { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' },
+        { id: 'sehat', name: 'Surat Keterangan Sehat', file: null, required: false, type: 'optional' },
+    ]);
+    const [files, setFiles] = useState({ photo: null });
+    
+    // Photo Upload State
+    const [isDragging, setIsDragging] = useState(false);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [cameraStream, setCameraStream] = useState(null);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
 
     // Fetch initial data
     useEffect(() => {
@@ -101,8 +109,90 @@ export default function KknStudentRegistration() {
         }
     };
 
-    const handleFileChange = (e) => {
-        setFiles({ ...files, [e.target.name]: e.target.files[0] });
+    const handlePhotoChange = (e) => {
+        setFiles({ ...files, photo: e.target.files[0] });
+    };
+
+    const handleDocumentFileChange = (index, file) => {
+        const newDocs = [...documents];
+        newDocs[index].file = file;
+        setDocuments(newDocs);
+    };
+
+    const handleDocumentNameChange = (index, name) => {
+         const newDocs = [...documents];
+         newDocs[index].name = name;
+         setDocuments(newDocs);
+    };
+
+    const addDocument = () => {
+        setDocuments([...documents, { id: Date.now(), name: '', file: null, required: false, type: 'custom' }]);
+    };
+
+    const removeDocument = (index) => {
+        const newDocs = [...documents];
+        newDocs.splice(index, 1);
+        setDocuments(newDocs);
+    };
+
+    // Camera & Drag Logic
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            setCameraStream(stream);
+            setIsCameraOpen(true);
+        } catch (err) {
+            toast.error("Gagal akses kamera: " + err.message);
+        }
+    };
+
+    const stopCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
+        }
+        setIsCameraOpen(false);
+    };
+
+    const capturePhoto = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (video && canvas) {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(blob => {
+                const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+                setFiles({ ...files, photo: file });
+                stopCamera();
+            }, 'image/jpeg');
+        }
+    };
+
+    useEffect(() => {
+        if (isCameraOpen && videoRef.current && cameraStream) {
+            videoRef.current.srcObject = cameraStream;
+        }
+    }, [isCameraOpen, cameraStream]);
+
+    const onDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+    
+    const onDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const onDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            setFiles({ ...files, photo: e.dataTransfer.files[0] });
+        }
     };
 
     const handleRegister = async () => {
@@ -127,9 +217,17 @@ export default function KknStudentRegistration() {
         formData.append('fiscal_year_id', selectedFy);
 
         // Files
-        if (files.krs_file) formData.append('krs_file', files.krs_file);
-        if (files.transcript_file) formData.append('transcript_file', files.transcript_file);
-        if (files.health_file) formData.append('health_file', files.health_file);
+        // Files
+        // Documents (Dynamic)
+        documents.forEach((doc, index) => {
+            if (doc.file) {
+                 formData.append(`documents[${index}][name]`, doc.name);
+                 formData.append(`documents[${index}][file]`, doc.file);
+                 formData.append(`documents[${index}][type]`, doc.type);
+            }
+        });
+
+        // Photo (Step 3)
         if (files.photo) formData.append('photo', files.photo);
 
         try {
@@ -283,25 +381,81 @@ export default function KknStudentRegistration() {
                 {/* Step 2: Documents */}
                 {step === 2 && (
                     <div className="space-y-6">
-                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen</h3>
+                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen Pendukung</h3>
                         
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Kartu Rencana Studi (KRS)</p>
-                            <input type="file" name="krs_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Nama Dokumen</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Upload</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {documents.map((doc, index) => (
+                                        <tr key={doc.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {doc.required ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-gray-900">{doc.name}</span>
+                                                        <span className="text-xs text-red-500">*Wajib</span>
+                                                    </div>
+                                                ) : (
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Nama Dokumen..." 
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-2 border"
+                                                        value={doc.name}
+                                                        onChange={(e) => handleDocumentNameChange(index, e.target.value)}
+                                                    />
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center justify-center cursor-pointer group">
+                                                    <input 
+                                                        type="file" 
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleDocumentFileChange(index, e.target.files[0])}
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                    />
+                                                    <div className="text-center">
+                                                        {doc.file ? (
+                                                            <div className="flex items-center text-green-600">
+                                                                <CheckCircle size={16} className="mr-1" />
+                                                                <span className="text-sm truncate max-w-[200px]">{doc.file.name}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center text-gray-500 group-hover:text-green-600">
+                                                                <Upload size={16} className="mr-2" />
+                                                                <span className="text-xs">Drag & Drop atau Klik</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {!doc.required && (
+                                                    <button 
+                                                        onClick={() => removeDocument(index)}
+                                                        className="text-red-500 hover:text-red-700 font-medium text-sm"
+                                                    >
+                                                        Hapus
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Transkrip Nilai Sementara</p>
-                            <input type="file" name="transcript_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
-                        </div>
-
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Surat Keterangan Sehat</p>
-                            <input type="file" name="health_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
-                        </div>
+                        <button 
+                            onClick={addDocument}
+                            className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
+                        >
+                            + Tambah Dokumen Lain
+                        </button>
 
                         <div className="flex justify-between mt-6">
                             <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
@@ -315,22 +469,83 @@ export default function KknStudentRegistration() {
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
                         
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors">
-                            <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                            <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
-                            <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
-                            <input 
-                                type="file" 
-                                name="photo" 
-                                onChange={handleFileChange} 
-                                className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" 
-                                accept=".jpg,.jpeg,.png" 
-                            />
-                            {files.photo && (
-                                <div className="mt-4 text-sm text-green-600 font-medium">
-                                    ✓ File dipilih: {files.photo.name}
-                                </div>
-                            )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Left Column: Input Area */}
+                            <div>
+                                {isCameraOpen ? (
+                                    <div className="relative rounded-lg overflow-hidden bg-black aspect-[3/4] flex items-center justify-center">
+                                        <video ref={videoRef} autoPlay className="w-full h-full object-cover transform scale-x-[-1]" />
+                                        <div className="absolute bottom-4 flex space-x-2">
+                                            <button 
+                                                onClick={capturePhoto} 
+                                                className="bg-white text-black p-3 rounded-full hover:bg-gray-200 shadow-lg"
+                                                title="Ambil Foto"
+                                            >
+                                                <Camera size={24} />
+                                            </button>
+                                            <button 
+                                                onClick={stopCamera} 
+                                                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 shadow-lg"
+                                                title="Batal"
+                                            >
+                                                <span className="font-bold">X</span>
+                                            </button>
+                                        </div>
+                                        <canvas ref={canvasRef} className="hidden" />
+                                    </div>
+                                ) : (
+                                    <div 
+                                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full flex flex-col items-center justify-center cursor-pointer ${isDragging ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}
+                                        onDragOver={onDragOver}
+                                        onDragLeave={onDragLeave}
+                                        onDrop={onDrop}
+                                    >
+                                        <div onClick={() => document.getElementById('photo-upload').click()}>
+                                            <Camera className={`mx-auto h-16 w-16 mb-4 ${isDragging ? 'text-green-500' : 'text-gray-400'}`} />
+                                            <p className="text-lg font-medium text-gray-700 mb-2">Drag & Drop Foto di sini</p>
+                                            <p className="text-sm text-gray-500 mb-4">atau klik untuk upload (Max 2MB)</p>
+                                            <input 
+                                                id="photo-upload"
+                                                type="file" 
+                                                name="photo" 
+                                                onChange={handlePhotoChange} 
+                                                className="hidden" 
+                                                accept=".jpg,.jpeg,.png" 
+                                            />
+                                        </div>
+                                        
+                                        <div className="my-4 text-gray-400 text-xs">- ATAU -</div>
+                                        
+                                        <button 
+                                            onClick={startCamera}
+                                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                                        >
+                                            <Camera className="mr-2 w-4 h-4" /> Buka Kamera
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Column: Preview Area */}
+                            <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <span className="text-sm font-medium text-gray-500 mb-4">Preview Foto</span>
+                                {files.photo ? (
+                                    <div className="relative shadow-md rounded-lg overflow-hidden">
+                                        <img 
+                                            src={URL.createObjectURL(files.photo)} 
+                                            alt="Preview" 
+                                            className="w-48 h-64 object-cover"
+                                        />
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 text-center truncate px-2">
+                                            {files.photo.name}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-48 h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white text-gray-400">
+                                        No Image
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex justify-between mt-8 border-t pt-6">

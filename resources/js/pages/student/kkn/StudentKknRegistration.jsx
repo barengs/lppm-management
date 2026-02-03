@@ -32,12 +32,13 @@ export default function KknStudentRegistration() {
         date_of_birth: user?.mahasiswa_profile?.date_of_birth || '',
         jacket_size: user?.mahasiswa_profile?.jacket_size || '',
     });
-    const [files, setFiles] = useState({
-        krs_file: null,
-        transcript_file: null,
-        health_file: null,
-        photo: null,
-    });
+    const [documents, setDocuments] = useState([
+        { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
+        { id: 'transkrip', name: 'Transkrip Nilai Sementara', file: null, required: true, type: 'required' },
+        { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' },
+        { id: 'sehat', name: 'Surat Keterangan Sehat', file: null, required: false, type: 'optional' },
+    ]);
+    const [files, setFiles] = useState({ photo: null }); // Keep photo separate as it is in Step 3
 
     // Fetch initial data
     useEffect(() => {
@@ -101,8 +102,30 @@ export default function KknStudentRegistration() {
         }
     };
 
-    const handleFileChange = (e) => {
-        setFiles({ ...files, [e.target.name]: e.target.files[0] });
+    const handlePhotoChange = (e) => {
+        setFiles({ ...files, photo: e.target.files[0] });
+    };
+
+    const handleDocumentFileChange = (index, file) => {
+        const newDocs = [...documents];
+        newDocs[index].file = file;
+        setDocuments(newDocs);
+    };
+
+    const handleDocumentNameChange = (index, name) => {
+         const newDocs = [...documents];
+         newDocs[index].name = name;
+         setDocuments(newDocs);
+    };
+
+    const addDocument = () => {
+        setDocuments([...documents, { id: Date.now(), name: '', file: null, required: false, type: 'custom' }]);
+    };
+
+    const removeDocument = (index) => {
+        const newDocs = [...documents];
+        newDocs.splice(index, 1);
+        setDocuments(newDocs);
     };
 
     const handleRegister = async () => {
@@ -126,9 +149,16 @@ export default function KknStudentRegistration() {
         formData.append('fiscal_year_id', selectedFy);
 
         // Files
-        if (files.krs_file) formData.append('krs_file', files.krs_file);
-        if (files.transcript_file) formData.append('transcript_file', files.transcript_file);
-        if (files.health_file) formData.append('health_file', files.health_file);
+        // Documents (Dynamic)
+        documents.forEach((doc, index) => {
+            if (doc.file) {
+                 formData.append(`documents[${index}][name]`, doc.name);
+                 formData.append(`documents[${index}][file]`, doc.file);
+                 formData.append(`documents[${index}][type]`, doc.type);
+            }
+        });
+
+        // Photo (Step 3)
         if (files.photo) formData.append('photo', files.photo);
 
         try {
@@ -282,25 +312,81 @@ export default function KknStudentRegistration() {
                 {/* Step 2: Documents */}
                 {step === 2 && (
                     <div className="space-y-6">
-                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen</h3>
+                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen Pendukung</h3>
                         
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Kartu Rencana Studi (KRS)</p>
-                            <input type="file" name="krs_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Nama Dokumen</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Upload</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {documents.map((doc, index) => (
+                                        <tr key={doc.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {doc.required ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-gray-900">{doc.name}</span>
+                                                        <span className="text-xs text-red-500">*Wajib</span>
+                                                    </div>
+                                                ) : (
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Nama Dokumen..." 
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-2 border"
+                                                        value={doc.name}
+                                                        onChange={(e) => handleDocumentNameChange(index, e.target.value)}
+                                                    />
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center justify-center cursor-pointer group">
+                                                    <input 
+                                                        type="file" 
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleDocumentFileChange(index, e.target.files[0])}
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                    />
+                                                    <div className="text-center">
+                                                        {doc.file ? (
+                                                            <div className="flex items-center text-green-600">
+                                                                <CheckCircle size={16} className="mr-1" />
+                                                                <span className="text-sm truncate max-w-[200px]">{doc.file.name}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center text-gray-500 group-hover:text-green-600">
+                                                                <Upload size={16} className="mr-2" />
+                                                                <span className="text-xs">Drag & Drop atau Klik</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {!doc.required && (
+                                                    <button 
+                                                        onClick={() => removeDocument(index)}
+                                                        className="text-red-500 hover:text-red-700 font-medium text-sm"
+                                                    >
+                                                        Hapus
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Transkrip Nilai Sementara</p>
-                            <input type="file" name="transcript_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
-                        </div>
-
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Surat Keterangan Sehat</p>
-                            <input type="file" name="health_file" onChange={handleFileChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" accept=".pdf,.jpg,.jpeg,.png" />
-                        </div>
+                        <button 
+                            onClick={addDocument}
+                            className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
+                        >
+                            + Tambah Dokumen Lain
+                        </button>
 
                         <div className="flex justify-between mt-6">
                             <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
@@ -321,7 +407,7 @@ export default function KknStudentRegistration() {
                             <input 
                                 type="file" 
                                 name="photo" 
-                                onChange={handleFileChange} 
+                                onChange={handlePhotoChange} 
                                 className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" 
                                 accept=".jpg,.jpeg,.png" 
                             />

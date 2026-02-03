@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
 import { Upload, DollarSign, FileText } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function CreateProposal() {
     const navigate = useNavigate();
@@ -80,7 +82,7 @@ export default function CreateProposal() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
+        <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-sm overflow-hidden border border-gray-100">
             <div className="bg-green-700 px-6 py-4 border-b border-green-800">
                 <h1 className="text-xl font-bold text-white flex items-center">
                     <FileText className="mr-2" size={24} />
@@ -91,7 +93,7 @@ export default function CreateProposal() {
             
             <div className="p-8">
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-start">
+                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-sm border border-red-200 flex items-start">
                         <div className="mr-2 mt-0.5">⚠️</div>
                         <div>{error}</div>
                     </div>
@@ -104,7 +106,7 @@ export default function CreateProposal() {
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Anggaran</label>
                             <select 
                                 required
-                                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-gray-50"
+                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-gray-50"
                                 value={fiscalYearId}
                                 onChange={(e) => setFiscalYearId(e.target.value)}
                             >
@@ -117,7 +119,7 @@ export default function CreateProposal() {
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Skema Hibah</label>
                             <select 
                                 required
-                                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-white"
+                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-white"
                                 value={schemeId}
                                 onChange={(e) => setSchemeId(e.target.value)}
                             >
@@ -136,7 +138,7 @@ export default function CreateProposal() {
                             type="text" 
                             required
                             placeholder="Judul lengkap penelitian/pengabdian..."
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
+                            className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                         />
@@ -145,14 +147,23 @@ export default function CreateProposal() {
                     {/* Abstract */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Abstrak / Ringkasan</label>
-                        <textarea 
-                            required
-                            rows="5"
-                            placeholder="Ringkasan singkat tujuan, metode, dan luaran..."
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
-                            value={abstract}
-                            onChange={(e) => setAbstract(e.target.value)}
-                        ></textarea>
+                        <div className="bg-white">
+                             <ReactQuill 
+                                theme="snow"
+                                value={abstract}
+                                onChange={setAbstract}
+                                className="h-64 mb-12"
+                                modules={{
+                                    toolbar: [
+                                        [{ 'header': [1, 2, false] }],
+                                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                                        ['link'],
+                                        ['clean']
+                                    ],
+                                }}
+                             />
+                        </div>
                     </div>
 
                     {/* Budget & Location */}
@@ -168,7 +179,7 @@ export default function CreateProposal() {
                                     required
                                     min="0"
                                     placeholder="0"
-                                    className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 pl-10"
+                                    className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 pl-10"
                                     value={budget}
                                     onChange={(e) => setBudget(e.target.value)}
                                 />
@@ -179,7 +190,7 @@ export default function CreateProposal() {
                             <input 
                                 type="text" 
                                 placeholder="Lokasi kegiatan (jika ada)..."
-                                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
+                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
                             />
@@ -187,7 +198,7 @@ export default function CreateProposal() {
                     </div>
 
                     {/* File Upload */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-white transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-sm p-6 bg-gray-50 hover:bg-white transition-colors">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Unggah Dokumen Proposal (PDF)</label>
                         <div className="flex items-center justify-center w-full">
                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -217,14 +228,14 @@ export default function CreateProposal() {
                         <button 
                             type="button"
                             onClick={() => navigate('/dashboard')}
-                            className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="px-6 py-2.5 border border-gray-300 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Batal
                         </button>
                         <button 
                             type="submit"
                             disabled={isLoading}
-                            className={`px-6 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                            className={`px-6 py-2.5 border border-transparent rounded-sm shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
                         >
                             {isLoading ? 'Mengirim...' : 'Kirim Proposal'}
                         </button>

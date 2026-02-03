@@ -42,6 +42,7 @@ export default function Sidebar() {
             items: [
                 { name: 'Daftar Proposal', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
                 { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
+                { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
             ]
         },
         {

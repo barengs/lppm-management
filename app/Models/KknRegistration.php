@@ -20,9 +20,14 @@ class KknRegistration extends Model
         'validation_notes',
     ];
 
-    protected $casts = [
-        'documents' => 'array',
-    ];
+    // protected $casts = [
+    //     'documents' => 'array',
+    // ];
+
+    public function kknRegistrationDocuments()
+    {
+        return $this->hasMany(KknRegistrationDocument::class, 'kkn_registration_id');
+    }
 
     public function student()
     {
