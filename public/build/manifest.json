@@ -1,6 +1,6 @@
 {
-  "_mapbox-gl-C3HSJsow.js": {
-    "file": "assets/mapbox-gl-C3HSJsow.js",
+  "_mapbox-gl-B0Pkzfrg.js": {
+    "file": "assets/mapbox-gl-B0Pkzfrg.js",
     "name": "mapbox-gl",
     "isDynamicEntry": true,
     "imports": [
@@ -8,7 +8,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Dk2MCK3a.css",
+    "file": "assets/app-BwX8huKq.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -17,12 +17,12 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-CsgVf_M9.js",
+    "file": "assets/app-DMJfZjsl.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
     "dynamicImports": [
-      "_mapbox-gl-C3HSJsow.js"
+      "_mapbox-gl-B0Pkzfrg.js"
     ],
     "css": [
       "assets/app-Cbuchz1P.css"

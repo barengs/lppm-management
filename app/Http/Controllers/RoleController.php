@@ -31,13 +31,22 @@ class RoleController extends Controller
             'permissions' => 'array'
         ]);
 
-        $role = Role::create(['name' => $validated['name']]);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        if (!empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $role = Role::create(['name' => $validated['name']]);
+
+            if (!empty($validated['permissions'])) {
+                $role->syncPermissions($validated['permissions']);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json($role->load('permissions'), 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed to create role: ' . $e->getMessage()], 500);
         }
-
-        return response()->json($role->load('permissions'), 201);
     }
 
     /**
@@ -52,13 +61,22 @@ class RoleController extends Controller
             'permissions' => 'array'
         ]);
 
-        $role->update(['name' => $validated['name']]);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        if (isset($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $role->update(['name' => $validated['name']]);
+
+            if (isset($validated['permissions'])) {
+                $role->syncPermissions($validated['permissions']);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json($role->load('permissions'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed to update role: ' . $e->getMessage()], 500);
         }
-
-        return response()->json($role->load('permissions'));
     }
 
     /**

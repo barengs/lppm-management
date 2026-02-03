@@ -50,41 +50,54 @@ class UserController extends Controller
             'google_scholar_id' => 'nullable|string',
         ]);
 
-        $userData = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ];
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // Avatar handling moved to profile creation below
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ];
 
-        $user = User::create($userData);
-        
-        // Explicitly load role from 'web' guard
-        $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
-        $user->assignRole($role);
+            // Avatar handling moved to profile creation below
 
-        $avatarPath = null;
-        if ($request->hasFile('avatar')) {
-             $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $user = User::create($userData);
+            
+            // Explicitly load role from 'web' guard
+            $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
+            $user->assignRole($role);
+
+            $avatarPath = null;
+            if ($request->hasFile('avatar')) {
+                 $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            }
+
+            if (in_array($validated['role'], ['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
+                 // Create or update DosenProfile (assuming staff also use this or a similar profile, 
+                 // but schema implies this table is for lecturers. However, current controller logic uses it for staff too).
+                 // Based on current logic, we create dosenProfile for these roles.
+                $user->dosenProfile()->create([
+                    'nidn' => $validated['nidn'] ?? null,
+                    'prodi' => $validated['prodi'] ?? null,
+                    'fakultas' => $validated['fakultas'] ?? null,
+                    'scopus_id' => $validated['scopus_id'] ?? null,
+                    'sinta_id' => $validated['sinta_id'] ?? null,
+                    'google_scholar_id' => $validated['google_scholar_id'] ?? null,
+                    'avatar' => $avatarPath, // Save avatar here
+                ]);
+            }
+            
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json($user->load('dosenProfile'), 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            // Delete uploaded avatar if failed
+            if (isset($avatarPath) && \Storage::disk('public')->exists($avatarPath)) {
+                \Storage::disk('public')->delete($avatarPath);
+            }
+            return response()->json(['message' => 'Failed to create user: ' . $e->getMessage()], 500);
         }
-
-        if (in_array($validated['role'], ['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
-             // Create or update DosenProfile (assuming staff also use this or a similar profile, 
-             // but schema implies this table is for lecturers. However, current controller logic uses it for staff too).
-             // Based on current logic, we create dosenProfile for these roles.
-            $user->dosenProfile()->create([
-                'nidn' => $validated['nidn'] ?? null,
-                'prodi' => $validated['prodi'] ?? null,
-                'fakultas' => $validated['fakultas'] ?? null,
-                'scopus_id' => $validated['scopus_id'] ?? null,
-                'sinta_id' => $validated['sinta_id'] ?? null,
-                'google_scholar_id' => $validated['google_scholar_id'] ?? null,
-                'avatar' => $avatarPath, // Save avatar here
-            ]);
-        }
-        
-        return response()->json($user->load('dosenProfile'), 201);
     }
 
     /**
@@ -117,46 +130,56 @@ class UserController extends Controller
             'google_scholar_id' => 'nullable|string',
         ]);
 
-        if ($request->has('name')) $user->name = $validated['name'];
-        if ($request->has('email')) $user->email = $validated['email'];
-        if ($request->has('password') && !empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
-        
-        $user->save();
-        
-        if (isset($validated['role'])) {
-            $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
-            $user->syncRoles($role);
-        }
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // Handle Avatar Logic
-        $avatarPath = $user->dosenProfile->avatar ?? null;
-        if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists in profile
-            if ($user->dosenProfile && $user->dosenProfile->avatar && \Storage::disk('public')->exists($user->dosenProfile->avatar)) {
-                \Storage::disk('public')->delete($user->dosenProfile->avatar);
+            if ($request->has('name')) $user->name = $validated['name'];
+            if ($request->has('email')) $user->email = $validated['email'];
+            if ($request->has('password') && !empty($validated['password'])) {
+                $user->password = Hash::make($validated['password']);
             }
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-        }
+            
+            $user->save();
+            
+            if (isset($validated['role'])) {
+                $role = \Spatie\Permission\Models\Role::where('name', $validated['role'])->where('guard_name', 'web')->firstOrFail();
+                $user->syncRoles($role);
+            }
 
-        // Update Profile
-        if ($user->hasAnyRole(['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
-             $user->dosenProfile()->updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'nidn' => $validated['nidn'] ?? $user->dosenProfile->nidn ?? null,
-                    'prodi' => $validated['prodi'] ?? $user->dosenProfile->prodi ?? null,
-                    'fakultas' => $validated['fakultas'] ?? $user->dosenProfile->fakultas ?? null,
-                    'scopus_id' => $validated['scopus_id'] ?? $user->dosenProfile->scopus_id ?? null,
-                    'sinta_id' => $validated['sinta_id'] ?? $user->dosenProfile->sinta_id ?? null,
-                    'google_scholar_id' => $validated['google_scholar_id'] ?? $user->dosenProfile->google_scholar_id ?? null,
-                    'avatar' => $avatarPath,
-                ]
-            );
+            // Handle Avatar Logic
+            $avatarPath = $user->dosenProfile->avatar ?? null;
+            if ($request->hasFile('avatar')) {
+                // Delete old avatar if exists in profile
+                if ($user->dosenProfile && $user->dosenProfile->avatar && \Storage::disk('public')->exists($user->dosenProfile->avatar)) {
+                    \Storage::disk('public')->delete($user->dosenProfile->avatar);
+                }
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            }
+
+            // Update Profile
+            if ($user->hasAnyRole(['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
+                 $user->dosenProfile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'nidn' => $validated['nidn'] ?? $user->dosenProfile->nidn ?? null,
+                        'prodi' => $validated['prodi'] ?? $user->dosenProfile->prodi ?? null,
+                        'fakultas' => $validated['fakultas'] ?? $user->dosenProfile->fakultas ?? null,
+                        'scopus_id' => $validated['scopus_id'] ?? $user->dosenProfile->scopus_id ?? null,
+                        'sinta_id' => $validated['sinta_id'] ?? $user->dosenProfile->sinta_id ?? null,
+                        'google_scholar_id' => $validated['google_scholar_id'] ?? $user->dosenProfile->google_scholar_id ?? null,
+                        'avatar' => $avatarPath,
+                    ]
+                );
+            }
+            
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json($user->fresh('dosenProfile'));
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Failed to update user: ' . $e->getMessage()], 500);
         }
-        
-        return response()->json($user->fresh('dosenProfile'));
     }
 
     /**

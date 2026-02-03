@@ -200,7 +200,7 @@ export default function StudentKknGuidance() {
                         {/* Messages */}
                         <div className="flex-grow overflow-y-auto p-4 space-y-4">
                             {isLoading ? <div className="text-center p-4">Loading...</div> : messages.map((msg, idx) => {
-                                const isMe = msg.user_id === user.id;
+                                const isMe = msg.user_id == user.id;
                                 return (
                                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`flex max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>

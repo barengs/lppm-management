@@ -7,6 +7,7 @@ export default function PublicLayout() {
     const { isAuthenticated, user, fetchUser } = useAuthStore();
     const [dropdown, setDropdown] = React.useState(null);
     const [primaryMenu, setPrimaryMenu] = React.useState([]);
+    const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
     React.useEffect(() => {
         fetchUser();
@@ -65,10 +66,10 @@ export default function PublicLayout() {
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center relative z-10">
                     <div className="flex items-center space-x-4">
-                        <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-16 w-16 object-contain" />
+                        <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
                          <div>
-                            <h1 className="text-xl font-bold text-blue-900 tracking-tight">LPPM UIM</h1>
-                            <p className="text-xs text-gray-500 font-medium tracking-wide">Lembaga Penelitian dan Pengabdian kepada Masyarakat</p>
+                            <h1 className="text-lg md:text-xl font-bold text-blue-900 tracking-tight">LPPM UIM</h1>
+                            <p className="text-[10px] md:text-xs text-gray-500 font-medium tracking-wide">Lembaga Penelitian dan Pengabdian kepada Masyarakat</p>
                         </div>
                     </div>
                     <div className="text-sm text-gray-600 hidden md:block">
@@ -77,31 +78,104 @@ export default function PublicLayout() {
                 </div>
             </div>
             {/* Navigation Bar */}
+            {/* Navigation Bar */}
             <nav className="bg-green-700 text-white sticky top-0 z-50 shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center h-12 space-x-6 text-sm font-medium">
+                    <div className="flex items-center justify-between h-12">
                         
-                        {/* Dynamic Menu Rendering */}
-                        {primaryMenu.length > 0 ? primaryMenu.map(item => renderMenuItem(item)) : (
-                            /* Fallback Skeleton or default */
-                            <div className="text-green-300 text-xs">Loading menu...</div>
-                        )}
+                        {/* Desktop Menu */}
+                        <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
+                            {primaryMenu.length > 0 ? primaryMenu.map(item => renderMenuItem(item)) : (
+                                <div className="text-green-300 text-xs">Loading menu...</div>
+                            )}
+                        </div>
 
-                        <div className="flex-grow"></div>
-                        {isAuthenticated ? (
-                            <div className="flex items-center space-x-4">
-                                <span className="text-green-100 text-xs hidden md:inline-block">Halo, {user?.name || 'User'}</span>
-                                <Link to="/dashboard" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow flex items-center">
-                                    DASHBOARD
+                        {/* Mobile Menu Button */}
+                        <div className="flex items-center md:hidden">
+                            <button 
+                                onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+                                className="text-white hover:text-yellow-300 focus:outline-none"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {isMobileMenuOpen ? (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    ) : (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                    )}
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Right Side (Auth) */}
+                         <div className="hidden md:flex items-center space-x-4">
+                            {isAuthenticated ? (
+                                <>
+                                    <span className="text-green-100 text-xs">Halo, {user?.name || 'User'}</span>
+                                    <Link to="/dashboard" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow flex items-center">
+                                        DASHBOARD
+                                    </Link>
+                                </>
+                            ) : (
+                                <Link to="/login" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow">
+                                    LOGIN
                                 </Link>
-                            </div>
-                        ) : (
-                            <Link to="/login" className="bg-yellow-500 text-green-900 px-5 py-1.5 rounded font-bold hover:bg-yellow-400 transition-colors shadow">
-                                LOGIN
-                            </Link>
-                        )}
+                            )}
+                        </div>
+                         {/* Mobile Logo (Centered if needed, or just keep spacing) */}
+                         <div className="md:hidden flex-grow text-center font-bold text-yellow-300">
+                            LPPM UIM
+                         </div>
+                         
+                         {/* Mobile Auth Icon (Optional, or put in menu) */}
+                         <div className="md:hidden">
+                            {isAuthenticated ? (
+                                <Link to="/dashboard" className="text-white hover:text-yellow-300">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </Link>
+                            ) : (
+                                <Link to="/login" className="text-white hover:text-yellow-300">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                                </Link>
+                            )}
+                         </div>
+
                     </div>
                 </div>
+
+                {/* Mobile Menu Dropdown */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden bg-green-800 text-white animate-fade-in-down border-t border-green-600">
+                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                            {primaryMenu.map(item => (
+                                <div key={item.id}>
+                                    {item.children && item.children.length > 0 ? (
+                                        <>
+                                            <div className="px-3 py-2 text-yellow-300 font-bold uppercase">{item.title}</div>
+                                            {item.children.map(child => (
+                                                 <Link 
+                                                    key={child.id} 
+                                                    to={child.url} 
+                                                    className="block px-3 py-2 pl-6 rounded-md text-base font-medium hover:bg-green-700 hover:text-white"
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                >
+                                                    - {child.title}
+                                                </Link>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <Link 
+                                            to={item.url} 
+                                            className="block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700 hover:text-white uppercase"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            {item.title}
+                                        </Link>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </nav>
 
             {/* Main Content */}

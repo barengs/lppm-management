@@ -51,36 +51,46 @@ class AuthController extends Controller
             'jacket_size' => 'nullable|string|in:S,M,L,XL,XXL,XXXL',
         ]);
 
-        $user = \App\Models\User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
-            'role' => $validated['role'],
-        ]);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // Assign Spatie Role
-        $user->assignRole($validated['role']);
+            $user = \App\Models\User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => bcrypt($validated['password']),
+                'role' => $validated['role'],
+            ]);
 
-        // Create Profile based on Role
-        if ($validated['role'] === 'mahasiswa') {
-            $user->mahasiswaProfile()->create([
-                'npm' => $validated['identity_number'] ?? null,
-                'prodi' => $validated['prodi'] ?? null,
-                'fakultas' => $validated['fakultas'] ?? null,
-                'jacket_size' => $validated['jacket_size'] ?? null,
-            ]);
-        } else {
-            // Dosen & Reviewer use DosenProfile
-            $user->dosenProfile()->create([
-                'nidn' => $validated['identity_number'] ?? null,
-                'prodi' => $validated['prodi'] ?? null,
-                'fakultas' => $validated['fakultas'] ?? null,
-            ]);
+            // Assign Spatie Role
+            $user->assignRole($validated['role']);
+
+            // Create Profile based on Role
+            if ($validated['role'] === 'mahasiswa') {
+                $user->mahasiswaProfile()->create([
+                    'npm' => $validated['identity_number'] ?? null,
+                    'prodi' => $validated['prodi'] ?? null,
+                    'fakultas' => $validated['fakultas'] ?? null,
+                    'jacket_size' => $validated['jacket_size'] ?? null,
+                ]);
+            } else {
+                // Dosen & Reviewer use DosenProfile
+                $user->dosenProfile()->create([
+                    'nidn' => $validated['identity_number'] ?? null,
+                    'prodi' => $validated['prodi'] ?? null,
+                    'fakultas' => $validated['fakultas'] ?? null,
+                ]);
+            }
+
+            $token = auth('api')->login($user);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return $this->respondWithToken($token);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Registration failed: ' . $e->getMessage()], 500);
         }
-
-        $token = auth('api')->login($user);
-
-        return $this->respondWithToken($token);
     }
 
     /**
