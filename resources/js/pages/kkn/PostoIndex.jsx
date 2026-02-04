@@ -370,7 +370,7 @@ export default function PostoIndex() {
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Total Anggota</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {postos.reduce((sum, p) => sum + (p.member_count || 0), 0)}
+                                    {Array.isArray(postos) ? postos.reduce((sum, p) => sum + (p.member_count || 0), 0) : 0}
                                 </p>
                             </div>
                         </div>
@@ -383,7 +383,7 @@ export default function PostoIndex() {
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Posko Aktif</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {postos.filter((p) => p.status === 'active').length}
+                                    {Array.isArray(postos) ? postos.filter((p) => p.status === 'active').length : 0}
                                 </p>
                             </div>
                         </div>
@@ -396,7 +396,7 @@ export default function PostoIndex() {
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Posko Lengkap</p>
                                 <p className="text-2xl font-bold text-gray-900">
-                                    {postos.filter((p) => p.is_complete).length}
+                                    {Array.isArray(postos) ? postos.filter((p) => p.is_complete).length : 0}
                                 </p>
                             </div>
                         </div>
@@ -406,7 +406,7 @@ export default function PostoIndex() {
                 {/* DataTable */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                     <DataTable
-                        data={postos}
+                        data={Array.isArray(postos) ? postos : []}
                         columns={columns}
                         options={{
                             enableGlobalFilter: true,

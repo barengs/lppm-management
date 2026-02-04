@@ -54,10 +54,10 @@ export default function JournalIndex() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex justify-between items-center bg-white p-4 rounded-sm shadow-sm">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-                        <Newspaper className="mr-2" /> Kalsultasi Jurnal
+                        <Newspaper className="mr-2" /> Konsultasi Jurnal
                     </h1>
                     <p className="text-gray-500 text-sm">Review draft jurnal sebelum submit ke publisher</p>
                 </div>
@@ -68,7 +68,7 @@ export default function JournalIndex() {
                 )}
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-sm shadow overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex items-center">
                     <Search className="text-gray-400 mr-2" size={20} />
                     <input 

@@ -87,7 +87,7 @@ export default function JournalShow() {
                     <ChevronLeft size={16} /> Kembali
                 </button>
                 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white p-6 rounded-sm shadow-sm border border-gray-100">
                     <h1 className="text-xl font-bold text-gray-900 mb-2">{journal.title}</h1>
                     <div className="space-y-3 text-sm">
                          <div className="flex justify-between border-b pb-2">
@@ -130,7 +130,7 @@ export default function JournalShow() {
             </div>
 
             {/* Right/Bottom Panel: Chat/Timeline */}
-            <div className="md:w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
+            <div className="md:w-2/3 bg-white rounded-sm shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
                 <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700 flex items-center">
                     <Clock size={18} className="mr-2" /> Riwayat Diskusi & Revisi
                 </div>
