@@ -20,6 +20,8 @@ class KknLocation extends Model
         'village_id',
         'latitude',
         'longitude',
+        'location_type',
+        'country',
     ];
 
     public function fiscalYear()
