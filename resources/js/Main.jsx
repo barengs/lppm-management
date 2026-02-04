@@ -40,6 +40,7 @@ import RolesIndex from './pages/admin/roles/Index';
 import PermissionsIndex from './pages/admin/permissions/Index';
 import MenuIndex from './pages/admin/menus/Index';
 import MenuBuilder from './pages/admin/menus/Builder';
+import SystemSettingIndex from './pages/admin/SystemSetting';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -73,9 +74,11 @@ import PrivateRoute from './components/PrivateRoute';
 import useAuthStore from './store/useAuthStore';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
+import useSystemStore from './store/useSystemStore';
 
 export default function Main() {
     const { fetchUser, isAuthenticated, isLocked, lockScreen, unlockScreen, logout, user } = useAuthStore();
+    const { setSettings } = useSystemStore();
 
     // Inactivity tracker - only active when authenticated
     useInactivityTracker(
@@ -86,7 +89,33 @@ export default function Main() {
 
     useEffect(() => {
         fetchUser();
+        fetchSystemSettings();
     }, []);
+
+    const fetchSystemSettings = async () => {
+        try {
+            const { data } = await import('./utils/api').then(m => m.default.get('/system-settings'));
+            
+            // Save to global store
+            setSettings(data);
+
+            if (data?.theme_color) {
+                document.documentElement.style.setProperty('--primary-color', data.theme_color);
+            }
+            if (data?.favicon_path) {
+                const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+                link.type = 'image/x-icon';
+                link.rel = 'shortcut icon';
+                link.href = `/storage/${data.favicon_path}`;
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            if (data?.system_name) {
+                document.title = data.system_name;
+            }
+        } catch (error) {
+            console.error('Failed to load system settings:', error);
+        }
+    };
 
     // Handle unlock
     const handleUnlock = async (email) => {
@@ -212,6 +241,7 @@ export default function Main() {
                         <Route path="admin/permissions" element={<PermissionsIndex />} />
                         <Route path="admin/menus" element={<MenuIndex />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />
+                        <Route path="admin/settings" element={<SystemSettingIndex />} />
 
                         {/* Profile */}
                         <Route path="profile" element={<ProfileIndex />} />

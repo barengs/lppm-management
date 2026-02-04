@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import useSidebarStore from '../store/useSidebarStore';
+import useSystemStore from '../store/useSystemStore';
 import { 
     Home, FileText, MapPin, ClipboardList, 
     Newspaper, FolderOpen, Image, 
@@ -14,6 +15,7 @@ import {
 export default function Sidebar() {
     const { logout, user } = useAuthStore();
     const { isCollapsed, toggleSidebar } = useSidebarStore();
+    const { settings } = useSystemStore();
     const location = useLocation();
 
     const isActive = (path) => location.pathname.startsWith(path);
@@ -81,6 +83,7 @@ export default function Sidebar() {
                 { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
                 { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
                 { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
+                { name: 'Sistem Setting', icon: <Settings size={20} />, path: '/admin/settings', permission: 'settings.view' }, // Admin only by default logic or add permission
             ]
         },
         {
@@ -113,11 +116,15 @@ export default function Sidebar() {
 
 
     return (
-        <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-[#004d40] text-white h-full flex flex-col shadow-xl transition-all duration-300`}>
+        <div className={`${isCollapsed ? 'w-20' : 'w-64'} text-white h-full flex flex-col shadow-xl transition-all duration-300`} style={{ backgroundColor: 'var(--primary-color)' }}>
             {/* Brand */}
-            <div className={`h-16 flex-shrink-0 flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-6 space-x-3'} bg-[#00251a] border-b border-green-800 transition-all duration-300`}>
-                 <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="UIM Logo" className="h-10 w-10 object-contain" />
-                {!isCollapsed && <span className="text-xl font-bold tracking-wider whitespace-nowrap">LPPM UIM</span>}
+            <div className={`h-16 flex-shrink-0 flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-6 space-x-3'} bg-black/20 border-b border-white/10 transition-all duration-300`}>
+                 <img 
+                    src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"} 
+                    alt="Logo" 
+                    className="h-10 w-10 object-contain" 
+                 />
+                {!isCollapsed && <span className="text-xl font-bold tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">{settings.system_name}</span>}
             </div>
 
             {/* Menu */}

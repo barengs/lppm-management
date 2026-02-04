@@ -37,6 +37,8 @@ Route::get('public/menus/{location}', [App\Http\Controllers\MenuController::clas
 // Public Master Data for Registration Form
 Route::get('faculties', [App\Http\Controllers\FacultyController::class, 'index']); // Public access for registration
 Route::get('study-programs', [App\Http\Controllers\StudyProgramController::class, 'index']); // Public access for registration
+// Public System Settings
+Route::get('system-settings', [App\Http\Controllers\SystemSettingController::class, 'index']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('fiscal-years/active', [App\Http\Controllers\FiscalYearController::class, 'active']);
@@ -177,6 +179,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('surveys', [App\Http\Controllers\SurveyController::class, 'index']);
 
     // Menu Management
+    Route::post('system-settings', [App\Http\Controllers\SystemSettingController::class, 'update']); // Admin Update (Protected by Role check in FE/Controller)
+
     Route::get('menus', [App\Http\Controllers\MenuController::class, 'index']);
     Route::get('menus/{id}', [App\Http\Controllers\MenuController::class, 'show']);
     Route::post('menus', [App\Http\Controllers\MenuController::class, 'store']);

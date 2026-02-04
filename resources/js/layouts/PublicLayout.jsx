@@ -1,10 +1,12 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
+import useAuth from '../store/useAuthStore';
+import useSystemStore from '../store/useSystemStore';
 import api from '../utils/api';
 
 export default function PublicLayout() {
-    const { isAuthenticated, user, fetchUser } = useAuthStore();
+    const { isAuthenticated, user, fetchUser } = useAuth();
+    const { settings } = useSystemStore(); 
     const [dropdown, setDropdown] = React.useState(null);
     const [primaryMenu, setPrimaryMenu] = React.useState([]);
     const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -66,10 +68,14 @@ export default function PublicLayout() {
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center relative z-10">
                     <div className="flex items-center space-x-4">
-                        <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
+                        <img 
+                            src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"} 
+                            alt="Logo" 
+                            className="h-12 w-12 md:h-16 md:w-16 object-contain" 
+                        />
                          <div>
-                            <h1 className="text-lg md:text-xl font-bold text-blue-900 tracking-tight">LPPM UIM</h1>
-                            <p className="text-[10px] md:text-xs text-gray-500 font-medium tracking-wide">Lembaga Penelitian dan Pengabdian kepada Masyarakat</p>
+                            <h1 className="text-lg md:text-xl font-bold tracking-tight" style={{ color: 'var(--primary-color)' }}>{settings.system_name}</h1>
+                            <p className="text-[10px] md:text-xs text-gray-500 font-medium tracking-wide">{settings.description}</p>
                         </div>
                     </div>
                     <div className="text-sm text-gray-600 hidden md:block">
@@ -79,7 +85,8 @@ export default function PublicLayout() {
             </div>
             {/* Navigation Bar */}
             {/* Navigation Bar */}
-            <nav className="bg-green-700 text-white sticky top-0 z-50 shadow-md">
+            {/* Navigation Bar */}
+            <nav className="text-white sticky top-0 z-50 shadow-md transition-colors duration-300" style={{ backgroundColor: 'var(--primary-color)' }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-12">
                         
@@ -184,15 +191,19 @@ export default function PublicLayout() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-[#004d40] text-white py-12 border-t-4 border-yellow-500">
+            <footer className="text-white py-12 border-t-4 border-yellow-500" style={{ backgroundColor: 'var(--primary-color)' }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center mb-4 space-x-3">
-                             <img src="https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png" alt="Logo" className="h-12 w-12 object-contain brightness-0 invert" />
-                             <span className="text-xl font-bold">LPPM UIM</span>
+                             <img 
+                                src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"} 
+                                alt="Logo" 
+                                className="h-12 w-12 object-contain brightness-0 invert" 
+                             />
+                             <span className="text-xl font-bold">{settings.system_name}</span>
                         </div>
                         <p className="text-sm text-gray-300 leading-relaxed max-w-md">
-                            Lembaga Penelitian dan Pengabdian kepada Masyarakat Universitas Islam Madura berkomitmen untuk mengembangkan ilmu pengetahuan dan teknologi melalui riset dan pengabdian yang berkualitas.
+                            {settings.description}
                         </p>
                          <div className="mt-6 flex space-x-4">
                             {/* Social Icons Placeholder */}
@@ -215,15 +226,15 @@ export default function PublicLayout() {
                         <div className="text-sm text-gray-300 space-y-3">
                             <p className="flex items-start">
                                 <svg className="w-5 h-5 mr-3 text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                <span>Kompleks Pondok Pesantren Miftahul Ulum, Bettet, Pamekasan, Jawa Timur.</span>
+                                <span>{settings.address}</span>
                             </p>
                             <p className="flex items-center">
                                 <svg className="w-5 h-5 mr-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                lppm@uim.ac.id
+                                {settings.email}
                             </p>
                             <p className="flex items-center">
                                 <svg className="w-5 h-5 mr-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                (0324) 321706
+                                {settings.phone}
                             </p>
                         </div>
                     </div>
