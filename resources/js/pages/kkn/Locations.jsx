@@ -29,6 +29,8 @@ export default function KknLocationsIndex() {
         quota: 0, 
         description: '', 
         fiscal_year_id: '',
+        location_type: 'domestic', // Default domestic
+        country: '',
         province_id: '',
         city_id: '',
         district_id: '',
@@ -199,7 +201,10 @@ export default function KknLocationsIndex() {
                 header: 'Wilayah',
                 cell: ({ row }) => (
                     <div className="text-sm text-gray-900">
-                        {row.original.district?.name}, {row.original.city?.name}, {row.original.province?.name}
+                        {row.original.location_type === 'international' 
+                            ? <span className="text-blue-600 font-semibold">{row.original.country} (Luar Negeri)</span> 
+                            : `${row.original.district?.name}, ${row.original.city?.name}, ${row.original.province?.name}`
+                        }
                     </div>
                 ),
             },
@@ -229,6 +234,8 @@ export default function KknLocationsIndex() {
                                     quota: row.original.quota, 
                                     description: row.original.description || '', 
                                     fiscal_year_id: row.original.fiscal_year_id,
+                                    location_type: row.original.location_type || 'domestic',
+                                    country: row.original.country || '',
                                     province_id: row.original.province_id,
                                     city_id: row.original.city_id,
                                     district_id: row.original.district_id,
@@ -270,7 +277,7 @@ export default function KknLocationsIndex() {
                         <Upload size={18} className="mr-2" /> Import
                     </button>
                     <button onClick={() => { 
-                        setFormData({ name: '', quota: 0, description: '', fiscal_year_id: fiscalYears[0]?.id || '', province_id: '', city_id: '', district_id: '', village_id: '', latitude: '-7.1568', longitude: '113.4746' });
+                        setFormData({ name: '', quota: 0, description: '', fiscal_year_id: fiscalYears[0]?.id || '', location_type: 'domestic', country: '', province_id: '', city_id: '', district_id: '', village_id: '', latitude: '-7.1568', longitude: '113.4746' });
                         setIsEditing(false); 
                         setShowModal(true); 
                     }} className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700">
@@ -311,46 +318,90 @@ export default function KknLocationsIndex() {
                             </div>
                             
                             {/* Region Selectors */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Provinsi</label>
-                                <select className="w-full border p-2 rounded" value={formData.province_id} onChange={e => setFormData({...formData, province_id: e.target.value, city_id: '', district_id: '', village_id: '', name: ''})}>
-                                    <option value="">Pilih Provinsi</option>
-                                    {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Lokasi</label>
+                                <div className="flex space-x-4">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="location_type" 
+                                            value="domestic" 
+                                            checked={formData.location_type === 'domestic'} 
+                                            onChange={() => setFormData({...formData, location_type: 'domestic', country: ''})}
+                                            className="text-green-600 focus:ring-green-500"
+                                        />
+                                        <span>Dalam Negeri</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="location_type" 
+                                            value="international" 
+                                            checked={formData.location_type === 'international'} 
+                                            onChange={() => setFormData({...formData, location_type: 'international', province_id: '', city_id: '', district_id: '', village_id: ''})}
+                                            className="text-green-600 focus:ring-green-500"
+                                        />
+                                        <span>Luar Negeri</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
-                                <select className="w-full border p-2 rounded" value={formData.city_id} onChange={e => setFormData({...formData, city_id: e.target.value, district_id: '', village_id: '', name: ''})} disabled={!formData.province_id}>
-                                    <option value="">Pilih Kota/Kab</option>
-                                    {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Kecamatan</label>
-                                <select className="w-full border p-2 rounded" value={formData.district_id} onChange={e => setFormData({...formData, district_id: e.target.value, village_id: '', name: ''})} disabled={!formData.city_id}>
-                                    <option value="">Pilih Kecamatan</option>
-                                    {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Desa/Kelurahan</label>
-                                <select 
-                                    className="w-full border p-2 rounded" 
-                                    value={formData.village_id} 
-                                    onChange={e => {
-                                        const selectedVillage = villages.find(v => v.id == e.target.value);
-                                        setFormData({
-                                            ...formData, 
-                                            village_id: e.target.value,
-                                            name: selectedVillage ? selectedVillage.name : ''
-                                        });
-                                    }} 
-                                    disabled={!formData.district_id}
-                                >
-                                    <option value="">Pilih Desa/Kelurahan</option>
-                                    {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                </select>
-                            </div>
+
+                            {formData.location_type === 'international' ? (
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700">Negara <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full border p-2 rounded" 
+                                        placeholder="Contoh: Malaysia, Singapura"
+                                        value={formData.country} 
+                                        onChange={e => setFormData({...formData, country: e.target.value, name: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Provinsi</label>
+                                        <select className="w-full border p-2 rounded" value={formData.province_id} onChange={e => setFormData({...formData, province_id: e.target.value, city_id: '', district_id: '', village_id: '', name: ''})}>
+                                            <option value="">Pilih Provinsi</option>
+                                            {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
+                                        <select className="w-full border p-2 rounded" value={formData.city_id} onChange={e => setFormData({...formData, city_id: e.target.value, district_id: '', village_id: '', name: ''})} disabled={!formData.province_id}>
+                                            <option value="">Pilih Kota/Kab</option>
+                                            {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Kecamatan</label>
+                                        <select className="w-full border p-2 rounded" value={formData.district_id} onChange={e => setFormData({...formData, district_id: e.target.value, village_id: '', name: ''})} disabled={!formData.city_id}>
+                                            <option value="">Pilih Kecamatan</option>
+                                            {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Desa/Kelurahan</label>
+                                        <select 
+                                            className="w-full border p-2 rounded" 
+                                            value={formData.village_id} 
+                                            onChange={e => {
+                                                const selectedVillage = villages.find(v => v.id == e.target.value);
+                                                setFormData({
+                                                    ...formData, 
+                                                    village_id: e.target.value,
+                                                    name: selectedVillage ? selectedVillage.name : ''
+                                                });
+                                            }} 
+                                            disabled={!formData.district_id}
+                                        >
+                                            <option value="">Pilih Desa/Kelurahan</option>
+                                            {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
                             
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Kuota Mahasiswa</label>
