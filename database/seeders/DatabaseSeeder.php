@@ -82,6 +82,7 @@ class DatabaseSeeder extends Seeder
             OrganizationSeeder::class,
             PageSeeder::class,
             MenuSeeder::class,
+            SystemSettingSeeder::class,
         ]);
     }
 }
