@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import React, { useState, useMemo } from 'react';
 import { 
     Users, Search, Filter, CheckCircle, XCircle, 
     AlertCircle, Clock, Eye, User, MapPin, Calendar,
     Mail, Phone, GraduationCap, Award, FileText
 } from 'lucide-react';
-import useAuthStore from '../../store/useAuthStore';
+import { useGetRegistrationsQuery, useGetStatisticsQuery, useGetRegistrationByIdQuery, useApproveRegistrationMutation, useRejectRegistrationMutation, useRequestRevisionMutation, useAddNoteMutation } from '../../store/api/kknApi';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import DataTable from '../../components/DataTable';
@@ -34,70 +33,36 @@ const STATUS_CONFIG = {
 };
 
 export default function KknParticipants() {
-    const { token } = useAuthStore();
-    const [registrations, setRegistrations] = useState([]);
-    const [statistics, setStatistics] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         status: 'all',
         search: '',
-        per_page: 10
+        per_page: 10,
+        page: 1
     });
-    const [selectedRegistration, setSelectedRegistration] = useState(null);
+    const [selectedId, setSelectedId] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [pagination, setPagination] = useState(null);
+    
+    // RTK Query hooks
+    const { data: registrationsData, isLoading: loading, refetch } = useGetRegistrationsQuery(filters);
+    const { data: statistics } = useGetStatisticsQuery();
+    const { data: selectedRegistration } = useGetRegistrationByIdQuery(selectedId, { skip: !selectedId });
+    
+    const [approveRegistration] = useApproveRegistrationMutation();
+    const [rejectRegistration] = useRejectRegistrationMutation();
+    const [requestRevision] = useRequestRevisionMutation();
+    const [addNote] = useAddNoteMutation();
+    
+    const registrations = registrationsData?.data || [];
+    const pagination = registrationsData;
 
-    useEffect(() => {
-        fetchStatistics();
-        fetchRegistrations();
-    }, [filters]);
-
-    const fetchStatistics = async () => {
-        try {
-            const response = await axios.get('/api/admin/kkn-registrations/statistics', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setStatistics(response.data);
-        } catch (error) {
-            console.error('Failed to fetch statistics:', error);
-        }
-    };
-
-    const fetchRegistrations = async (page = 1) => {
-        setLoading(true);
-        try {
-            const response = await axios.get('/api/admin/kkn-registrations', {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { ...filters, page }
-            });
-            setRegistrations(response.data.data);
-            setPagination(response.data);
-        } catch (error) {
-            console.error('Failed to fetch registrations:', error);
-        }
-        setLoading(false);
-    };
-
-    const viewDetail = async (id) => {
-        try {
-            const response = await axios.get(`/api/admin/kkn-registrations/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setSelectedRegistration(response.data);
-            setShowDetailModal(true);
-        } catch (error) {
-            console.error('Failed to fetch registration detail:', error);
-        }
+    const viewDetail = (id) => {
+        setSelectedId(id);
+        setShowDetailModal(true);
     };
 
     const handleApprove = async (id, note) => {
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/approve`, 
-                { note },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchRegistrations();
-            fetchStatistics();
+            await approveRegistration({ id, note }).unwrap();
             setShowDetailModal(false);
             alert('Pendaftaran berhasil disetujui');
         } catch (error) {
@@ -112,14 +77,9 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/reject`, 
-                { note },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchRegistrations();
-            fetchStatistics();
+            await rejectRegistration({ id, note }).unwrap();
             setShowDetailModal(false);
-            alert('Pendaftaran ditolak');
+            alert('Pendaftaran berhasil ditolak');
         } catch (error) {
             console.error('Failed to reject:', error);
             alert('Gagal menolak pendaftaran');
@@ -331,7 +291,7 @@ export default function KknParticipants() {
                                     {pagination.last_page > 1 && (
                                         <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                                             <button
-                                                onClick={() => fetchRegistrations(pagination.current_page - 1)}
+                                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page - 1 }))}
                                                 disabled={pagination.current_page === 1}
                                                 className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-l-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                             >
@@ -342,7 +302,7 @@ export default function KknParticipants() {
                                                 return (
                                                     <button
                                                         key={page}
-                                                        onClick={() => fetchRegistrations(page)}
+                                                        onClick={() => setFilters(prev => ({ ...prev, page }))}
                                                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                                                             pagination.current_page === page
                                                                 ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
@@ -354,7 +314,7 @@ export default function KknParticipants() {
                                                 );
                                             })}
                                             <button
-                                                onClick={() => fetchRegistrations(pagination.current_page + 1)}
+                                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page + 1 }))}
                                                 disabled={pagination.current_page === pagination.last_page}
                                                 className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                             >
