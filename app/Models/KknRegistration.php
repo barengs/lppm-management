@@ -54,6 +54,38 @@ class KknRegistration extends Model
         return $this->hasMany(KknRegistrationLog::class, 'registration_id')->orderBy('created_at', 'desc');
     }
 
+    protected $appends = ['documents'];
+
+    public function getDocumentsAttribute()
+    {
+        $docs = $this->kknRegistrationDocuments;
+        $mapped = [];
+
+        foreach ($docs as $doc) {
+            $key = $doc->doc_type;
+            
+            // Map legacy/indonesian keys to frontend expected keys
+            switch ($key) {
+                case 'transkrip':
+                    $key = 'transcript';
+                    break;
+                case 'sehat':
+                    $key = 'health';
+                    break;
+                case 'required_photo':
+                    $key = 'photo';
+                    break;
+                case 'krs':
+                    $key = 'krs';
+                    break;
+            }
+            
+            $mapped[$key] = $doc;
+        }
+
+        return (object) $mapped;
+    }
+
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');

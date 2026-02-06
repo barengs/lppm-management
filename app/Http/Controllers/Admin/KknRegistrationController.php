@@ -48,7 +48,8 @@ class KknRegistrationController extends Controller
             'fiscalYear',
             'dpl',
             'reviewer',
-            'logs.creator'
+            'logs.creator',
+            'kknRegistrationDocuments'
         ])->findOrFail($id);
 
         return response()->json($registration);
