@@ -140,6 +140,19 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/{id}/note', [App\Http\Controllers\Admin\KknRegistrationController::class, 'addNote']);
     });
     
+    // Admin KKN Document Template Management
+    Route::prefix('admin/kkn-document-templates')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'store']);
+        Route::put('/{id}', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'destroy']);
+        Route::post('/reorder', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'reorder']);
+    });
+    
+    // Public endpoint for fetching document templates (for registration form)
+    Route::get('kkn-document-templates', [App\Http\Controllers\Admin\KknDocumentTemplateController::class, 'getForFiscalYear']);
+    
+    
     // KKN Reporting & Guidance
     Route::apiResource('kkn-reports', App\Http\Controllers\KknReportController::class);
     Route::put('kkn-reports/{id}/status', [App\Http\Controllers\KknReportController::class, 'updateStatus']); // Review

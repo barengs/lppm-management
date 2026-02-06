@@ -41,12 +41,8 @@ export default function KknStudentRegistration() {
         date_of_birth: '',
         jacket_size: '',
     });
-    const [documents, setDocuments] = useState([
-        { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
-        { id: 'transkrip', name: 'Transkrip Nilai Sementara', file: null, required: true, type: 'required' },
-        { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' },
-        { id: 'sehat', name: 'Surat Keterangan Sehat', file: null, required: false, type: 'optional' },
-    ]);
+    const [documents, setDocuments] = useState([]);
+    const [documentTemplates, setDocumentTemplates] = useState([]);
     const [files, setFiles] = useState({ photo: null });
     
     // Photo Upload State
@@ -65,6 +61,13 @@ export default function KknStudentRegistration() {
         fetchData();
         fetchProfile();
     }, [token]);
+
+    // Fetch document templates when fiscal year changes
+    useEffect(() => {
+        if (accountData.fiscal_year_id) {
+            fetchDocumentTemplates(accountData.fiscal_year_id);
+        }
+    }, [accountData.fiscal_year_id]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -112,6 +115,29 @@ export default function KknStudentRegistration() {
             console.error("Failed to fetch profile");
         }
     }
+
+    const fetchDocumentTemplates = async (fiscalYearId) => {
+        try {
+            const response = await api.get(`/kkn-document-templates?fiscal_year_id=${fiscalYearId}`);
+            const templates = response.data;
+            
+            // Transform templates into document state format
+            const docs = templates.map(template => ({
+                id: template.slug,
+                name: template.name,
+                file: null,
+                required: template.is_required,
+                type: template.is_required ? 'required' : 'optional',
+                description: template.description
+            }));
+            
+            setDocumentTemplates(templates);
+            setDocuments(docs);
+        } catch (error) {
+            console.error('Error fetching document templates:', error);
+            toast.error('Gagal memuat template dokumen');
+        }
+    };
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
