@@ -46,6 +46,7 @@ import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
 import KknStudentRegistration from './pages/kkn/Registration';
 import KknParticipantsIndex from './pages/kkn/Participants';
+import KknDocumentTemplates from './pages/admin/KknDocumentTemplates';
 import StudentKknStatus from './pages/student/KknStatus';
 
 // KKN Posko Management
@@ -221,6 +222,7 @@ export default function Main() {
                         
                         {/* KKN Assessment (Admin/Staff) */}
                         <Route path="kkn/assessment" element={<KknAssessment />} />
+                        <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
 
                         {/* CMS */}
                         <Route path="cms/posts" element={<PostsIndex />} />

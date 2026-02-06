@@ -54,6 +54,59 @@ class KknRegistration extends Model
         return $this->hasMany(KknRegistrationLog::class, 'registration_id')->orderBy('created_at', 'desc');
     }
 
+    protected $appends = ['documents'];
+
+    public function getDocumentsAttribute()
+    {
+        $docs = $this->kknRegistrationDocuments;
+        $mapped = [];
+
+        foreach ($docs as $doc) {
+            $key = $doc->doc_type;
+            
+            // Map to frontend expected keys
+            switch ($key) {
+                case 'transkrip':
+                    $key = 'transcript';
+                    break;
+                case 'sehat':
+                    $key = 'health';
+                    break;
+                case 'ortu':
+                    $key = 'parent_letter';
+                    break;
+                case 'required_photo':
+                    $key = 'photo';
+                    break;
+                case 'krs':
+                    $key = 'krs';
+                    break;
+                case 'required':
+                case 'optional':
+                case 'custom':
+                    // For generic types, try to infer from document name
+                    $name = strtolower($doc->name);
+                    if (str_contains($name, 'krs') || str_contains($name, 'rencana studi')) {
+                        $key = 'krs';
+                    } elseif (str_contains($name, 'transkrip') || str_contains($name, 'nilai')) {
+                        $key = 'transcript';
+                    } elseif (str_contains($name, 'sehat') || str_contains($name, 'kesehatan')) {
+                        $key = 'health';
+                    } elseif (str_contains($name, 'orang tua') || str_contains($name, 'ortu') || str_contains($name, 'izin')) {
+                        $key = 'parent_letter';
+                    } else {
+                        // Use a unique key based on ID to avoid overwriting
+                        $key = 'doc_' . $doc->id;
+                    }
+                    break;
+            }
+            
+            $mapped[$key] = $doc;
+        }
+
+        return (object) $mapped;
+    }
+
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');

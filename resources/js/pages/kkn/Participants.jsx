@@ -582,29 +582,32 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                             </div>
                         )}
 
-                        {/* Documents Tab */}
+                        {/* Documents Tab - Dynamic */}
                         {activeTab === 'documents' && (
                             <div className="grid grid-cols-2 gap-4">
-                                <DocumentCard
-                                    document={registration.documents?.krs}
-                                    title="KRS"
-                                    onPreview={() => handlePreview(registration.documents?.krs, 'Kartu Rencana Studi (KRS)')}
-                                />
-                                <DocumentCard
-                                    document={registration.documents?.health}
-                                    title="Surat Sehat"
-                                    onPreview={() => handlePreview(registration.documents?.health, 'Surat Keterangan Sehat')}
-                                />
-                                <DocumentCard
-                                    document={registration.documents?.transcript}
-                                    title="Transkrip Nilai"
-                                    onPreview={() => handlePreview(registration.documents?.transcript, 'Transkrip Nilai')}
-                                />
-                                <DocumentCard
-                                    document={registration.documents?.photo}
-                                    title="Foto"
-                                    onPreview={() => handlePreview(registration.documents?.photo, 'Foto Mahasiswa')}
-                                />
+                                {registration.documents && Object.entries(registration.documents).map(([key, doc]) => {
+                                    if (!doc || !doc.file_path) return null;
+                                    
+                                    // Generate readable title from key or use doc name
+                                    const title = doc.name || key.split('_').map(word => 
+                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                    ).join(' ');
+                                    
+                                    return (
+                                        <DocumentCard
+                                            key={key}
+                                            document={doc}
+                                            title={title}
+                                            onPreview={() => handlePreview(doc, title)}
+                                        />
+                                    );
+                                })}
+                                {(!registration.documents || Object.keys(registration.documents).length === 0) && (
+                                    <div className="col-span-2 text-center py-8 text-gray-500">
+                                        <FileText size={48} className="mx-auto mb-2 opacity-50" />
+                                        <p>Tidak ada dokumen yang diupload</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

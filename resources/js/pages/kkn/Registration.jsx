@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../../utils/api'; 
 import useAuthStore from '../../store/useAuthStore';
-import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
+import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function KknStudentRegistration() {
@@ -17,27 +17,32 @@ export default function KknStudentRegistration() {
     const [filteredPrograms, setFilteredPrograms] = useState([]);
     
     // Form States
+    const isAdmin = user?.role === 'admin';
     const [step, setStep] = useState(1);
-    const [profileData, setProfileData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        npm: user?.mahasiswa_profile?.npm || '',
-        prodi: user?.mahasiswa_profile?.prodi || '',
-        fakultas: user?.mahasiswa_profile?.fakultas || '',
-        phone: user?.mahasiswa_profile?.phone || '',
-        address: user?.mahasiswa_profile?.address || '',
-        ips: user?.mahasiswa_profile?.ips || '',
-        gender: user?.mahasiswa_profile?.gender || '',
-        place_of_birth: user?.mahasiswa_profile?.place_of_birth || '',
-        date_of_birth: user?.mahasiswa_profile?.date_of_birth || '',
-        jacket_size: user?.mahasiswa_profile?.jacket_size || '',
+    
+    // Account Data (For Admin creating new student)
+    const [accountData, setAccountData] = useState({
+        email: '',
+        password: '',
+        confirmPassword: '',
     });
-    const [documents, setDocuments] = useState([
-        { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
-        { id: 'transkrip', name: 'Transkrip Nilai Sementara', file: null, required: true, type: 'required' },
-        { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' },
-        { id: 'sehat', name: 'Surat Keterangan Sehat', file: null, required: false, type: 'optional' },
-    ]);
+    const [errors, setErrors] = useState({});
+
+    const [profileData, setProfileData] = useState({
+        name: '',
+        npm: '',
+        prodi: '',
+        fakultas: '',
+        phone: '',
+        address: '',
+        ips: '',
+        gender: '',
+        place_of_birth: '',
+        date_of_birth: '',
+        jacket_size: '',
+    });
+    const [documents, setDocuments] = useState([]);
+    const [documentTemplates, setDocumentTemplates] = useState([]);
     const [files, setFiles] = useState({ photo: null });
     
     // Photo Upload State
@@ -47,11 +52,22 @@ export default function KknStudentRegistration() {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
+    // Password Visibility State
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     // Fetch initial data
     useEffect(() => {
         fetchData();
         fetchProfile();
     }, [token]);
+
+    // Fetch document templates when fiscal year changes
+    useEffect(() => {
+        if (accountData.fiscal_year_id) {
+            fetchDocumentTemplates(accountData.fiscal_year_id);
+        }
+    }, [accountData.fiscal_year_id]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -75,12 +91,14 @@ export default function KknStudentRegistration() {
     };
 
     const fetchProfile = async () => {
+        // Only fetch profile for students, Admin starts blank
+        if (isAdmin) return;
+
         try {
             const { data } = await api.get('/profile/me');
             if (data && data.mahasiswa_profile) {
                 setProfileData({
                     name: data.name,
-                    email: data.email,
                     npm: data.mahasiswa_profile.npm || '',
                     prodi: data.mahasiswa_profile.prodi || '',
                     fakultas: data.mahasiswa_profile.fakultas || '',
@@ -90,12 +108,36 @@ export default function KknStudentRegistration() {
                     gender: data.mahasiswa_profile.gender || '',
                     place_of_birth: data.mahasiswa_profile.place_of_birth || '',
                     date_of_birth: data.mahasiswa_profile.date_of_birth || '',
+                    jacket_size: data.mahasiswa_profile.jacket_size || '',
                 });
             }
         } catch (error) {
             console.error("Failed to fetch profile");
         }
     }
+
+    const fetchDocumentTemplates = async (fiscalYearId) => {
+        try {
+            const response = await api.get(`/kkn-document-templates?fiscal_year_id=${fiscalYearId}`);
+            const templates = response.data;
+            
+            // Transform templates into document state format
+            const docs = templates.map(template => ({
+                id: template.slug,
+                name: template.name,
+                file: null,
+                required: template.is_required,
+                type: template.is_required ? 'required' : 'optional',
+                description: template.description
+            }));
+            
+            setDocumentTemplates(templates);
+            setDocuments(docs);
+        } catch (error) {
+            console.error('Error fetching document templates:', error);
+            toast.error('Gagal memuat template dokumen');
+        }
+    };
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
@@ -209,9 +251,14 @@ export default function KknStudentRegistration() {
         formData.append('ips', profileData.ips);
         formData.append('gender', profileData.gender);
         formData.append('place_of_birth', profileData.place_of_birth);
-        formData.append('place_of_birth', profileData.place_of_birth);
         formData.append('date_of_birth', profileData.date_of_birth);
         formData.append('jacket_size', profileData.jacket_size || '');
+
+        // Account Data (Admin only)
+        if (isAdmin) {
+            formData.append('email', accountData.email);
+            formData.append('password', accountData.password);
+        }
 
         // Registration Data (location is optional now)
         formData.append('fiscal_year_id', selectedFy);
@@ -223,7 +270,8 @@ export default function KknStudentRegistration() {
             if (doc.file) {
                  formData.append(`documents[${index}][name]`, doc.name);
                  formData.append(`documents[${index}][file]`, doc.file);
-                 formData.append(`documents[${index}][type]`, doc.type);
+                 // Send doc.id (e.g. 'krs', 'transkrip') as the type identifier
+                 formData.append(`documents[${index}][type]`, doc.id);
             }
         });
 
@@ -289,8 +337,13 @@ export default function KknStudentRegistration() {
 
             {/* Stepper */}
             <div className="flex justify-between items-center mb-8">
-                {['Data Diri & Akademik', 'Dokumen Pendukung', 'Upload Foto'].map((label, idx) => (
-                    <div key={idx} className={`flex flex-col items-center w-1/3 cursor-pointer ${step === idx + 1 ? 'opacity-100' : 'opacity-50'}`} onClick={() => setStep(idx + 1)}>
+                {[
+                    ...(isAdmin ? ['Akun & Data Akademik'] : []), // Updated Label
+                    isAdmin ? 'Data Pribadi' : 'Data Diri & Akademik', 
+                    'Dokumen Pendukung', 
+                    'Upload Foto'
+                ].map((label, idx) => (
+                    <div key={idx} className={`flex flex-col items-center flex-1 cursor-pointer ${step === idx + 1 ? 'opacity-100' : 'opacity-50'}`} onClick={() => setStep(idx + 1)}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-2 ${step > idx ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
                             {idx + 1}
                         </div>
@@ -301,19 +354,227 @@ export default function KknStudentRegistration() {
 
             <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
                 
-                {/* Step 1: Profile */}
-                {step === 1 && (
+                {/* Step 1 (Admin Only): Account & Academic Data */}
+                {isAdmin && step === 1 && (
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Data Diri</h3>
+                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Buat Akun Mahasiswa</h3>
+                         
+                         {/* Account Info */}
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="email" 
+                                    value={accountData.email} 
+                                    onChange={e => {
+                                        setAccountData({...accountData, email: e.target.value});
+                                        if (errors.email) setErrors({...errors, email: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.email ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required 
+                                />
+                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                            </div>
+                            <div className="hidden md:block"></div> {/* Spacer */}
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
+                                <div className="relative">
+                                    <input 
+                                        type={showPassword ? "text" : "password"} 
+                                        value={accountData.password} 
+                                        onChange={e => {
+                                            setAccountData({...accountData, password: e.target.value});
+                                            if (errors.password) setErrors({...errors, password: ''});
+                                        }} 
+                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.password ? 'border-red-500' : 'border-gray-300'}`} 
+                                        required 
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 top-1"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Konfirmasi Password <span className="text-red-500">*</span></label>
+                                <div className="relative">
+                                    <input 
+                                        type={showConfirmPassword ? "text" : "password"} 
+                                        value={accountData.confirmPassword} 
+                                        onChange={e => {
+                                            setAccountData({...accountData, confirmPassword: e.target.value});
+                                            if (errors.confirmPassword) setErrors({...errors, confirmPassword: ''});
+                                        }} 
+                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} 
+                                        required 
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 top-1"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                            </div>
+                        </div>
+
+                        <hr className="my-4" />
+
+                        {/* Public Data */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                                <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
+                                <label className="block text-sm font-medium text-gray-700">Nama Lengkap <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={profileData.name} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.name) setErrors({...errors, name: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.name ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required 
+                                />
+                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">NPM</label>
-                                <input type="text" name="npm" value={profileData.npm} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
+                                <label className="block text-sm font-medium text-gray-700">NPM <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    name="npm" 
+                                    value={profileData.npm} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.npm) setErrors({...errors, npm: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.npm ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required 
+                                />
+                                {errors.npm && <p className="text-red-500 text-xs mt-1">{errors.npm}</p>}
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Fakultas <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="fakultas" 
+                                    value={profileData.fakultas} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.fakultas) setErrors({...errors, fakultas: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.fakultas ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required
+                                >
+                                    <option value="">Pilih Fakultas</option>
+                                    {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                </select>
+                                {errors.fakultas && <p className="text-red-500 text-xs mt-1">{errors.fakultas}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Program Studi <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="prodi" 
+                                    value={profileData.prodi} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.prodi) setErrors({...errors, prodi: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.prodi ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required 
+                                    disabled={!profileData.fakultas}
+                                >
+                                    <option value="">Pilih Program Studi</option>
+                                    {filteredPrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                {errors.prodi && <p className="text-red-500 text-xs mt-1">{errors.prodi}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="jacket_size" 
+                                    value={profileData.jacket_size} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.jacket_size) setErrors({...errors, jacket_size: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.jacket_size ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required
+                                >
+                                    <option value="">Pilih Ukuran</option>
+                                    {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
+                                        <option key={size} value={size}>{size}</option>
+                                    ))}
+                                </select>
+                                {errors.jacket_size && <p className="text-red-500 text-xs mt-1">{errors.jacket_size}</p>}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end mt-6">
+                            <button 
+                                onClick={() => {
+                                    // Validation for Step 1
+                                    const newErrors = {};
+                                    if (!accountData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountData.email)) {
+                                        newErrors.email = "Email tidak valid";
+                                    }
+                                    if (!accountData.password) {
+                                        newErrors.password = "Password wajib diisi";
+                                    } else if (accountData.password.length < 6) {
+                                        newErrors.password = "Password minimal 6 karakter";
+                                    }
+                                    if (accountData.password !== accountData.confirmPassword) {
+                                        newErrors.confirmPassword = "Password tidak cocok";
+                                    }
+                                    
+                                    if (!profileData.name) newErrors.name = "Nama wajib diisi";
+                                    if (!profileData.npm) newErrors.npm = "NPM wajib diisi";
+                                    if (!profileData.fakultas) newErrors.fakultas = "Fakultas wajib dipilih";
+                                    if (!profileData.prodi) newErrors.prodi = "Program studi wajib dipilih";
+                                    if (!profileData.jacket_size) newErrors.jacket_size = "Ukuran jaket wajib dipilih";
+
+                                    if (Object.keys(newErrors).length > 0) {
+                                        setErrors(newErrors);
+                                        toast.error("Mohon lengkapi data dengan benar.");
+                                    } else {
+                                        setErrors({});
+                                        setStep(2);
+                                    }
+                                }} 
+                                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+                            >
+                                Lanjut
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Step 2 (or 1 for Student): Profile / Data Pribadi */}
+                {(isAdmin ? step === 2 : step === 1) && (
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> {isAdmin ? 'Data Pribadi' : 'Data Diri'}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
+                            {/* Student Fields (Only show in Step 1 for Non-Admin) */}
+                            {!isAdmin && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                        <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">NPM</label>
+                                        <input type="text" name="npm" value={profileData.npm} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
+                                    </div>
+                                </>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
@@ -335,20 +596,26 @@ export default function KknStudentRegistration() {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Fakultas</label>
-                                <select name="fakultas" value={profileData.fakultas} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
-                                    <option value="">Pilih Fakultas</option>
-                                    {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Program Studi</label>
-                                <select name="prodi" value={profileData.prodi} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required disabled={!profileData.fakultas}>
-                                    <option value="">Pilih Program Studi</option>
-                                    {filteredPrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
+                            {/* Student Fields (Only show in Step 1 for Non-Admin) */}
+                            {!isAdmin && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Fakultas</label>
+                                        <select name="fakultas" value={profileData.fakultas} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
+                                            <option value="">Pilih Fakultas</option>
+                                            {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Program Studi</label>
+                                        <select name="prodi" value={profileData.prodi} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required disabled={!profileData.fakultas}>
+                                            <option value="">Pilih Program Studi</option>
+                                            {filteredPrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">No. HP / WA</label>
                                 <input type="text" name="phone" value={profileData.phone} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
@@ -362,24 +629,27 @@ export default function KknStudentRegistration() {
                                 <textarea name="address" rows="3" value={profileData.address} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required></textarea>
                             </div>
                             
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos</label>
-                                <select name="jacket_size" value={profileData.jacket_size} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
-                                    <option value="">Pilih Ukuran</option>
-                                    {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
-                                        <option key={size} value={size}>{size}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {!isAdmin && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos</label>
+                                    <select name="jacket_size" value={profileData.jacket_size} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
+                                        <option value="">Pilih Ukuran</option>
+                                        {['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
+                                            <option key={size} value={size}>{size}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end mt-6">
-                            <button onClick={() => setStep(2)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
+                            {isAdmin && <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2 mr-2">Kembali</button>}
+                            <button onClick={() => setStep(isAdmin ? 3 : 2)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
                         </div>
                     </div>
                 )}
 
-                {/* Step 2: Documents */}
-                {step === 2 && (
+                {/* Step 3 (or 2 for Student): Documents */}
+                {(isAdmin ? step === 3 : step === 2) && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen Pendukung</h3>
                         
@@ -458,14 +728,14 @@ export default function KknStudentRegistration() {
                         </button>
 
                         <div className="flex justify-between mt-6">
-                            <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
-                            <button onClick={() => setStep(3)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
+                            <button onClick={() => setStep(isAdmin ? 2 : 1)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                            <button onClick={() => setStep(isAdmin ? 4 : 3)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
                         </div>
                     </div>
                 )}
 
-                {/* Step 3: Photo Upload */}
-                {step === 3 && (
+                {/* Step 4 (or 3 for Student): Photo Upload */}
+                {(isAdmin ? step === 4 : step === 3) && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
                         
@@ -549,7 +819,7 @@ export default function KknStudentRegistration() {
                         </div>
 
                         <div className="flex justify-between mt-8 border-t pt-6">
-                            <button onClick={() => setStep(2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                            <button onClick={() => setStep(isAdmin ? 3 : 2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
                             <button 
                                 onClick={handleRegister} 
                                 disabled={isLoading}

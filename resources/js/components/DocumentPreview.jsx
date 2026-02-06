@@ -13,15 +13,27 @@ export default function DocumentPreview({ document, title, onClose }) {
         );
     }
 
-    const fileUrl = `/storage/${document}`;
-    const fileExtension = document.split('.').pop().toLowerCase();
+    // Handle both string path (legacy) and document object
+    const filePath = typeof document === 'object' ? document.file_path : document;
+    
+    if (!filePath || typeof filePath !== 'string') {
+        return (
+             <div className="text-center py-8 text-gray-500">
+                <FileText size={48} className="mx-auto mb-2 opacity-50" />
+                <p>Format dokumen tidak valid</p>
+            </div>
+        );
+    }
+
+    const fileUrl = `/storage/${filePath}`;
+    const fileExtension = filePath.split('.').pop().toLowerCase();
     const isPDF = fileExtension === 'pdf';
-    const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
 
     const handleDownload = () => {
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = fileUrl;
-        link.download = document.split('/').pop();
+        link.download = filePath.split('/').pop();
         link.click();
     };
 
@@ -124,9 +136,14 @@ export function DocumentCard({ document, title, icon: Icon = FileText, onPreview
         );
     }
 
-    const fileExtension = document.split('.').pop().toLowerCase();
+    // Handle both string path (legacy) and document object
+    const filePath = typeof document === 'object' ? document.file_path : document;
+    
+    if (!filePath || typeof filePath !== 'string') return null;
+
+    const fileExtension = filePath.split('.').pop().toLowerCase();
     const isPDF = fileExtension === 'pdf';
-    const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
 
     return (
         <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all">
@@ -150,7 +167,7 @@ export function DocumentCard({ document, title, icon: Icon = FileText, onPreview
                     <span>Preview</span>
                 </button>
                 <a
-                    href={`/storage/${document}`}
+                    href={`/storage/${filePath}`}
                     download
                     className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                     title="Download"
