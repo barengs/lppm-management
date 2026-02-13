@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { Image, Plus, Trash2 } from 'lucide-react';
 
 export default function GalleriesIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [galleries, setGalleries] = useState([]);
     
     // Simple placeholder for now as backend for Gallery Items is complex

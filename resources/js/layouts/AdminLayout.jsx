@@ -3,13 +3,16 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import DateTimePeriod from '../components/DateTimePeriod';
 import NotificationDropdown from '../components/NotificationDropdown';
-import useAuthStore from '../store/useAuthStore';
-import useSidebarStore from '../store/useSidebarStore';
+import { useAuth } from '../hooks/useAuth';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectIsCollapsed, toggleSidebar as toggleSidebarAction } from '../store/slices/sidebarSlice';
 import { Menu, Bell } from 'lucide-react';
 
 export default function AdminLayout() {
-    const { user } = useAuthStore();
-    const { isCollapsed, toggleSidebar } = useSidebarStore();
+    const { user } = useAuth();
+    const dispatch = useDispatch();
+    const isCollapsed = useSelector(selectIsCollapsed);
+    const toggleSidebar = () => dispatch(toggleSidebarAction());
 
     // Dynamic classes based on collapsed state
     const sidebarWidth = isCollapsed ? 'w-20' : 'w-64';

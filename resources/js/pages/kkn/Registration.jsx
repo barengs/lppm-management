@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useGetFiscalYearsQuery, useGetFacultiesQuery, useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
@@ -9,7 +9,7 @@ import { useGetProfileQuery } from '../../store/api/authApi';
 
 export default function KknStudentRegistration() {
     const navigate = useNavigate();
-    const { user } = useAuthStore();
+    const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
     
     // Form States

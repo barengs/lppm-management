@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { FileText, Plus, Trash2, Download, Edit } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 
 export default function DocumentsIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [documents, setDocuments] = useState([]);
     
     // Upload/Edit State

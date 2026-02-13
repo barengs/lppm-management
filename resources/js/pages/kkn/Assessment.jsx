@@ -1,135 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
 import { Download, Save, FileText, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import { useGetKknGradesQuery, useSaveKknGradeMutation, useExportKknGradesMutation, useGetKknLocationsQuery, useGetPostosQuery } from '../../store/api/kknApi';
+import { useGetFacultiesQuery, useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
 
 export default function KknAssessment() {
-    const { token } = useAuthStore();
-    const [registrations, setRegistrations] = useState([]);
-    
-    // Master Data
-    const [locations, setLocations] = useState([]);
-    const [postos, setPostos] = useState([]);
-    const [faculties, setFaculties] = useState([]);
-    const [prodis, setProdis] = useState([]);
-
     // Filters
     const [filterLocation, setFilterLocation] = useState('');
     const [filterPosto, setFilterPosto] = useState('');
     const [filterFaculty, setFilterFaculty] = useState('');
     const [filterProdi, setFilterProdi] = useState('');
 
-    const [loading, setLoading] = useState(true);
     const [grading, setGrading] = useState(null); // ID of registration being graded
     const [scoreInput, setScoreInput] = useState('');
 
-    useEffect(() => {
-        fetchLocations();
-        fetchFaculties();
-        fetchProdis();
-    }, []);
+    // Build query params
+    const gradesParams = {
+        ...(filterLocation && { kkn_location_id: filterLocation }),
+        ...(filterPosto && { kkn_posto_id: filterPosto }),
+        ...(filterFaculty && { faculty_id: filterFaculty }),
+        ...(filterProdi && { prodi_id: filterProdi }),
+    };
 
+    // RTK Query hooks
+    const { data: gradesData, isLoading } = useGetKknGradesQuery(gradesParams);
+    const { data: locations = [] } = useGetKknLocationsQuery();
+    const { data: postos = [] } = useGetPostosQuery(
+        { kkn_location_id: filterLocation },
+        { skip: !filterLocation }
+    );
+    const { data: faculties = [] } = useGetFacultiesQuery();
+    const { data: studyPrograms = [] } = useGetStudyProgramsQuery();
+
+    const [saveGrade] = useSaveKknGradeMutation();
+    const [exportGrades] = useExportKknGradesMutation();
+
+    const registrations = gradesData?.data || [];
+
+    // Reset posto filter when location changes
     useEffect(() => {
-        if (filterLocation) {
-            fetchPostos(filterLocation);
-        } else {
-            setPostos([]);
+        if (!filterLocation) {
             setFilterPosto('');
         }
     }, [filterLocation]);
 
-    useEffect(() => {
-        fetchRegistrations();
-    }, [filterLocation, filterPosto, filterFaculty, filterProdi]);
-
-    const fetchLocations = async () => {
-        try {
-            const response = await axios.get('/api/kkn-locations', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setLocations(response.data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const fetchPostos = async (locationId) => {
-        try {
-            const response = await axios.get('/api/kkn/postos', {
-                headers: { Authorization: `Bearer ${token}` },
-                params: { kkn_location_id: locationId }
-            });
-            setPostos(response.data.data || response.data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const fetchFaculties = async () => {
-        try {
-            const response = await axios.get('/api/faculties', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setFaculties(response.data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const fetchProdis = async () => {
-        try {
-            const response = await axios.get('/api/study-programs', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProdis(response.data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const fetchRegistrations = async () => {
-        setLoading(true);
-        try {
-            const params = {};
-            if (filterLocation) params.kkn_location_id = filterLocation;
-            if (filterPosto) params.kkn_posto_id = filterPosto;
-            if (filterFaculty) params.faculty_id = filterFaculty;
-            if (filterProdi) params.prodi_id = filterProdi;
-            
-            const response = await axios.get('/api/kkn-grades', {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            });
-            setRegistrations(response.data.data);
-        } catch (error) {
-            toast.error("Gagal memuat data mahasiswa.");
-        }
-        setLoading(false);
-    };
-
     const handleExport = async () => {
         try {
-            const params = {};
-            if (filterLocation) params.kkn_location_id = filterLocation;
-            if (filterPosto) params.kkn_posto_id = filterPosto;
-            if (filterFaculty) params.faculty_id = filterFaculty;
-            if (filterProdi) params.prodi_id = filterProdi;
-
-            const response = await axios.get('/api/kkn-grades/export', {
-                headers: { Authorization: `Bearer ${token}` },
-                params,
-                responseType: 'blob'
-            });
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Rekap_Nilai_KKN_${new Date().getTime()}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            await exportGrades(gradesParams).unwrap();
         } catch (error) {
             toast.error("Gagal mengunduh PDF.");
             console.error(error);
@@ -143,16 +61,13 @@ export default function KknAssessment() {
         }
 
         try {
-            await axios.post('/api/kkn-grades', {
+            await saveGrade({
                 kkn_registration_id: regId,
                 numeric_score: scoreInput
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            }).unwrap();
             
             toast.success("Nilai berhasil disimpan.");
             setGrading(null);
-            fetchRegistrations();
         } catch (error) {
             toast.error("Gagal menyimpan nilai.");
         }
@@ -353,7 +268,7 @@ export default function KknAssessment() {
                                 onChange={e => setFilterProdi(e.target.value)}
                             >
                                 <option value="">Semua Prodi</option>
-                                {prodis
+                                {studyPrograms
                                     .filter(p => !filterFaculty || p.faculty_id == filterFaculty)
                                     .map(prodi => (
                                         <option key={prodi.id} value={prodi.id}>{prodi.name}</option>
@@ -378,7 +293,7 @@ export default function KknAssessment() {
                         enableSorting: true,
                         enablePagination: true,
                         searchPlaceholder: 'Cari mahasiswa...',
-                        emptyMessage: loading ? 'Memuat data...' : 'Tidak ada mahasiswa yang siap dinilai (Status ACC).'
+                        emptyMessage: isLoading ? 'Memuat data...' : 'Tidak ada mahasiswa yang siap dinilai (Status ACC).'
                     }}
                 />
             </div>

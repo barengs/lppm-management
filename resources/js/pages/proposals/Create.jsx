@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { Upload, DollarSign, FileText } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
 export default function CreateProposal() {
     const navigate = useNavigate();
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     
     // Form State
     const [title, setTitle] = useState('');

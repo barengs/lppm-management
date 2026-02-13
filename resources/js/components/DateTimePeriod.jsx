@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import axios from 'axios';
-import useAuthStore from '../store/useAuthStore';
+import { useAuth } from '../hooks/useAuth';
 
 export default function DateTimePeriod() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [activePeriod, setActivePeriod] = useState(null);
-    const { token } = useAuthStore();
+    const { token } = useAuth();
 
     // Update clock every second
     useEffect(() => {

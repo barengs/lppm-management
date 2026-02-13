@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { MapPin, Calendar, CheckCircle } from 'lucide-react';
 import api from '../../utils/api';
 
 export default function PublicKknRegister() {
-    const { token, user } = useAuthStore();
+    const { token, user } = useAuth();
     const [pageContent, setPageContent] = React.useState(null);
 
     React.useEffect(() => {

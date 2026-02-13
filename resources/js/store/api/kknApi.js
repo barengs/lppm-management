@@ -345,6 +345,63 @@ export const kknApi = baseApi.injectEndpoints({
                 },
             }),
         }),
+
+        getAvailableStudents: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn/postos/available-students',
+                params,
+            }),
+            providesTags: ['AvailableStudents'],
+        }),
+
+        addPostoMember: builder.mutation({
+            query: ({ postoId, student_id, position }) => ({
+                url: `/kkn/postos/${postoId}/members`,
+                method: 'POST',
+                body: { student_id, position },
+            }),
+            invalidatesTags: (result, error, { postoId }) => [
+                { type: 'Postos', id: postoId },
+                'AvailableStudents',
+            ],
+        }),
+
+        // ============ Assessments/Grades ============
+        getKknGrades: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn-grades',
+                params,
+            }),
+            providesTags: ['KknGrades'],
+        }),
+
+        saveKknGrade: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-grades',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['KknGrades'],
+        }),
+
+        exportKknGrades: builder.mutation({
+            query: (params = {}) => ({
+                url: '/kkn-grades/export',
+                params,
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Rekap_Nilai_KKN_${new Date().getTime()}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
+        }),
     }),
 });
 
@@ -385,4 +442,11 @@ export const {
     useUpdatePostoStatusMutation,
     useImportPostosMutation,
     useDownloadPostoTemplateMutation,
+    useGetAvailableStudentsQuery,
+    useAddPostoMemberMutation,
+    
+    // Assessments/Grades
+    useGetKknGradesQuery,
+    useSaveKknGradeMutation,
+    useExportKknGradesMutation,
 } = kknApi;

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../utils/api'; 
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function KknStudentRegistration() {
-    const { token, user } = useAuthStore();
+    const { token, user } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
     const [selectedFy, setSelectedFy] = useState('');

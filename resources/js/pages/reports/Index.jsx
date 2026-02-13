@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { FileText, Calendar, CheckCircle, XCircle, AlertCircle, Eye, MessageSquare, Download, Search, ChevronRight, User, Home, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function ReportsIndex() {
-    const { token, user } = useAuthStore();
+    const { token, user } = useAuth();
     
     // UI State
     const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'final'

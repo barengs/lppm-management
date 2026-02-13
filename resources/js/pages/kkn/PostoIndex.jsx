@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../utils/api';
 import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle, Upload, Download, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation } from '../../store/api/kknApi';
+import { useGetFiscalYearsQuery } from '../../store/api/masterDataApi';
+import { useGetKknLocationsQuery } from '../../store/api/kknApi';
 
 export default function PostoIndex() {
-    const [postos, setPostos] = useState([]);
-    const [fiscalYears, setFiscalYears] = useState([]);
-    const [locations, setLocations] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState({
         fiscal_year_id: '',
         status: '',
@@ -19,10 +17,27 @@ export default function PostoIndex() {
     // Import Modal State
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [importFile, setImportFile] = useState(null);
-    const [isImporting, setIsImporting] = useState(false);
 
-    const handleDownloadTemplate = () => {
-        window.open('/api/kkn/postos/template', '_blank');
+    // RTK Query hooks
+    const { data: postosData, isLoading } = useGetPostosQuery(filters);
+    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: locationsData } = useGetKknLocationsQuery();
+    const [deletePosto] = useDeletePostoMutation();
+    const [importPostos, { isLoading: isImporting }] = useImportPostosMutation();
+    const [downloadTemplate] = useDownloadPostoTemplateMutation();
+
+    // Derived data
+    const postos = postosData || [];
+    const fiscalYears = fiscalYearsData || [];
+    const locations = locationsData || [];
+
+    const handleDownloadTemplate = async () => {
+        try {
+            await downloadTemplate().unwrap();
+        } catch (error) {
+            console.error('Failed to download template:', error);
+            toast.error('Gagal mengunduh template');
+        }
     };
 
     const handleImport = async (e) => {
@@ -35,44 +50,14 @@ export default function PostoIndex() {
         const formData = new FormData();
         formData.append('file', importFile);
 
-        setIsImporting(true);
         try {
-            await api.post('/kkn/postos/import', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await importPostos(formData).unwrap();
             toast.success('Import berhasil');
             setIsImportModalOpen(false);
             setImportFile(null);
-            fetchData(); // Refresh data
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || 'Gagal import data');
-        } finally {
-            setIsImporting(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [filters]);
-
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [postosRes, fiscalYearsRes, locationsRes] = await Promise.all([
-                api.get('/kkn/postos', { params: filters }),
-                api.get('/fiscal-years'),
-                api.get('/kkn-locations'),
-            ]);
-
-            setPostos(postosRes.data);
-            setFiscalYears(fiscalYearsRes.data);
-            setLocations(locationsRes.data);
-        } catch (error) {
-            console.error('Failed to fetch data:', error);
-            toast.error('Gagal memuat data posko');
-        } finally {
-            setIsLoading(false);
+            toast.error(error.data?.message || 'Gagal import data');
         }
     };
 
@@ -80,9 +65,8 @@ export default function PostoIndex() {
         if (!confirm('Apakah Anda yakin ingin menghapus posko ini?')) return;
 
         try {
-            await api.delete(`/kkn/postos/${id}`);
+            await deletePosto(id).unwrap();
             toast.success('Posko berhasil dihapus');
-            fetchData();
         } catch (error) {
             console.error('Failed to delete posto:', error);
             toast.error('Gagal menghapus posko');

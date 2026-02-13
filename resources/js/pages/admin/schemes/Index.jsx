@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function SchemesIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [schemes, setSchemes] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', type: 'research', max_budget: '' });

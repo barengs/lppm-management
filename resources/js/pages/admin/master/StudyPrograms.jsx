@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { School, Plus, Trash2, Edit, Upload, Download } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function StudyPrograms() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [studyPrograms, setStudyPrograms] = useState([]);
     const [faculties, setFaculties] = useState([]);
     

@@ -5,7 +5,7 @@ import {
     User, FileText, MapPin, Calendar, Award, Mail, Phone,
     RefreshCw, Download, Eye
 } from 'lucide-react';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 
@@ -37,7 +37,7 @@ const STATUS_CONFIG = {
 };
 
 export default function StudentKknStatus() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [registration, setRegistration] = useState(null);
     const [profile, setProfile] = useState(null);

@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send, Paperclip, FileText, User, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '../../utils/api';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function JournalShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuthStore();
+    const { user } = useAuth();
     const [journal, setJournal] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');

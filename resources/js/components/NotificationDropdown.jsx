@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import useAuthStore from '../store/useAuthStore';
+import { useAuth } from '../hooks/useAuth';
 
 export default function NotificationDropdown() {
-    const { user, token } = useAuthStore();
+    const { user, token } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);

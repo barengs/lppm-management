@@ -6,6 +6,8 @@ const initialState = {
     isAuthenticated: !!localStorage.getItem('token'),
     isLocked: false,
     lastActivity: Date.now(),
+    isLoading: false,
+    error: null,
 };
 
 const authSlice = createSlice({
@@ -13,10 +15,21 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         setCredentials: (state, action) => {
-            state.user = action.payload.user;
-            state.token = action.payload.token;
+            const { user, token } = action.payload;
+            
+            // Only update user if provided (not null/undefined)
+            if (user !== undefined && user !== null) {
+                state.user = user;
+            }
+            
+            // Only update token if provided (not null/undefined)
+            if (token !== undefined && token !== null) {
+                state.token = token;
+                localStorage.setItem('token', token);
+            }
+            
             state.isAuthenticated = true;
-            localStorage.setItem('token', action.payload.token);
+            state.error = null;
         },
         setUser: (state, action) => {
             state.user = action.payload;

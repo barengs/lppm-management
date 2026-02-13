@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { PlusCircle, Edit, Trash2, Upload, Download, User, BookOpen, Camera, Lock } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { toast } from 'react-toastify';
 
 export default function UsersIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [users, setUsers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     

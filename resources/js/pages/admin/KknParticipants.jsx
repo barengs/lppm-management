@@ -4,7 +4,7 @@ import {
     Users, Search, Filter, CheckCircle, XCircle, 
     AlertCircle, Clock, Eye, FileText, Download 
 } from 'lucide-react';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 
 const STATUS_CONFIG = {
     pending: {
@@ -30,7 +30,7 @@ const STATUS_CONFIG = {
 };
 
 export default function KknParticipants() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [statistics, setStatistics] = useState(null);
     const [loading, setLoading] = useState(true);
