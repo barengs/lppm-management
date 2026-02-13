@@ -21,6 +21,7 @@ import PublicKknRegister from './pages/public/KknRegister';
 import PublicOrganization from './pages/public/OrganizationChart';
 import PageDetail from './pages/public/PageDetail';
 import StudentRegister from './pages/StudentRegister';
+import api from './utils/api';
 
 import ReportsIndex from './pages/reports/Index';
 import PostsIndex from './pages/cms/Posts';
@@ -97,7 +98,7 @@ export default function Main() {
 
     const fetchSystemSettings = async () => {
         try {
-            const { data } = await import('./utils/api').then(m => m.default.get('/system-settings'));
+            const { data } = await api.get('/system-settings');
             
             // Save to global store
             setSettings(data);
