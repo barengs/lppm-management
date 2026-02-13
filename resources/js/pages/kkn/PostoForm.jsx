@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../utils/api';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useGetFiscalYearsQuery, useGetActiveFiscalYearQuery, useGetUsersByRoleQuery } from '../../store/api/masterDataApi';
+import {
+    useGetKknLocationsQuery,
+    useGetPostoByIdQuery,
+    useCreatePostoMutation,
+    useUpdatePostoMutation,
+} from '../../store/api/kknApi';
 
 export default function PostoForm() {
     const { id } = useParams();
@@ -19,85 +25,70 @@ export default function PostoForm() {
         description: '',
     });
 
-    const [locations, setLocations] = useState([]);
-    const [fiscalYears, setFiscalYears] = useState([]);
-    const [dosens, setDosens] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(isEdit);
+    // RTK Query hooks
+    const { data: locationsData } = useGetKknLocationsQuery();
+    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: dosensData } = useGetUsersByRoleQuery('dosen');
+    const { data: activeFiscalYearData } = useGetActiveFiscalYearQuery(undefined, {
+        skip: isEdit, // Only fetch for new posto
+    });
 
+    // Fetch posto data for edit mode
+    const { data: postoData, isLoading: isFetching } = useGetPostoByIdQuery(id, {
+        skip: !isEdit, // Only fetch if editing
+    });
+
+    // Mutations
+    const [createPosto, { isLoading: isCreating }] = useCreatePostoMutation();
+    const [updatePosto, { isLoading: isUpdating }] = useUpdatePostoMutation();
+
+    // Derived data
+    const locations = Array.isArray(locationsData) ? locationsData : [];
+    const fiscalYears = Array.isArray(fiscalYearsData) ? fiscalYearsData : [];
+    const dosens = Array.isArray(dosensData) ? dosensData : [];
+    const isLoading = isCreating || isUpdating;
+
+    // Auto-select active fiscal year for new posto
     useEffect(() => {
-        fetchOptions();
-        if (isEdit) {
-            fetchPosto();
+        if (!isEdit && activeFiscalYearData && activeFiscalYearData.length > 0) {
+            setFormData((prev) => ({
+                ...prev,
+                fiscal_year_id: activeFiscalYearData[0].id,
+            }));
         }
-    }, [id]);
+    }, [activeFiscalYearData, isEdit]);
 
-    const fetchOptions = async () => {
-        try {
-            const [locationsRes, fiscalYearsRes, dosensRes, activeFiscalYearRes] = await Promise.all([
-                api.get('/kkn-locations'),
-                api.get('/fiscal-years'),
-                api.get('/users', { params: { role: 'dosen' } }),
-                api.get('/fiscal-years/active').catch(() => ({ data: [] })), // Get active fiscal year, ignore error if not found
-            ]);
-
-            setLocations(locationsRes.data);
-            setFiscalYears(fiscalYearsRes.data);
-            setDosens(dosensRes.data);
-
-            // Auto-select active fiscal year for new posko (not edit)
-            // active endpoint returns array, get first item
-            if (!isEdit && activeFiscalYearRes.data && activeFiscalYearRes.data.length > 0) {
-                setFormData((prev) => ({
-                    ...prev,
-                    fiscal_year_id: activeFiscalYearRes.data[0].id
-                }));
-            }
-        } catch (error) {
-            console.error('Failed to fetch options:', error);
-            toast.error('Gagal memuat data');
-        }
-    };
-
-    const fetchPosto = async () => {
-        setIsFetching(true);
-        try {
-            const { data } = await api.get(`/kkn/postos/${id}`);
+    // Populate form for edit mode
+    useEffect(() => {
+        if (postoData) {
             setFormData({
-                name: data.name,
-                kkn_location_id: data.location?.id || '',
-                fiscal_year_id: data.fiscal_year?.id || '',
-                dpl_id: data.dpl?.id || '',
-                start_date: data.start_date || '',
-                end_date: data.end_date || '',
-                description: data.description || '',
+                name: postoData.name,
+                kkn_location_id: postoData.location?.id || '',
+                fiscal_year_id: postoData.fiscal_year?.id || '',
+                dpl_id: postoData.dpl?.id || '',
+                start_date: postoData.start_date || '',
+                end_date: postoData.end_date || '',
+                description: postoData.description || '',
             });
-        } catch (error) {
-            console.error('Failed to fetch posto:', error);
-            toast.error('Gagal memuat data posko');
-        } finally {
-            setIsFetching(false);
         }
-    };
+    }, [postoData]);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
 
         try {
             if (isEdit) {
-                await api.put(`/kkn/postos/${id}`, formData);
+                await updatePosto({ id, ...formData }).unwrap();
                 toast.success('Posko berhasil diupdate');
             } else {
-                await api.post('/kkn/postos', formData);
+                await createPosto(formData).unwrap();
                 toast.success('Posko berhasil dibuat');
             }
             navigate('/kkn/postos');
         } catch (error) {
             console.error('Failed to save posto:', error);
-            toast.error(error.response?.data?.message || 'Gagal menyimpan posko');
-        } finally {
-            setIsLoading(false);
+            toast.error(error.data?.message || 'Gagal menyimpan posko');
         }
     };
 

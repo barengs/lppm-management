@@ -16,12 +16,22 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      * Shows Staff (Admin, Dosen, Reviewer) - Excludes 'mahasiswa'.
+     * Supports filtering by role via ?role=dosen query parameter.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::whereDoesntHave('roles', function ($q) {
+        $query = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'mahasiswa');
-        })->with('dosenProfile')->orderBy('name')->get());
+        })->with('dosenProfile')->orderBy('name');
+
+        // Filter by role if provided
+        if ($request->has('role')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+
+        return response()->json($query->get());
     }
 
     /**

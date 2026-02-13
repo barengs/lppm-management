@@ -72,6 +72,8 @@ import JournalShow from './pages/journal/Show';
 import KknAssessment from './pages/kkn/Assessment';
 
 import PrivateRoute from './components/PrivateRoute';
+import { Provider } from 'react-redux';
+import store from './store';
 import useAuthStore from './store/useAuthStore';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
@@ -149,8 +151,9 @@ export default function Main() {
     }
 
     return (
-        <BrowserRouter>
-            <ToastContainer
+        <Provider store={store}>
+            <BrowserRouter>
+                <ToastContainer
                 position="top-right"
                 autoClose={3000}
                 hideProgressBar={false}
@@ -255,7 +258,8 @@ export default function Main() {
                 {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        </BrowserRouter>
+            </BrowserRouter>
+        </Provider>
     );
 }
 

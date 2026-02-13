@@ -126,14 +126,14 @@ class KknPostoController extends Controller
             }
         }
 
-        // Check if posto already exists for this location and fiscal year
+        // Check if posto already exists for this location (regardless of fiscal year)
+        // A location can only have ONE active posto at a time
         $exists = KknPosto::where('kkn_location_id', $validated['kkn_location_id'])
-            ->where('fiscal_year_id', $validated['fiscal_year_id'])
             ->exists();
 
         if ($exists) {
             return response()->json([
-                'message' => 'Posko sudah ada untuk lokasi dan tahun ajaran ini'
+                'message' => 'Posko sudah ada untuk lokasi ini. Satu lokasi hanya boleh memiliki satu posko.'
             ], 422);
         }
 
