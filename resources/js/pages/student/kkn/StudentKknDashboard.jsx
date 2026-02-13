@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../utils/api';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Clock, XCircle, AlertCircle, FileText, Users, MapPin, Calendar, Award } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function StudentKknDashboard() {
-    const { user } = useAuthStore();
+    const { user } = useAuth();
     const [registration, setRegistration] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 

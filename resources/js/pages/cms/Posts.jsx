@@ -3,12 +3,12 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { Newspaper, Plus, Edit, Trash2, CheckCircle, XCircle, Eye } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 
 export default function PostsIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     

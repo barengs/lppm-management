@@ -1,12 +1,13 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import useAuth from '../store/useAuthStore';
-import useSystemStore from '../store/useSystemStore';
+import { useAuth } from '../hooks/useAuth';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectSettings, setSettings } from '../store/slices/systemSlice';
 import api from '../utils/api';
 
 export default function PublicLayout() {
     const { isAuthenticated, user, fetchUser } = useAuth();
-    const { settings } = useSystemStore(); 
+    const settings = useSelector(selectSettings); 
     const [dropdown, setDropdown] = React.useState(null);
     const [primaryMenu, setPrimaryMenu] = React.useState([]);
     const [isMobileMenuOpen, setMobileMenuOpen] = React.useState(false);

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { Shield, Plus, Edit, Trash2, CheckSquare, Square } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function RolesIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [roles, setRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);

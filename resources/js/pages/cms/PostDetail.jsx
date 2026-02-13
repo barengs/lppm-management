@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { ArrowLeft, Calendar, User, Tag, CheckCircle, XCircle } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
 export default function CmsPostDetail() {
     const { id } = useParams();
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [post, setPost] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 

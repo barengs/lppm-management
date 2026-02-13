@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, FileText, Newspaper } from 'lucide-react';
 import api from '../../utils/api';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function JournalIndex() {
-    const { user } = useAuthStore();
+    const { user } = useAuth();
     const [journals, setJournals] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');

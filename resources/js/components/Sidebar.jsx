@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
-import useSidebarStore from '../store/useSidebarStore';
-import useSystemStore from '../store/useSystemStore';
+import { useAuth } from '../hooks/useAuth';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectIsCollapsed, toggleSidebar as toggleSidebarAction } from '../store/slices/sidebarSlice';
+import { selectSettings } from '../store/slices/systemSlice';
 import { 
     Home, FileText, MapPin, ClipboardList, 
     Newspaper, FolderOpen, Image, 
@@ -13,9 +14,11 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { logout, user } = useAuthStore();
-    const { isCollapsed, toggleSidebar } = useSidebarStore();
-    const { settings } = useSystemStore();
+    const { logout, user } = useAuth();
+    const dispatch = useDispatch();
+    const isCollapsed = useSelector(selectIsCollapsed);
+    const toggleSidebar = () => dispatch(toggleSidebarAction());
+    const settings = useSelector(selectSettings);
     const location = useLocation();
 
     const isActive = (path) => location.pathname.startsWith(path);

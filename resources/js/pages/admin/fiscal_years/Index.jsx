@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { PlusCircle, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function FiscalYearsIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [years, setYears] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ year: '', is_active: false });

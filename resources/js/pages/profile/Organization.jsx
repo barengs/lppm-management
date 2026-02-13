@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Tree, TreeNode } from 'react-organizational-chart';
 import styled from '@emotion/styled';
 import { Users, Mail, Phone, Building2 } from 'lucide-react';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 
 // Styled components for organization chart
 const StyledNode = styled.div`
@@ -68,7 +68,7 @@ const OrganizationNode = ({ member }) => {
 };
 
 export default function OrganizationIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [organization, setOrganization] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 

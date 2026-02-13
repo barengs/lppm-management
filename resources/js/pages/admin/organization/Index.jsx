@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { Users, Plus, Edit, Trash2, Upload } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function OrganizationIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [members, setMembers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     

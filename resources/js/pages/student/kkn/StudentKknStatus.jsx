@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../utils/api';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { 
     CheckCircle, Clock, XCircle, AlertCircle, FileText, 
     MapPin, User, Calendar, Download, Upload 
@@ -9,7 +9,7 @@ import {
 import { toast } from 'react-toastify';
 
 export default function StudentKknStatus() {
-    const { user } = useAuthStore();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [registration, setRegistration] = useState(null);
     const [profile, setProfile] = useState(null);

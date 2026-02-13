@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { FileText, Calendar, Upload, Clock, CheckCircle, XCircle } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function StudentKknReports() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [posto, setPosto] = useState(null);
     const [reports, setReports] = useState([]);
     const [error, setError] = useState(null);

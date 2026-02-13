@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { MessageSquare, Plus, Send, User, Paperclip, File, X } from 'lucide-react';
 
 export default function StudentKknGuidance() {
-    const { token, user } = useAuthStore();
+    const { token, user } = useAuth();
     const [posto, setPosto] = useState(null);
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);

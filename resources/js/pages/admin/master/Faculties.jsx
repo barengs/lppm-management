@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { Building, Plus, Trash2, Edit, Upload, Download } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 export default function Faculties() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [faculties, setFaculties] = useState([]);
     
     // Form State

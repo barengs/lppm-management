@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
-import useSystemStore from '../store/useSystemStore';
+import { useAuth } from '../hooks/useAuth';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectSettings, setSettings } from '../store/slices/systemSlice';
 import { Lock, Mail } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
-    const { login, isLoading, error } = useAuthStore();
-    const { settings } = useSystemStore();
+    const { login, isLoading, user } = useAuth();
+    const settings = useSelector(selectSettings);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const success = await login(email, password);
         if (success) {
-            // Get user from store after successful login
-            const { user } = useAuthStore.getState();
-            
             // Redirect mahasiswa to KKN dashboard, others to main dashboard
             if (user?.role === 'mahasiswa') {
                 navigate('/dashboard/kkn');
@@ -39,12 +37,6 @@ export default function Login() {
                     <h1 className="text-3xl font-bold text-green-700" style={{ color: 'var(--primary-color)' }}>{settings.system_name}</h1>
                     <p className="text-gray-600 mt-2">{settings.description}</p>
                 </div>
-
-                {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-                        {error}
-                    </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>

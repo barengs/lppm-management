@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../../store/useAuthStore';
+import { useAuth } from '../../../hooks/useAuth';
 import { Award, Download, DownloadCloud, AlertCircle } from 'lucide-react';
 
 export default function StudentKknAssessment() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

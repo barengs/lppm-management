@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { FileText, Star, CheckCircle, XCircle, AlertCircle, Eye } from 'lucide-react';
 
 export default function ReviewIndex() {
-    const { token } = useAuthStore();
+    const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     

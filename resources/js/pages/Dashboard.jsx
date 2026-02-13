@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import useAuthStore from '../store/useAuthStore';
+import { useAuth } from '../hooks/useAuth';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     LineChart, Line
@@ -8,7 +8,7 @@ import {
 import { Users, MapPin, BookOpen, UserCheck } from 'lucide-react';
 
 export default function Dashboard() {
-    const { user, token } = useAuthStore();
+    const { user, token } = useAuth();
     const [stats, setStats] = useState({
         participants_per_period: [],
         lecturer_count: 0,

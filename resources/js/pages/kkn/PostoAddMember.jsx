@@ -1,49 +1,35 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../utils/api';
 import { ArrowLeft, UserPlus, CheckSquare, Square } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import { useGetPostoByIdQuery, useGetAvailableStudentsQuery, useAddPostoMemberMutation } from '../../store/api/kknApi';
 
 export default function PostoAddMember() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [posto, setPosto] = useState(null);
-    const [availableStudents, setAvailableStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState({}); // {studentId: position}
-    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        fetchData();
-    }, [id]);
+    // RTK Query hooks
+    const { data: posto, isLoading: isLoadingPosto } = useGetPostoByIdQuery(id);
+    const { data: availableStudentsData, isLoading: isLoadingStudents } = useGetAvailableStudentsQuery(
+        { fiscal_year_id: posto?.fiscal_year?.id },
+        { skip: !posto?.fiscal_year?.id } // Skip until we have fiscal year
+    );
+    const [addPostoMember] = useAddPostoMemberMutation();
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const postoRes = await api.get(`/kkn/postos/${id}`);
-            setPosto(postoRes.data);
+    // Transform available students data
+    const availableStudents = useMemo(() => {
+        if (!availableStudentsData) return [];
+        return availableStudentsData.map(item => ({
+            ...item.student,
+            registration_id: item.registration_id
+        }));
+    }, [availableStudentsData]);
 
-            const studentsRes = await api.get('/kkn/postos/available-students', {
-                params: {
-                    fiscal_year_id: postoRes.data.fiscal_year?.id,
-                }
-            });
-
-            const students = studentsRes.data.map(item => ({
-                ...item.student,
-                registration_id: item.registration_id
-            }));
-            
-            setAvailableStudents(students);
-        } catch (error) {
-            console.error('Failed to fetch data:', error);
-            toast.error(error.response?.data?.message || 'Gagal memuat data');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const isLoading = isLoadingPosto || isLoadingStudents;
 
     const handleToggleStudent = (student) => {
         const newSelected = { ...selectedStudents };
@@ -71,18 +57,21 @@ export default function PostoAddMember() {
 
         setIsSaving(true);
         try {
-            for (const [studentId, position] of Object.entries(selectedStudents)) {
-                await api.post(`/kkn/postos/${id}/members`, {
+            // Add all members in parallel
+            const promises = Object.entries(selectedStudents).map(([studentId, position]) =>
+                addPostoMember({
+                    postoId: id,
                     student_id: parseInt(studentId),
                     position: position,
-                });
-            }
+                }).unwrap()
+            );
 
+            await Promise.all(promises);
             toast.success(`${selectedCount} anggota berhasil ditambahkan`);
             navigate(`/kkn/postos/${id}`);
         } catch (error) {
             console.error('Failed to add members:', error);
-            toast.error(error.response?.data?.message || 'Gagal menambah anggota');
+            toast.error(error.data?.message || 'Gagal menambah anggota');
         } finally {
             setIsSaving(false);
         }

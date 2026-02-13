@@ -1,9 +1,9 @@
 import React from 'react';
-import useAuthStore from '../../store/useAuthStore';
+import { useAuth } from '../../hooks/useAuth';
 import { User, Mail, Briefcase, MapPin, Award, BookOpen, Fingerprint } from 'lucide-react';
 
 export default function ProfileIndex() {
-    const { user } = useAuthStore();
+    const { user } = useAuth();
 
     if (!user) return null;
 
