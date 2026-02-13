@@ -215,20 +215,22 @@ export default function PostoIndex() {
                             Kelola posko KKN, anggota, dan struktur kepengurusan
                         </p>
                     </div>
-                    <Link
-                        to="/kkn/postos/create"
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Buat Posko Baru
-                    </Link>
-                    <button
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="ml-2 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        <Upload className="w-5 h-5 mr-2" />
-                        Import Excel
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            to="/kkn/postos/create"
+                            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Buat Posko Baru
+                        </Link>
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <Upload className="w-5 h-5 mr-2" />
+                            Import Excel
+                        </button>
+                    </div>
                 </div>
 
                 {/* Import Modal */}

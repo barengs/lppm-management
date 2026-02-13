@@ -1,30 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
-import api from '../../utils/api'; 
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
-import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useGetFiscalYearsQuery, useGetFacultiesQuery, useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
+import { useGetDocumentTemplatesQuery, useCreateRegistrationMutation, useGetRegistrationsQuery } from '../../store/api/kknApi';
+import { useGetProfileQuery } from '../../store/api/authApi';
 
 export default function KknStudentRegistration() {
-    const { token, user } = useAuthStore();
-    const [registrations, setRegistrations] = useState([]);
-    const [fiscalYears, setFiscalYears] = useState([]);
-    const [selectedFy, setSelectedFy] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    // Master Data
-    const [faculties, setFaculties] = useState([]);
-    const [studyPrograms, setStudyPrograms] = useState([]);
-    const [filteredPrograms, setFilteredPrograms] = useState([]);
+    const navigate = useNavigate();
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === 'admin';
     
     // Form States
-    const isAdmin = user?.role === 'admin';
     const [step, setStep] = useState(1);
+    const [selectedFy, setSelectedFy] = useState('');
+    const [filteredPrograms, setFilteredPrograms] = useState([]);
     
     // Account Data (For Admin creating new student)
     const [accountData, setAccountData] = useState({
         email: '',
         password: '',
         confirmPassword: '',
+        fiscal_year_id: '',
     });
     const [errors, setErrors] = useState({});
 
@@ -42,8 +40,25 @@ export default function KknStudentRegistration() {
         jacket_size: '',
     });
     const [documents, setDocuments] = useState([]);
-    const [documentTemplates, setDocumentTemplates] = useState([]);
     const [files, setFiles] = useState({ photo: null });
+    
+    // RTK Query hooks
+    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: facultiesData } = useGetFacultiesQuery();
+    const { data: studyProgramsData } = useGetStudyProgramsQuery();
+    const { data: fetchedProfile } = useGetProfileQuery(undefined, { skip: isAdmin });
+    const { data: registrationsData } = useGetRegistrationsQuery({}, { skip: isAdmin }); // Only for students
+    const { data: documentTemplatesData } = useGetDocumentTemplatesQuery(
+        { fiscal_year_id: accountData.fiscal_year_id },
+        { skip: !accountData.fiscal_year_id }
+    );
+    const [createRegistration, { isLoading: isSubmitting }] = useCreateRegistrationMutation();
+    
+    // Derived data from RTK Query
+    const fiscalYears = fiscalYearsData || [];
+    const faculties = facultiesData || [];
+    const studyPrograms = studyProgramsData || [];
+    const registrations = registrationsData?.data || [];
     
     // Photo Upload State
     const [isDragging, setIsDragging] = useState(false);
@@ -55,74 +70,43 @@ export default function KknStudentRegistration() {
     // Password Visibility State
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    
+    // Confirmation Modal State
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    // Fetch initial data
+    // Initialize fiscal year when data loads
     useEffect(() => {
-        fetchData();
-        fetchProfile();
-    }, [token]);
+        if (fiscalYears.length > 0 && !selectedFy) {
+            setSelectedFy(fiscalYears[0].id);
+        }
+    }, [fiscalYears, selectedFy]);
 
-    // Fetch document templates when fiscal year changes
+    // Load profile data from RTK Query
     useEffect(() => {
-        if (accountData.fiscal_year_id) {
-            fetchDocumentTemplates(accountData.fiscal_year_id);
-        }
-    }, [accountData.fiscal_year_id]);
-
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [regRes, fyRes, facRes, prodiRes] = await Promise.all([
-                api.get('/kkn-registrations'),
-                api.get('/fiscal-years/active'),
-                api.get('/faculties'),
-                api.get('/study-programs')
-            ]);
-            setRegistrations(regRes.data);
-            setFiscalYears(fyRes.data);
-            setFaculties(facRes.data);
-            setStudyPrograms(prodiRes.data);
-            if(fyRes.data.length > 0) setSelectedFy(fyRes.data[0].id);
-        } catch (error) {
-            console.error("Failed to fetch data", error);
-            toast.error("Failed to load KKN data");
-        }
-        setIsLoading(false);
-    };
-
-    const fetchProfile = async () => {
-        // Only fetch profile for students, Admin starts blank
-        if (isAdmin) return;
-
-        try {
-            const { data } = await api.get('/profile/me');
-            if (data && data.mahasiswa_profile) {
+        if (!isAdmin && fetchedProfile) {
+            const profile = fetchedProfile.mahasiswa_profile;
+            if (profile) {
                 setProfileData({
-                    name: data.name,
-                    npm: data.mahasiswa_profile.npm || '',
-                    prodi: data.mahasiswa_profile.prodi || '',
-                    fakultas: data.mahasiswa_profile.fakultas || '',
-                    phone: data.mahasiswa_profile.phone || '',
-                    address: data.mahasiswa_profile.address || '',
-                    ips: data.mahasiswa_profile.ips || '',
-                    gender: data.mahasiswa_profile.gender || '',
-                    place_of_birth: data.mahasiswa_profile.place_of_birth || '',
-                    date_of_birth: data.mahasiswa_profile.date_of_birth || '',
-                    jacket_size: data.mahasiswa_profile.jacket_size || '',
+                    name: fetchedProfile.name,
+                    npm: profile.npm || '',
+                    prodi: profile.prodi || '',
+                    fakultas: profile.fakultas || '',
+                    phone: profile.phone || '',
+                    address: profile.address || '',
+                    ips: profile.ips || '',
+                    gender: profile.gender || '',
+                    place_of_birth: profile.place_of_birth || '',
+                    date_of_birth: profile.date_of_birth || '',
+                    jacket_size: profile.jacket_size || '',
                 });
             }
-        } catch (error) {
-            console.error("Failed to fetch profile");
         }
-    }
+    }, [fetchedProfile, isAdmin]);
 
-    const fetchDocumentTemplates = async (fiscalYearId) => {
-        try {
-            const response = await api.get(`/kkn-document-templates?fiscal_year_id=${fiscalYearId}`);
-            const templates = response.data;
-            
-            // Transform templates into document state format
-            const docs = templates.map(template => ({
+    // Transform document templates from RTK Query
+    useEffect(() => {
+        if (documentTemplatesData) {
+            const docs = documentTemplatesData.map(template => ({
                 id: template.slug,
                 name: template.name,
                 file: null,
@@ -130,14 +114,9 @@ export default function KknStudentRegistration() {
                 type: template.is_required ? 'required' : 'optional',
                 description: template.description
             }));
-            
-            setDocumentTemplates(templates);
             setDocuments(docs);
-        } catch (error) {
-            console.error('Error fetching document templates:', error);
-            toast.error('Gagal memuat template dokumen');
         }
-    };
+    }, [documentTemplatesData]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
@@ -237,8 +216,12 @@ export default function KknStudentRegistration() {
         }
     };
 
+    const handleRegisterClick = () => {
+        setShowConfirmModal(true);
+    };
+
     const handleRegister = async () => {
-        if (!confirm("Apakah Anda yakin data dan dokumen sudah benar?")) return;
+        setShowConfirmModal(false);
 
         const formData = new FormData();
         // Profile Data
@@ -279,16 +262,48 @@ export default function KknStudentRegistration() {
         if (files.photo) formData.append('photo', files.photo);
 
         try {
-            setIsLoading(true);
-            await api.post('/kkn-registrations', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await createRegistration(formData).unwrap();
             toast.success("Berhasil mendaftar KKN!");
-            fetchData();
+            
+            // Redirect to participants page after short delay to show toast
+            setTimeout(() => {
+                navigate('/kkn/participants');
+            }, 1500);
         } catch (error) {
-            toast.error(error.response?.data?.message || "Gagal mendaftar.");
-        } finally {
-            setIsLoading(false);
+            console.error('Registration failed:', error);
+            
+            // Handle specific error messages
+            if (error.status === 500 && error.data?.message) {
+                const message = error.data.message;
+                
+                // Check for duplicate NPM
+                if (message.includes('Duplicate entry') && message.includes('npm')) {
+                    toast.error("NPM sudah terdaftar! Gunakan NPM yang berbeda.");
+                } 
+                // Check for duplicate email
+                else if (message.includes('Duplicate entry') && message.includes('email')) {
+                    toast.error("Email sudah terdaftar! Gunakan email yang berbeda.");
+                }
+                // Generic validation error
+                else if (message.includes('Integrity constraint violation')) {
+                    toast.error("Data yang Anda masukkan sudah terdaftar. Periksa kembali NPM dan Email.");
+                }
+                // Other errors
+                else {
+                    toast.error(message);
+                }
+            } 
+            // Handle validation errors (422)
+            else if (error.status === 422 && error.data?.errors) {
+                const errors = error.data.errors;
+                const firstError = Object.values(errors)[0];
+                toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+            }
+            // Generic error
+            else {
+                toast.error(error.data?.message || "Gagal mendaftar. Silakan coba lagi.");
+            }
+            // Stay on form - modal will close automatically, form stays visible
         }
     };
 
@@ -821,17 +836,84 @@ export default function KknStudentRegistration() {
                         <div className="flex justify-between mt-8 border-t pt-6">
                             <button onClick={() => setStep(isAdmin ? 3 : 2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
                             <button 
-                                onClick={handleRegister} 
-                                disabled={isLoading}
-                                className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
+                                onClick={handleRegisterClick} 
+                                disabled={isSubmitting}
+                                className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
                             >
                                 <Save className="mr-2 w-5 h-5" />
-                                {isLoading ? 'Proses Mendaftar...' : 'Selesaikan Pendaftaran'}
+                                {isSubmitting ? 'Proses Mendaftar...' : 'Selesaikan Pendaftaran'}
                             </button>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900">Konfirmasi Pendaftaran</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <p className="text-gray-700 mb-4">
+                                Apakah Anda yakin semua data dan dokumen yang Anda masukkan sudah benar?
+                            </p>
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                                <p className="text-sm text-yellow-800">
+                                    <strong>Perhatian:</strong> Pastikan semua informasi yang Anda berikan akurat. 
+                                    Data yang salah dapat menyebabkan penolakan pendaftaran.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="flex space-x-3 p-6 bg-gray-50 rounded-b-2xl">
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                disabled={isSubmitting}
+                                className={`flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                Periksa Kembali
+                            </button>
+                            <button
+                                onClick={handleRegister}
+                                disabled={isSubmitting}
+                                className={`flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}`}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Memproses...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="w-5 h-5" />
+                                        <span>Ya, Daftar Sekarang</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

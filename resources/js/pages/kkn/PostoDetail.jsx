@@ -1,40 +1,33 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import api from '../../utils/api';
 import { ArrowLeft, Edit, Users, MapPin, Calendar, User, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import {
+    useGetPostoByIdQuery,
+    useRemovePostoMemberMutation,
+    useUpdatePostoStatusMutation,
+} from '../../store/api/kknApi';
 
 export default function PostoDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [posto, setPosto] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchPosto();
-    }, [id]);
+    // RTK Query hooks
+    const { data: posto, isLoading, error } = useGetPostoByIdQuery(id);
 
-    const fetchPosto = async () => {
-        setIsLoading(true);
-        try {
-            const { data } = await api.get(`/kkn/postos/${id}`);
-            setPosto(data);
-        } catch (error) {
-            console.error('Failed to fetch posto:', error);
-            toast.error('Gagal memuat data posko');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Mutations
+    const [removePostoMember] = useRemovePostoMemberMutation();
+    const [updatePostoStatus] = useUpdatePostoStatusMutation();
+
 
     const handleRemoveMember = async (memberId) => {
         if (!confirm('Apakah Anda yakin ingin menghapus anggota ini?')) return;
 
         try {
-            await api.delete(`/kkn/postos/${id}/members/${memberId}`);
+            await removePostoMember({ postoId: id, memberId }).unwrap();
             toast.success('Anggota berhasil dihapus');
-            fetchPosto();
+            // No manual refetch needed - RTK Query auto-refetches!
         } catch (error) {
             console.error('Failed to remove member:', error);
             toast.error('Gagal menghapus anggota');
@@ -43,12 +36,12 @@ export default function PostoDetail() {
 
     const handleUpdateStatus = async (newStatus) => {
         try {
-            await api.patch(`/kkn/postos/${id}/status`, { status: newStatus });
+            await updatePostoStatus({ id, status: newStatus }).unwrap();
             toast.success('Status posko berhasil diupdate');
-            fetchPosto();
+            // No manual refetch needed!
         } catch (error) {
             console.error('Failed to update status:', error);
-            toast.error(error.response?.data?.message || 'Gagal update status');
+            toast.error(error.data?.message || 'Gagal update status');
         }
     };
 

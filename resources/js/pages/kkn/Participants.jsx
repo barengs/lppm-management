@@ -92,12 +92,7 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/revise`, 
-                { note },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchRegistrations();
-            fetchStatistics();
+            await requestRevision({ id, note }).unwrap();
             setShowDetailModal(false);
             alert('Permintaan revisi berhasil dikirim');
         } catch (error) {

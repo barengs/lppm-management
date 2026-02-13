@@ -185,8 +185,71 @@ export const kknApi = baseApi.injectEndpoints({
                 url: '/kkn-locations',
                 params,
             }),
-            providesTags: ['KknLocations'],
+            providesTags: (result) =>
+                result
+                    ? [
+                          ...result.map(({ id }) => ({ type: 'KknLocation', id })),
+                          { type: 'KknLocations', id: 'LIST' },
+                      ]
+                    : [{ type: 'KknLocations', id: 'LIST' }],
             keepUnusedDataFor: 300,
+        }),
+
+        createKknLocation: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-locations',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+        }),
+
+        updateKknLocation: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/kkn-locations/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'KknLocation', id },
+                { type: 'KknLocations', id: 'LIST' },
+            ],
+        }),
+
+        deleteKknLocation: builder.mutation({
+            query: (id) => ({
+                url: `/kkn-locations/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+        }),
+
+        importKknLocations: builder.mutation({
+            query: (formData) => ({
+                url: '/kkn-locations/import',
+                method: 'POST',
+                body: formData,
+            }),
+            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+        }),
+
+        downloadKknLocationTemplate: builder.mutation({
+            query: () => ({
+                url: '/kkn-locations/template',
+                method: 'GET',
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'locations_template.xlsx');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
         }),
 
         // ============ Postos ============
@@ -207,6 +270,80 @@ export const kknApi = baseApi.injectEndpoints({
         getPostoById: builder.query({
             query: (id) => `/kkn-postos/${id}`,
             providesTags: (result, error, id) => [{ type: 'Postos', id }],
+        }),
+
+        deletePostо: builder.mutation({
+            query: (id) => ({
+                url: `/kkn-postos/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+        }),
+
+        createPosto: builder.mutation({
+            query: (data) => ({
+                url: '/kkn/postos',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+        }),
+
+        updatePosto: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/kkn/postos/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'Postos', id: 'LIST' },
+                { type: 'Postos', id },
+            ],
+        }),
+
+        removePostoMember: builder.mutation({
+            query: ({ postoId, memberId }) => ({
+                url: `/kkn/postos/${postoId}/members/${memberId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: (result, error, { postoId }) => [
+                { type: 'Postos', id: postoId },
+            ],
+        }),
+
+        updatePostoStatus: builder.mutation({
+            query: ({ id, status }) => ({
+                url: `/kkn/postos/${id}/status`,
+                method: 'PATCH',
+                body: { status },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'Postos', id },
+                { type: 'Postos', id: 'LIST' },
+            ],
+        }),
+
+        importPostos: builder.mutation({
+            query: (formData) => ({
+                url: '/kkn/postos/import',
+                method: 'POST',
+                body: formData,
+            }),
+            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+        }),
+
+        downloadPostoTemplate: builder.mutation({
+            query: () => ({
+                url: '/kkn/postos/template',
+                method: 'GET',
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
         }),
     }),
 });
@@ -232,8 +369,20 @@ export const {
     
     // KKN Locations
     useGetKknLocationsQuery,
+    useCreateKknLocationMutation,
+    useUpdateKknLocationMutation,
+    useDeleteKknLocationMutation,
+    useImportKknLocationsMutation,
+    useDownloadKknLocationTemplateMutation,
     
     // Postos
     useGetPostosQuery,
     useGetPostoByIdQuery,
+    useCreatePostoMutation,
+    useUpdatePostoMutation,
+    useDeletePostoMutation,
+    useRemovePostoMemberMutation,
+    useUpdatePostoStatusMutation,
+    useImportPostosMutation,
+    useDownloadPostoTemplateMutation,
 } = kknApi;

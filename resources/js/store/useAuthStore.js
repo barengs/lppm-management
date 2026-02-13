@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import store from './index';
+import { setCredentials, logout as logoutRedux, setUser } from './slices/authSlice';
 
 const useAuthStore = create((set, get) => ({
     user: null,
@@ -24,6 +26,9 @@ const useAuthStore = create((set, get) => ({
                 isAuthenticated: true, 
                 isLoading: false 
             });
+            
+            // Sync to Redux for RTK Query
+            store.dispatch(setCredentials({ user, token: access_token }));
             
             toast.success(`Selamat datang, ${user.name}! 👋`);
             return true;
@@ -54,6 +59,10 @@ const useAuthStore = create((set, get) => ({
                 isAuthenticated: false, 
                 isLoading: false 
             });
+            
+            // Sync to Redux
+            store.dispatch(logoutRedux());
+            
             toast.success('Anda telah logout. Sampai jumpa! 👋');
         }
     },
@@ -109,9 +118,13 @@ const useAuthStore = create((set, get) => ({
                 headers: { Authorization: `Bearer ${token}` }
             });
             set({ user: response.data, isAuthenticated: true });
+            
+            // Sync to Redux
+            store.dispatch(setUser(response.data));
         } catch (error) {
             localStorage.removeItem('token');
             set({ user: null, token: null, isAuthenticated: false });
+            store.dispatch(logoutRedux());
         }
     }
 }));

@@ -28,6 +28,16 @@ export const masterDataApi = baseApi.injectEndpoints({
             providesTags: ['StudyPrograms'],
             keepUnusedDataFor: 600,
         }),
+
+        // ============ Users ============
+        getUsersByRole: builder.query({
+            query: (role) => ({
+                url: '/users',
+                params: { role },
+            }),
+            providesTags: (result, error, role) => [{ type: 'Users', id: role }],
+            keepUnusedDataFor: 300, // 5 minutes
+        }),
     }),
 });
 
@@ -36,4 +46,5 @@ export const {
     useGetActiveFiscalYearQuery,
     useGetFacultiesQuery,
     useGetStudyProgramsQuery,
+    useGetUsersByRoleQuery,
 } = masterDataApi;

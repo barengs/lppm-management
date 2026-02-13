@@ -1,25 +1,42 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
-import useAuthStore from '../../store/useAuthStore';
-
 import { MapPin, Plus, Edit, Trash2, Upload, Download } from 'lucide-react';
 import LocationMapPicker from '../../components/LocationMapPicker';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import { useGetFiscalYearsQuery } from '../../store/api/masterDataApi';
+import { 
+    useGetKknLocationsQuery, 
+    useCreateKknLocationMutation, 
+    useUpdateKknLocationMutation, 
+    useDeleteKknLocationMutation,
+    useImportKknLocationsMutation,
+    useDownloadKknLocationTemplateMutation
+} from '../../store/api/kknApi';
+import { 
+    useGetProvincesQuery, 
+    useGetCitiesQuery, 
+    useGetDistrictsQuery, 
+    useGetVillagesQuery 
+} from '../../store/api/indonesiaApi';
 
 export default function KknLocationsIndex() {
-    const { token } = useAuthStore();
-    const [locations, setLocations] = useState([]);
-    const [fiscalYears, setFiscalYears] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    // RTK Query hooks
+    const { data: locationsData, isLoading } = useGetKknLocationsQuery();
+    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: provincesData } = useGetProvincesQuery();
     
-    // Region Data
-    const [provinces, setProvinces] = useState([]);
-    const [cities, setCities] = useState([]);
-
-    const [districts, setDistricts] = useState([]);
-    const [villages, setVillages] = useState([]);
-
+    // Mutations
+    const [createLocation] = useCreateKknLocationMutation();
+    const [updateLocation] = useUpdateKknLocationMutation();
+    const [deleteLocation] = useDeleteKknLocationMutation();
+    const [importLocations, { isLoading: isImporting }] = useImportKknLocationsMutation();
+    const [downloadTemplate] = useDownloadKknLocationTemplateMutation();
+    
+    // Derived data
+    const locations = locationsData || [];
+    const fiscalYears = fiscalYearsData || [];
+    const provinces = provincesData || [];
+    
     // Modal
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -29,108 +46,63 @@ export default function KknLocationsIndex() {
         quota: 0, 
         description: '', 
         fiscal_year_id: '',
-        location_type: 'domestic', // Default domestic
+        location_type: 'domestic',
         country: '',
         province_id: '',
         city_id: '',
         district_id: '',
         village_id: '',
-        latitude: '-7.1568',  // Default: Pamekasan, Madura
+        latitude: '-7.1568',
         longitude: '113.4746'
     });
 
     // Import Modal
     const [showImportModal, setShowImportModal] = useState(false);
     const [importFile, setImportFile] = useState(null);
-    const [isImporting, setIsImporting] = useState(false);
+    
+    // Cascading dropdowns with RTK Query
+    const { data: citiesData } = useGetCitiesQuery(formData.province_id, { 
+        skip: !formData.province_id 
+    });
+    const { data: districtsData } = useGetDistrictsQuery(formData.city_id, { 
+        skip: !formData.city_id 
+    });
+    const { data: villagesData } = useGetVillagesQuery(formData.district_id, { 
+        skip: !formData.district_id 
+    });
+    
+    const cities = citiesData || [];
+    const districts = districtsData || [];
+    const villages = villagesData || [];
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [locRes, fyRes, provRes] = await Promise.all([
-                axios.get('/api/kkn-locations', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/fiscal-years/active', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/indonesia/provinces', { headers: { Authorization: `Bearer ${token}` } })
-            ]);
-            setLocations(locRes.data);
-            setFiscalYears(fyRes.data);
-            setProvinces(provRes.data);
-            if (fyRes.data.length > 0) {
-                setFormData(prev => ({ ...prev, fiscal_year_id: fyRes.data[0].id }));
-            }
-        } catch (error) {
-            console.error("Failed to fetch data", error);
-            toast.error('Gagal memuat data lokasi KKN');
+    // Initialize fiscal year when data loads
+    useEffect(() => {
+        if (fiscalYears.length > 0 && !formData.fiscal_year_id) {
+            setFormData(prev => ({ ...prev, fiscal_year_id: fiscalYears[0].id }));
         }
-        setIsLoading(false);
-    };
-
-    const fetchCities = async (provinceId) => {
-        if (!provinceId) return;
-        try {
-            const res = await axios.get(`/api/indonesia/cities?province_id=${provinceId}`, { headers: { Authorization: `Bearer ${token}` } });
-            setCities(res.data);
-        } catch (error) { console.error(error); }
-    };
-
-    const fetchDistricts = async (cityId) => {
-        if (!cityId) return;
-        try {
-            const res = await axios.get(`/api/indonesia/districts?city_id=${cityId}`, { headers: { Authorization: `Bearer ${token}` } });
-            setDistricts(res.data);
-        } catch (error) { console.error(error); }
-    };
-
-    const fetchVillages = async (districtId) => {
-        if (!districtId) return;
-        try {
-            const res = await axios.get(`/api/indonesia/villages?district_id=${districtId}`, { headers: { Authorization: `Bearer ${token}` } });
-            setVillages(res.data);
-        } catch (error) { console.error(error); }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [token]);
-
-    useEffect(() => {
-        if (formData.province_id) fetchCities(formData.province_id);
-    }, [formData.province_id]);
-
-    useEffect(() => {
-        if (formData.city_id) fetchDistricts(formData.city_id);
-    }, [formData.city_id]);
-
-    useEffect(() => {
-        if (formData.district_id) fetchVillages(formData.district_id);
-    }, [formData.district_id]);
+    }, [fiscalYears, formData.fiscal_year_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`/api/kkn-locations/${selectedId}`, formData, {
-                   headers: { Authorization: `Bearer ${token}` }
-                });
+                await updateLocation({ id: selectedId, ...formData }).unwrap();
+                toast.success('Lokasi berhasil diperbarui!');
             } else {
-                await axios.post('/api/kkn-locations', formData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await createLocation(formData).unwrap();
+                toast.success('Lokasi berhasil ditambahkan!');
             }
             setShowModal(false);
-            fetchData();
-            toast.success(isEditing ? 'Lokasi berhasil diperbarui!' : 'Lokasi berhasil ditambahkan!');
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || 'Gagal menyimpan lokasi');
+            toast.error(error.data?.message || 'Gagal menyimpan lokasi');
         }
     };
 
     const handleDelete = async (id) => {
         if (!confirm('Delete this location?')) return;
         try {
-            await axios.delete(`/api/kkn-locations/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-            fetchData();
+            await deleteLocation(id).unwrap();
             toast.success('Lokasi berhasil dihapus!');
         } catch (error) {
             console.error(error);
@@ -141,39 +113,25 @@ export default function KknLocationsIndex() {
     const handleImport = async (e) => {
         e.preventDefault();
         if (!importFile) return;
+        
         const data = new FormData();
         data.append('file', importFile);
         data.append('fiscal_year_id', formData.fiscal_year_id || (fiscalYears[0] ? fiscalYears[0].id : ''));
 
-        setIsImporting(true);
         try {
-            await axios.post('/api/kkn-locations/import', data, {
-                headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
-            });
+            await importLocations(data).unwrap();
             toast.success('Import lokasi berhasil!');
             setShowImportModal(false);
             setImportFile(null);
-            fetchData();
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || 'Import gagal. Periksa format file Anda.');
+            toast.error(error.data?.message || 'Import gagal. Periksa format file Anda.');
         }
-        setIsImporting(false);
     };
 
     const handleDownloadTemplate = async () => {
         try {
-            const response = await axios.get('/api/kkn-locations/template', {
-                responseType: 'blob',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'locations_template.xlsx');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            await downloadTemplate().unwrap();
             toast.success('Template berhasil diunduh!');
         } catch (error) {
             console.error("Failed to download template", error);

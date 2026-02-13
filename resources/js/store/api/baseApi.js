@@ -2,13 +2,23 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // Base query with token injection
 const baseQuery = fetchBaseQuery({
-    baseURL: '/api',
-    prepareHeaders: (headers) => {
-        const token = localStorage.getItem('token');
+    baseUrl: '/api', // Fixed: baseUrl not baseURL
+    credentials: 'include', // Include cookies for session-based auth
+    prepareHeaders: (headers, { getState }) => {
+        // Get token from Redux state (more reliable than localStorage)
+        const token = getState().auth?.token || localStorage.getItem('token');
+        
+        console.log('[RTK Query] Preparing headers:', {
+            reduxToken: getState().auth?.token,
+            localStorageToken: localStorage.getItem('token'),
+            finalToken: token
+        });
+        
         if (token) {
             headers.set('Authorization', `Bearer ${token}`);
         }
         headers.set('Accept', 'application/json');
+        headers.set('Content-Type', 'application/json');
         return headers;
     },
 });
