@@ -13,6 +13,7 @@ class KknRegistration extends Model
         'student_id',
         'kkn_location_id',
         'fiscal_year_id',
+        'registration_type',
         'dpl_id',
         'status',
         'notes',

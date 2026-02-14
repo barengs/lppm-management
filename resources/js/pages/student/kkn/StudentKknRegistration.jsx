@@ -31,6 +31,7 @@ export default function KknStudentRegistration() {
         place_of_birth: user?.mahasiswa_profile?.place_of_birth || '',
         date_of_birth: user?.mahasiswa_profile?.date_of_birth || '',
         jacket_size: user?.mahasiswa_profile?.jacket_size || '',
+        registration_type: 'reguler', // Default value
     });
     const [documents, setDocuments] = useState([
         { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
@@ -147,6 +148,7 @@ export default function KknStudentRegistration() {
 
         // Registration Data (location is optional now)
         formData.append('fiscal_year_id', selectedFy);
+        formData.append('registration_type', profileData.registration_type);
 
         // Files
         // Documents (Dynamic)
@@ -236,6 +238,58 @@ export default function KknStudentRegistration() {
                 {step === 1 && (
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Data Diri</h3>
+                        
+                        {/* Registration Type Selection */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                            <label className="block text-sm font-medium text-gray-900 mb-3">
+                                Jenis Pendaftaran <span className="text-red-500">*</span>
+                            </label>
+                            <div className="space-y-2">
+                                <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                    <input 
+                                        type="radio" 
+                                        name="registration_type" 
+                                        value="reguler" 
+                                        checked={profileData.registration_type === 'reguler'}
+                                        onChange={handleProfileChange}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                    />
+                                    <div className="ml-3">
+                                        <span className="font-medium text-gray-900">Reguler</span>
+                                        <p className="text-xs text-gray-500">Mahasiswa program reguler</p>
+                                    </div>
+                                </label>
+                                <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                    <input 
+                                        type="radio" 
+                                        name="registration_type" 
+                                        value="program_khusus"
+                                        checked={profileData.registration_type === 'program_khusus'}
+                                        onChange={handleProfileChange}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                    />
+                                    <div className="ml-3">
+                                        <span className="font-medium text-gray-900">Program Khusus</span>
+                                        <p className="text-xs text-gray-500">Mahasiswa program khusus</p>
+                                    </div>
+                                </label>
+                                <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                    <input 
+                                        type="radio" 
+                                        name="registration_type" 
+                                        value="santri"
+                                        checked={profileData.registration_type === 'santri'}
+                                        onChange={handleProfileChange}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                    />
+                                    <div className="ml-3">
+                                        <span className="font-medium text-gray-900">Santri</span>
+                                        <p className="text-xs text-gray-500">Mahasiswa santri pondok pesantren</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>

@@ -39,6 +39,7 @@ class KknRegistrationController extends Controller
             // Registration Data
             'kkn_location_id' => 'nullable|exists:kkn_locations,id',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
+            'registration_type' => 'required|in:reguler,program_khusus,santri',
             
             // Profile Data
             'name' => 'required|string|max:255',
@@ -133,6 +134,7 @@ class KknRegistrationController extends Controller
                 'student_id' => $targetUser->id,
                 'kkn_location_id' => $validated['kkn_location_id'] ?? null,
                 'fiscal_year_id' => $validated['fiscal_year_id'],
+                'registration_type' => $validated['registration_type'],
                 'status' => 'pending',
             ];
             
