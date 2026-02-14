@@ -243,14 +243,14 @@ export const kknApi = baseApi.injectEndpoints({
         // ============ Postos ============
         getPostos: builder.query({
             query: (params = {}) => ({
-                url: '/kkn-postos',
+                url: '/kkn/postos',
                 params,
             }),
             providesTags: ['Postos'],
         }),
 
         getPostoById: builder.query({
-            query: (id) => `/kkn-postos/${id}`,
+            query: (id) => `/kkn/postos/${id}`,
             providesTags: (result, error, id) => [{ type: 'Postos', id }],
         }),
 
