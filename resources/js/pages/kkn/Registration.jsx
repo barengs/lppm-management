@@ -23,6 +23,7 @@ export default function KknStudentRegistration() {
         password: '',
         confirmPassword: '',
         fiscal_year_id: '',
+        registration_type: 'reguler', // Default value
     });
     const [errors, setErrors] = useState({});
 
@@ -243,8 +244,9 @@ export default function KknStudentRegistration() {
             formData.append('password', accountData.password);
         }
 
-        // Registration Data (location is optional now)
+        // Registration Data        // Registration Data
         formData.append('fiscal_year_id', selectedFy);
+        formData.append('registration_type', accountData.registration_type);
 
         // Files
         // Files
@@ -492,6 +494,71 @@ export default function KknStudentRegistration() {
                                 </select>
                                 {errors.fakultas && <p className="text-red-500 text-xs mt-1">{errors.fakultas}</p>}
                             </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
+                                <select 
+                                    value={accountData.fiscal_year_id} 
+                                    onChange={e => setAccountData({...accountData, fiscal_year_id: e.target.value})} 
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" 
+                                    required
+                                >
+                                    <option value="">Pilih Tahun Akademik</option>
+                                    {fiscalYears.map(fy => <option key={fy.id} value={fy.id}>{fy.year}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Registration Type Selection */}
+                            <div className="md:col-span-2 bg-green-50 border border-green-200 rounded-lg p-4">
+                                <label className="block text-sm font-medium text-gray-900 mb-3">
+                                    Jenis Pendaftaran <span className="text-red-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                        <input 
+                                            type="radio" 
+                                            name="registration_type" 
+                                            value="reguler" 
+                                            checked={accountData.registration_type === 'reguler'}
+                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        />
+                                        <div className="ml-3">
+                                            <span className="font-medium text-gray-900">Reguler</span>
+                                            <p className="text-xs text-gray-500">Program reguler</p>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                        <input 
+                                            type="radio" 
+                                            name="registration_type" 
+                                            value="program_khusus"
+                                            checked={accountData.registration_type === 'program_khusus'}
+                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        />
+                                        <div className="ml-3">
+                                            <span className="font-medium text-gray-900">Program Khusus</span>
+                                            <p className="text-xs text-gray-500">Program khusus</p>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                        <input 
+                                            type="radio" 
+                                            name="registration_type" 
+                                            value="santri"
+                                            checked={accountData.registration_type === 'santri'}
+                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        />
+                                        <div className="ml-3">
+                                            <span className="font-medium text-gray-900">Santri</span>
+                                            <p className="text-xs text-gray-500">Santri pondok</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Program Studi <span className="text-red-500">*</span></label>
                                 <select 
