@@ -32,6 +32,11 @@ class KknDocumentTemplate extends Model
         return $this->belongsTo(FiscalYear::class);
     }
 
+    public function kknPeriod()
+    {
+        return $this->belongsTo(KknPeriod::class);
+    }
+
     /**
      * Scope to get templates for a specific fiscal year
      * If fiscal_year_id is null, returns global templates

@@ -45,6 +45,11 @@ class KknRegistration extends Model
         return $this->belongsTo(FiscalYear::class);
     }
 
+    public function kknPeriod()
+    {
+        return $this->belongsTo(KknPeriod::class);
+    }
+
     public function dpl()
     {
         return $this->belongsTo(User::class, 'dpl_id');

@@ -102,7 +102,7 @@ export default function KknAssessment() {
             cell: ({ row }) => (
                 <div className="text-sm">
                     <div className="text-gray-900">{row.original.kkn_location?.name}</div>
-                    <div className="text-xs text-gray-500">{row.original.kkn_location?.village}</div>
+                    <div className="text-xs text-gray-500">{row.original.kkn_location?.village?.name}</div>
                 </div>
             )
         },
@@ -205,7 +205,7 @@ export default function KknAssessment() {
                             >
                                 <option value="">Semua Lokasi</option>
                                 {locations.map(loc => (
-                                    <option key={loc.id} value={loc.id}>{loc.name} - {loc.village}</option>
+                                    <option key={loc.id} value={loc.id}>{loc.name} - {loc.village?.name}</option>
                                 ))}
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">

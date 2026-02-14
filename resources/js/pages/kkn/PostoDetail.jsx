@@ -175,7 +175,7 @@ export default function PostoDetail() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{posto.name}</h1>
-                            <p className="mt-1 text-sm text-gray-600">{posto.fiscal_year?.year}</p>
+                            <p className="mt-1 text-sm text-gray-600">{posto.kkn_period?.name}</p>
                         </div>
                         <div className="flex items-center gap-3">
                             {getStatusBadge(posto.status)}
@@ -214,17 +214,7 @@ export default function PostoDetail() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-start">
-                                    <Calendar className="w-5 h-5 text-gray-400 mr-3 mt-0.5" />
-                                    <div>
-                                        <div className="text-sm text-gray-600">Periode</div>
-                                        <div className="text-sm font-medium text-gray-900">
-                                            {posto.start_date && posto.end_date
-                                                ? `${new Date(posto.start_date).toLocaleDateString('id-ID')} - ${new Date(posto.end_date).toLocaleDateString('id-ID')}`
-                                                : 'Belum ditentukan'}
-                                        </div>
-                                    </div>
-                                </div>
+
                                 <div className="flex items-start">
                                     <Users className="w-5 h-5 text-gray-400 mr-3 mt-0.5" />
                                     <div>

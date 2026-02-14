@@ -8,11 +8,7 @@ const baseQuery = fetchBaseQuery({
         // Get token from Redux state (more reliable than localStorage)
         const token = getState().auth?.token || localStorage.getItem('token');
         
-        console.log('[RTK Query] Preparing headers:', {
-            reduxToken: getState().auth?.token,
-            localStorageToken: localStorage.getItem('token'),
-            finalToken: token
-        });
+
         
         if (token) {
             headers.set('Authorization', `Bearer ${token}`);

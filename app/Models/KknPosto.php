@@ -9,6 +9,7 @@ class KknPosto extends Model
     protected $fillable = [
         'name',
         'kkn_location_id',
+        'kkn_period_id',
         'fiscal_year_id',
         'dpl_id',
         'status',
@@ -31,6 +32,11 @@ class KknPosto extends Model
     public function fiscalYear()
     {
         return $this->belongsTo(FiscalYear::class);
+    }
+
+    public function kknPeriod()
+    {
+        return $this->belongsTo(KknPeriod::class);
     }
 
     public function dpl()
