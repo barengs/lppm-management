@@ -93,6 +93,33 @@ class KknRegistrationController extends Controller
                 // Student registering themselves
                 $targetUser = $user;
                 
+                // Get Fiscal Year and corresponding KKN Period
+                $fiscalYear = \App\Models\FiscalYear::find($validated['fiscal_year_id']);
+                $kknPeriod = \App\Models\KknPeriod::where('year', $fiscalYear->year)->first();
+
+                if (!$kknPeriod) {
+                     // Auto-create if not exists (safety net for transition)
+                     $kknPeriod = \App\Models\KknPeriod::create([
+                        'name' => 'KKN ' . $fiscalYear->year,
+                        'year' => $fiscalYear->year,
+                        'start_date' => $fiscalYear->year . '-01-01',
+                        'end_date' => $fiscalYear->year . '-12-31',
+                        'is_active' => $fiscalYear->is_active,
+                     ]);
+                }
+
+                // Check for Active Registration Wave (RegistrationPeriod)
+                $now = now();
+                $activeWave = $kknPeriod->registrationPeriods()
+                    ->where('is_active', true)
+                    ->whereDate('start_date', '<=', $now)
+                    ->whereDate('end_date', '>=', $now)
+                    ->first();
+
+                if (!$activeWave && !$isAdmin) {
+                    return response()->json(['message' => 'Pendaftaran KKN saat ini ditutup. Tidak ada gelombang pendaftaran yang aktif.'], 400);
+                }
+
                 // Check duplicate
                 $exists = KknRegistration::where('student_id', $targetUser->id)
                     ->where('fiscal_year_id', $validated['fiscal_year_id'])
@@ -128,12 +155,19 @@ class KknRegistrationController extends Controller
                  $photoPath = $request->file('photo')->store('kkn_photos', 'public');
                  $targetUser->mahasiswaProfile()->update(['avatar' => $photoPath]); 
             }
+            
+            // Resolve KKN Period ID again for saving (in case it wasn't resolved in student block)
+            if (!isset($kknPeriod)) {
+                $fiscalYear = \App\Models\FiscalYear::find($validated['fiscal_year_id']);
+                $kknPeriod = \App\Models\KknPeriod::where('year', $fiscalYear->year)->first();
+            }
 
             // Create Registration
             $data = [
                 'student_id' => $targetUser->id,
                 'kkn_location_id' => $validated['kkn_location_id'] ?? null,
                 'fiscal_year_id' => $validated['fiscal_year_id'],
+                'kkn_period_id' => $kknPeriod ? $kknPeriod->id : null,
                 'registration_type' => $validated['registration_type'],
                 'status' => 'pending',
             ];

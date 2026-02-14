@@ -55,6 +55,7 @@ import PostoIndex from './pages/kkn/PostoIndex';
 import PostoForm from './pages/kkn/PostoForm';
 import PostoDetail from './pages/kkn/PostoDetail';
 import PostoAddMember from './pages/kkn/PostoAddMember';
+import KknPeriodsIndex from './pages/admin/kkn-periods/Index';
 
 // Student KKN Dashboard Components
 import StudentKknDashboard from './pages/student/kkn/StudentKknDashboard';
@@ -212,6 +213,7 @@ function App() {
 
                     {/* KKN Module (Admin/Legacy) */}
                     <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
+                    <Route path="kkn/periods" element={<KknPeriodsIndex />} />
                     <Route path="kkn/locations" element={<KknLocationsIndex />} />
                     <Route path="kkn/registration" element={<KknStudentRegistration />} />
                     <Route path="kkn/status" element={<StudentKknStatus />} />

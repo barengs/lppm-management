@@ -29,6 +29,11 @@ class KknLocation extends Model
         return $this->belongsTo(FiscalYear::class);
     }
 
+    public function kknPeriod()
+    {
+        return $this->belongsTo(KknPeriod::class);
+    }
+
     public function registrations()
     {
         return $this->hasMany(KknRegistration::class);

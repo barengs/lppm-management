@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom';
 import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle, Upload, Download, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
-import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation } from '../../store/api/kknApi';
-import { useGetFiscalYearsQuery } from '../../store/api/masterDataApi';
+import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation, useGetKknPeriodsQuery } from '../../store/api/kknApi';
 import { useGetKknLocationsQuery } from '../../store/api/kknApi';
 
 export default function PostoIndex() {
     const [filters, setFilters] = useState({
-        fiscal_year_id: '',
+        kkn_period_id: '',
         status: '',
         location_id: '',
     });
@@ -20,16 +19,17 @@ export default function PostoIndex() {
 
     // RTK Query hooks
     const { data: postosData, isLoading } = useGetPostosQuery(filters);
-    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: periodsData } = useGetKknPeriodsQuery();
     const { data: locationsData } = useGetKknLocationsQuery();
     const [deletePosto] = useDeletePostoMutation();
     const [importPostos, { isLoading: isImporting }] = useImportPostosMutation();
     const [downloadTemplate] = useDownloadPostoTemplateMutation();
 
     // Derived data
-    const postos = postosData || [];
-    const fiscalYears = fiscalYearsData || [];
-    const locations = locationsData || [];
+    const postos = Array.isArray(postosData) ? postosData : [];
+    // Handle both array and paginated response for periods
+    const periods = periodsData?.data ? periodsData.data : (Array.isArray(periodsData) ? periodsData : []);
+    const locations = Array.isArray(locationsData) ? locationsData : [];
 
     const handleDownloadTemplate = async () => {
         try {
@@ -107,10 +107,10 @@ export default function PostoIndex() {
                 ),
             },
             {
-                accessorKey: 'fiscal_year.year',
-                header: 'Tahun',
+                accessorKey: 'kkn_period.name',
+                header: 'Periode KKN',
                 cell: ({ row }) => (
-                    <div className="text-sm text-gray-900">{row.original.fiscal_year?.year}</div>
+                    <div className="text-sm text-gray-900">{row.original.kkn_period?.name}</div>
                 ),
             },
             {
@@ -136,17 +136,7 @@ export default function PostoIndex() {
                 header: 'Status',
                 cell: ({ row }) => getStatusBadge(row.original.status),
             },
-            {
-                accessorKey: 'start_date',
-                header: 'Periode',
-                cell: ({ row }) => (
-                    <div className="text-sm text-gray-900">
-                        {row.original.start_date && row.original.end_date
-                            ? `${new Date(row.original.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(row.original.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                            : '-'}
-                    </div>
-                ),
-            },
+
             {
                 id: 'actions',
                 header: 'Aksi',
@@ -285,17 +275,17 @@ export default function PostoIndex() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Tahun Ajaran
+                                Periode KKN
                             </label>
                             <select
-                                value={filters.fiscal_year_id}
-                                onChange={(e) => setFilters({ ...filters, fiscal_year_id: e.target.value })}
+                                value={filters.kkn_period_id}
+                                onChange={(e) => setFilters({ ...filters, kkn_period_id: e.target.value })}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
-                                <option value="">Semua Tahun</option>
-                                {fiscalYears.map((fy) => (
-                                    <option key={fy.id} value={fy.id}>
-                                        {fy.year}
+                                <option value="">Semua Periode</option>
+                                {periods.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
                                     </option>
                                 ))}
                             </select>
@@ -325,7 +315,7 @@ export default function PostoIndex() {
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
                                 <option value="">Semua Lokasi</option>
-                                {locations.map((loc) => (
+                                {Array.isArray(locations) && locations.map((loc) => (
                                     <option key={loc.id} value={loc.id}>
                                         {loc.name}
                                     </option>

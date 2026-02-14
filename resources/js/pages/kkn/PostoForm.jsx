@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { useGetFiscalYearsQuery, useGetActiveFiscalYearQuery, useGetUsersByRoleQuery } from '../../store/api/masterDataApi';
+import { useGetUsersByRoleQuery } from '../../store/api/masterDataApi';
 import {
     useGetKknLocationsQuery,
     useGetPostoByIdQuery,
     useCreatePostoMutation,
     useUpdatePostoMutation,
+    useGetKknPeriodsQuery,
 } from '../../store/api/kknApi';
 
 export default function PostoForm() {
@@ -18,20 +19,15 @@ export default function PostoForm() {
     const [formData, setFormData] = useState({
         name: '',
         kkn_location_id: '',
-        fiscal_year_id: '',
+        kkn_period_id: '',
         dpl_id: '',
-        start_date: '',
-        end_date: '',
         description: '',
     });
 
     // RTK Query hooks
     const { data: locationsData } = useGetKknLocationsQuery();
-    const { data: fiscalYearsData } = useGetFiscalYearsQuery();
+    const { data: periodsData } = useGetKknPeriodsQuery({ active: true, no_pagination: true });
     const { data: dosensData } = useGetUsersByRoleQuery('dosen');
-    const { data: activeFiscalYearData } = useGetActiveFiscalYearQuery(undefined, {
-        skip: isEdit, // Only fetch for new posto
-    });
 
     // Fetch posto data for edit mode
     const { data: postoData, isLoading: isFetching } = useGetPostoByIdQuery(id, {
@@ -44,19 +40,23 @@ export default function PostoForm() {
 
     // Derived data
     const locations = Array.isArray(locationsData) ? locationsData : [];
-    const fiscalYears = Array.isArray(fiscalYearsData) ? fiscalYearsData : [];
+    const periods = Array.isArray(periodsData) ? periodsData : (periodsData?.data || []);
     const dosens = Array.isArray(dosensData) ? dosensData : [];
     const isLoading = isCreating || isUpdating;
 
-    // Auto-select active fiscal year for new posto
+    // Auto-select active period for new posto
     useEffect(() => {
-        if (!isEdit && activeFiscalYearData && activeFiscalYearData.length > 0) {
-            setFormData((prev) => ({
-                ...prev,
-                fiscal_year_id: activeFiscalYearData[0].id,
-            }));
+        if (!isEdit && periods && periods.length > 0) {
+            // Find active period if any, or just take the first one
+            const active = periods.find(p => p.is_active) || periods[0];
+            if (active) {
+                setFormData((prev) => ({
+                    ...prev,
+                    kkn_period_id: active.id,
+                }));
+            }
         }
-    }, [activeFiscalYearData, isEdit]);
+    }, [periods, isEdit]);
 
     // Populate form for edit mode
     useEffect(() => {
@@ -64,10 +64,8 @@ export default function PostoForm() {
             setFormData({
                 name: postoData.name,
                 kkn_location_id: postoData.location?.id || '',
-                fiscal_year_id: postoData.fiscal_year?.id || '',
+                kkn_period_id: postoData.kkn_period?.id || '',
                 dpl_id: postoData.dpl?.id || '',
-                start_date: postoData.start_date || '',
-                end_date: postoData.end_date || '',
                 description: postoData.description || '',
             });
         }
@@ -162,22 +160,22 @@ export default function PostoForm() {
                             </select>
                         </div>
 
-                        {/* Tahun Ajaran */}
+                        {/* Periode KKN */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Tahun Ajaran <span className="text-red-500">*</span>
+                                Periode KKN <span className="text-red-500">*</span>
                             </label>
                             <select
-                                name="fiscal_year_id"
-                                value={formData.fiscal_year_id}
+                                name="kkn_period_id"
+                                value={formData.kkn_period_id}
                                 onChange={handleChange}
                                 required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             >
-                                <option value="">Pilih Tahun Ajaran</option>
-                                {fiscalYears.map((fy) => (
-                                    <option key={fy.id} value={fy.id}>
-                                        {fy.year}
+                                <option value="">Pilih Periode</option>
+                                {periods.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
                                     </option>
                                 ))}
                             </select>
@@ -203,33 +201,7 @@ export default function PostoForm() {
                             </select>
                         </div>
 
-                        {/* Periode */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Tanggal Mulai
-                                </label>
-                                <input
-                                    type="date"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Tanggal Selesai
-                                </label>
-                                <input
-                                    type="date"
-                                    name="end_date"
-                                    value={formData.end_date}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                />
-                            </div>
-                        </div>
+
 
                         {/* Deskripsi */}
                         <div>

@@ -17,7 +17,7 @@ class KknPostoController extends Controller
     public function index(Request $request)
     {
         $user = auth('api')->user();
-        $query = KknPosto::with(['location', 'fiscalYear', 'dpl', 'members']);
+        $query = KknPosto::with(['location', 'kknPeriod', 'dpl', 'members']);
 
         // RESTRICT: Dosen only sees their supervised Postos
         if ($user && $user->role === 'dosen') {
@@ -25,8 +25,8 @@ class KknPostoController extends Controller
         }
 
         // Filters - use filled() to ignore empty strings
-        if ($request->filled('fiscal_year_id')) {
-            $query->where('fiscal_year_id', $request->fiscal_year_id);
+        if ($request->filled('kkn_period_id')) {
+            $query->where('kkn_period_id', $request->kkn_period_id);
         }
 
         if ($request->filled('status')) {
@@ -42,7 +42,7 @@ class KknPostoController extends Controller
                 'id' => $posto->id,
                 'name' => $posto->name,
                 'location' => $posto->location,
-                'fiscal_year' => $posto->fiscalYear,
+                'kkn_period' => $posto->kknPeriod,
                 'dpl' => $posto->dpl,
                 'status' => $posto->status,
                 'member_count' => $posto->getMemberCount(),
@@ -111,10 +111,8 @@ class KknPostoController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'kkn_location_id' => 'required|exists:kkn_locations,id',
-            'fiscal_year_id' => 'required|exists:fiscal_years,id',
+            'kkn_period_id' => 'required|exists:kkn_periods,id',
             'dpl_id' => 'nullable|exists:users,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
             'description' => 'nullable|string',
         ]);
 
@@ -138,7 +136,7 @@ class KknPostoController extends Controller
         }
 
         $posto = KknPosto::create($validated);
-        $posto->load(['location', 'fiscalYear', 'dpl']);
+        $posto->load(['location', 'kknPeriod', 'dpl']);
 
         return response()->json($posto, 201);
     }
@@ -150,7 +148,7 @@ class KknPostoController extends Controller
     {
         $posto = KknPosto::with([
             'location',
-            'fiscalYear',
+            'kknPeriod',
             'dpl',
             'members.student.mahasiswaProfile.faculty',
             'members.student.mahasiswaProfile.studyProgram',
@@ -160,7 +158,7 @@ class KknPostoController extends Controller
             'id' => $posto->id,
             'name' => $posto->name,
             'location' => $posto->location,
-            'fiscal_year' => $posto->fiscalYear,
+            'kkn_period' => $posto->kknPeriod,
             'dpl' => $posto->dpl,
             'status' => $posto->status,
             'start_date' => $posto->start_date,
@@ -194,10 +192,8 @@ class KknPostoController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'kkn_location_id' => 'sometimes|exists:kkn_locations,id',
-            'fiscal_year_id' => 'sometimes|exists:fiscal_years,id',
+            'kkn_period_id' => 'sometimes|exists:kkn_periods,id',
             'dpl_id' => 'nullable|exists:users,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
             'description' => 'nullable|string',
         ]);
 
@@ -210,7 +206,7 @@ class KknPostoController extends Controller
         }
 
         $posto->update($validated);
-        $posto->load(['location', 'fiscalYear', 'dpl']);
+        $posto->load(['location', 'kknPeriod', 'dpl']);
 
         return response()->json($posto);
     }
@@ -532,7 +528,7 @@ class KknPostoController extends Controller
              // Find student's posto membership
             $membership = KknPostoMember::with([
                 'posto.location',
-                'posto.fiscalYear',
+                'posto.kknPeriod',
                 'posto.dpl',
             ])->where('student_id', $user->id)
                 ->where('status', 'active')
@@ -550,7 +546,7 @@ class KknPostoController extends Controller
         } elseif ($user->role === 'dosen') {
              // Find posto managed by DPL
              // DPL should see their posto regardless of status (even draft)
-             $posto = KknPosto::with(['location', 'fiscalYear', 'dpl'])
+             $posto = KknPosto::with(['location', 'kknPeriod', 'dpl'])
                 ->where('dpl_id', $user->id)
                 // ->where('status', '!=', 'draft') // Removed to allow access to draft postos
                 ->latest()
@@ -572,7 +568,7 @@ class KknPostoController extends Controller
                 'id' => $posto->id,
                 'name' => $posto->name,
                 'location' => $posto->location,
-                'fiscal_year' => $posto->fiscalYear,
+                'kkn_period' => $posto->kknPeriod,
                 'dpl' => $posto->dpl,
                 'status' => $posto->status,
                 'start_date' => $posto->start_date,

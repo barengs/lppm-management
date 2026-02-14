@@ -8,13 +8,7 @@ export const kknApi = baseApi.injectEndpoints({
                 url: '/admin/kkn-registrations',
                 params,
             }),
-            providesTags: (result) =>
-                result
-                    ? [
-                          ...result.data.map(({ id }) => ({ type: 'Registration', id })),
-                          { type: 'Registrations', id: 'LIST' },
-                      ]
-                    : [{ type: 'Registrations', id: 'LIST' }],
+            providesTags: ['Registrations'],
             keepUnusedDataFor: 300, // 5 minutes
         }),
 
@@ -185,13 +179,7 @@ export const kknApi = baseApi.injectEndpoints({
                 url: '/kkn-locations',
                 params,
             }),
-            providesTags: (result) =>
-                result
-                    ? [
-                          ...result.map(({ id }) => ({ type: 'KknLocation', id })),
-                          { type: 'KknLocations', id: 'LIST' },
-                      ]
-                    : [{ type: 'KknLocations', id: 'LIST' }],
+            providesTags: ['KknLocations'],
             keepUnusedDataFor: 300,
         }),
 
@@ -258,13 +246,7 @@ export const kknApi = baseApi.injectEndpoints({
                 url: '/kkn-postos',
                 params,
             }),
-            providesTags: (result) =>
-                result
-                    ? [
-                          ...result.map(({ id }) => ({ type: 'Postos', id })),
-                          { type: 'Postos', id: 'LIST' },
-                      ]
-                    : [{ type: 'Postos', id: 'LIST' }],
+            providesTags: ['Postos'],
         }),
 
         getPostoById: builder.query({
@@ -272,7 +254,7 @@ export const kknApi = baseApi.injectEndpoints({
             providesTags: (result, error, id) => [{ type: 'Postos', id }],
         }),
 
-        deletePostо: builder.mutation({
+        deletePosto: builder.mutation({
             query: (id) => ({
                 url: `/kkn-postos/${id}`,
                 method: 'DELETE',
@@ -366,6 +348,81 @@ export const kknApi = baseApi.injectEndpoints({
             ],
         }),
 
+        // ============ KKN Periods & Waves ============
+        getKknPeriods: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn-periods',
+                params,
+            }),
+            providesTags: ['KknPeriods'],
+        }),
+
+        getKknPeriodById: builder.query({
+            query: (id) => `/kkn-periods/${id}`,
+            providesTags: (result, error, id) => [{ type: 'KknPeriod', id }],
+        }),
+
+        createKknPeriod: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-periods',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['KknPeriods'],
+        }),
+
+        updateKknPeriod: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/kkn-periods/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                'KknPeriods',
+                { type: 'KknPeriod', id }
+            ],
+        }),
+
+        deleteKknPeriod: builder.mutation({
+            query: (id) => ({
+                url: `/kkn-periods/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['KknPeriods'],
+        }),
+
+        createRegistrationPeriod: builder.mutation({
+            query: (data) => ({
+                url: '/registration-periods',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { kkn_period_id }) => [
+                'KknPeriods', 
+                { type: 'KknPeriod', id: kkn_period_id }
+            ],
+        }),
+
+        updateRegistrationPeriod: builder.mutation({
+            query: ({ id, kkn_period_id, ...data }) => ({
+                url: `/registration-periods/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { kkn_period_id }) => [
+                'KknPeriods',
+                { type: 'KknPeriod', id: kkn_period_id }
+            ],
+        }),
+
+        deleteRegistrationPeriod: builder.mutation({
+            query: (id) => ({
+                url: `/registration-periods/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['KknPeriods'],
+        }),
+
         // ============ Assessments/Grades ============
         getKknGrades: builder.query({
             query: (params = {}) => ({
@@ -449,4 +506,16 @@ export const {
     useGetKknGradesQuery,
     useSaveKknGradeMutation,
     useExportKknGradesMutation,
+
+    // KKN Periods
+    useGetKknPeriodsQuery,
+    useGetKknPeriodByIdQuery,
+    useCreateKknPeriodMutation,
+    useUpdateKknPeriodMutation,
+    useDeleteKknPeriodMutation,
+    
+    // Registration Periods (Waves)
+    useCreateRegistrationPeriodMutation,
+    useUpdateRegistrationPeriodMutation,
+    useDeleteRegistrationPeriodMutation,
 } = kknApi;

@@ -100,6 +100,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('kkn-locations', App\Http\Controllers\KknLocationController::class);
     Route::apiResource('kkn-registrations', KknRegistrationController::class);
     
+    // KKN Periods & Waves
+    Route::apiResource('kkn-periods', App\Http\Controllers\KknPeriodController::class);
+    Route::apiResource('registration-periods', App\Http\Controllers\RegistrationPeriodController::class);
+    
     // KKN Posko Management (Admin)
     Route::prefix('kkn/postos')->group(function () {
         Route::get('/', [App\Http\Controllers\KknPostoController::class, 'index']);
