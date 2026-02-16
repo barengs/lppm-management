@@ -26,9 +26,24 @@ class AuthController extends Controller
     public function login()
     {
         $credentials = request(['email', 'password']);
+        $recaptchaToken = request('recaptcha_token');
+
+        // Verify ReCaptcha
+        if (!$recaptchaToken) {
+             return response()->json(['error' => 'Please complete the ReCaptcha.'], 422);
+        }
+
+        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => env('RECAPTCHA_SECRET_KEY'),
+            'response' => $recaptchaToken,
+        ]);
+
+        if (!$response->json()['success']) {
+            return response()->json(['error' => 'ReCaptcha verification failed.'], 422);
+        }
 
         if (! $token = auth('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Login gagal. Periksa email dan password.'], 401);
         }
 
         return $this->respondWithToken($token);

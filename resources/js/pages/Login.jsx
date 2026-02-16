@@ -4,17 +4,26 @@ import { useAuth } from '../hooks/useAuth';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSettings, setSettings } from '../store/slices/systemSlice';
 import { Lock, Mail } from 'lucide-react';
+import ReCAPTCHA from "react-google-recaptcha";
+import { toast } from 'react-toastify';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [recaptchaToken, setRecaptchaToken] = useState(null);
     const navigate = useNavigate();
     const { login, isLoading, user } = useAuth();
     const settings = useSelector(selectSettings);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const loggedInUser = await login(email, password);
+
+        if (!recaptchaToken) {
+            toast.error("Please verify that you are not a robot.");
+            return;
+        }
+
+        const loggedInUser = await login(email, password, recaptchaToken);
         if (loggedInUser) {
             // Redirect mahasiswa to KKN dashboard, others to main dashboard
             if (loggedInUser.role === 'mahasiswa') {
@@ -71,6 +80,13 @@ export default function Login() {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <ReCAPTCHA
+                            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
+                            onChange={(token) => setRecaptchaToken(token)}
+                        />
                     </div>
 
                     <button

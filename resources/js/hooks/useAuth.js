@@ -29,9 +29,9 @@ export const useAuth = () => {
      * @param {string} password
      * @returns {Promise<boolean>} success status
      */
-    const login = async (email, password) => {
+    const login = async (email, password, recaptchaToken) => {
         try {
-            const response = await loginMutation({ email, password }).unwrap();
+            const response = await loginMutation({ email, password, recaptcha_token: recaptchaToken }).unwrap();
             return response.user; // Return user object directly
         } catch (error) {
             return null;
