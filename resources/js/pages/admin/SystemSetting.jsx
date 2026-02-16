@@ -8,6 +8,7 @@ export default function SystemSetting() {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         system_name: '',
+        university_name: '',
         description: '',
         address: '',
         email: '',
@@ -30,6 +31,7 @@ export default function SystemSetting() {
             const data = response.data;
             setFormData({
                 system_name: data.system_name || '',
+                university_name: data.university_name || '',
                 description: data.description || '',
                 address: data.address || '',
                 email: data.email || '',
@@ -77,6 +79,7 @@ export default function SystemSetting() {
 
         const data = new FormData();
         data.append('system_name', formData.system_name);
+        if (formData.university_name) data.append('university_name', formData.university_name);
         if (formData.description) data.append('description', formData.description);
         if (formData.address) data.append('address', formData.address);
         if (formData.email) data.append('email', formData.email);
@@ -125,6 +128,17 @@ export default function SystemSetting() {
                                 value={formData.system_name}
                                 onChange={e => setFormData({ ...formData, system_name: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Universitas</label>
+                            <input
+                                type="text"
+                                value={formData.university_name}
+                                onChange={e => setFormData({ ...formData, university_name: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Contoh: Universitas Islam Madura"
                             />
                         </div>
                         

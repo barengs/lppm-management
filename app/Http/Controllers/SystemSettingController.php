@@ -32,6 +32,7 @@ class SystemSettingController extends Controller
 
         $validated = $request->validate([
             'system_name' => 'required|string|max:255',
+            'university_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'email' => 'nullable|email',

@@ -3,8 +3,11 @@ import axios from 'axios';
 import { MessageSquare, Star, Send, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
+import { selectSettings } from '../../store/slices/systemSlice';
 
 export default function PublicSurvey() {
+    const settings = useSelector(selectSettings);
     const [formData, setFormData] = useState({
         name: '',
         role: 'mahasiswa', // dosen, mahasiswa, umum, tendik
@@ -46,7 +49,7 @@ export default function PublicSurvey() {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Terima Kasih!</h2>
                     <p className="text-gray-600 mb-8">
-                        Masukan Anda sangat berharga bagi kami untuk meningkatkan kualitas layanan LPPM Universitas Islam Madura.
+                        Masukan Anda sangat berharga bagi kami untuk meningkatkan kualitas layanan LPPM {settings.university_name}.
                     </p>
                     <Link to="/" className="inline-block bg-green-700 text-white font-bold py-3 px-8 rounded-full hover:bg-green-800 transition-colors">
                         Kembali ke Beranda

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Calendar, FileText, Users, Link as LinkIcon, Download, BarChart2, BookOpen, AlertCircle } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectSettings } from '../store/slices/systemSlice';
 
 export default function Home() {
+    const settings = useSelector(selectSettings);
     const [homeData, setHomeData] = useState({
         news: [],
         announcements: [],
@@ -111,7 +114,7 @@ export default function Home() {
                                     Selamat Datang di LPPM UIM
                                 </h2>
                                 <p className="text-green-100 mb-8 font-light text-lg max-w-2xl mx-auto">
-                                    Lembaga Penelitian dan Pengabdian kepada Masyarakat Universitas Islam Madura.
+                                    Lembaga Penelitian dan Pengabdian kepada Masyarakat {settings.university_name}.
                                 </p>
                             </>
                         )}
