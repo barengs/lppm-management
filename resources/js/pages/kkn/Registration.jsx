@@ -104,6 +104,19 @@ export default function KknStudentRegistration() {
         }
     }, [fetchedProfile, isAdmin]);
 
+    // Ensure filtered programs are updated when faculty or study programs change
+    useEffect(() => {
+        if (profileData.fakultas && studyPrograms.length > 0) {
+            const filtered = studyPrograms.filter(p => p.faculty_id == profileData.fakultas);
+            // Only update if length differs or something?
+            // Actually, comparing arrays is tricky. Just set it.
+            // React handles simple referential inequality by re-render, but virtual DOM diff will be cheap.
+            setFilteredPrograms(filtered);
+        } else if (!profileData.fakultas) {
+             setFilteredPrograms([]);
+        }
+    }, [profileData.fakultas, studyPrograms]);
+
     // Transform document templates from RTK Query
     useEffect(() => {
         if (documentTemplatesData) {
@@ -476,7 +489,7 @@ export default function KknStudentRegistration() {
                                 />
                                 {errors.npm && <p className="text-red-500 text-xs mt-1">{errors.npm}</p>}
                             </div>
-
+                            {/* info fakultas dan prodi */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Fakultas <span className="text-red-500">*</span></label>
                                 <select 
@@ -493,6 +506,25 @@ export default function KknStudentRegistration() {
                                     {faculties.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                                 </select>
                                 {errors.fakultas && <p className="text-red-500 text-xs mt-1">{errors.fakultas}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Program Studi <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="prodi" 
+                                    value={profileData.prodi} 
+                                    onChange={(e) => {
+                                        handleProfileChange(e);
+                                        if (errors.prodi) setErrors({...errors, prodi: ''});
+                                    }} 
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.prodi ? 'border-red-500' : 'border-gray-300'}`} 
+                                    required 
+                                    disabled={!profileData.fakultas}
+                                >
+                                    <option value="">Pilih Program Studi</option>
+                                    {filteredPrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                {errors.prodi && <p className="text-red-500 text-xs mt-1">{errors.prodi}</p>}
                             </div>
 
                             <div className="md:col-span-2">
@@ -558,26 +590,7 @@ export default function KknStudentRegistration() {
                                     </label>
                                 </div>
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Program Studi <span className="text-red-500">*</span></label>
-                                <select 
-                                    name="prodi" 
-                                    value={profileData.prodi} 
-                                    onChange={(e) => {
-                                        handleProfileChange(e);
-                                        if (errors.prodi) setErrors({...errors, prodi: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.prodi ? 'border-red-500' : 'border-gray-300'}`} 
-                                    required 
-                                    disabled={!profileData.fakultas}
-                                >
-                                    <option value="">Pilih Program Studi</option>
-                                    {filteredPrograms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                                {errors.prodi && <p className="text-red-500 text-xs mt-1">{errors.prodi}</p>}
-                            </div>
-
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos <span className="text-red-500">*</span></label>
                                 <select 

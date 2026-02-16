@@ -84,12 +84,24 @@ export default function KknStudentRegistration() {
                     gender: data.mahasiswa_profile.gender || '',
                     place_of_birth: data.mahasiswa_profile.place_of_birth || '',
                     date_of_birth: data.mahasiswa_profile.date_of_birth || '',
+                    jacket_size: data.mahasiswa_profile.jacket_size || '',
+                    registration_type: profileData.registration_type || 'reguler', // Preserve or default
                 });
             }
         } catch (error) {
             console.error("Failed to fetch profile");
         }
     }
+
+    // Ensure filtered programs are updated when faculty or study programs change
+    useEffect(() => {
+        if (profileData.fakultas && studyPrograms.length > 0) {
+            const filtered = studyPrograms.filter(p => p.faculty_id == profileData.fakultas);
+            setFilteredPrograms(filtered);
+        } else {
+             setFilteredPrograms([]);
+        }
+    }, [profileData.fakultas, studyPrograms]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
