@@ -42,6 +42,8 @@ import PermissionsIndex from './pages/admin/permissions/Index';
 import MenuIndex from './pages/admin/menus/Index';
 import MenuBuilder from './pages/admin/menus/Builder';
 import SystemSettingIndex from './pages/admin/SystemSetting';
+import PageIndex from './pages/admin/pages/Index';
+import PageForm from './pages/admin/pages/Form';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -249,7 +251,13 @@ function App() {
                     <Route path="admin/permissions" element={<PermissionsIndex />} />
                     <Route path="admin/menus" element={<MenuIndex />} />
                     <Route path="admin/menus/:id" element={<MenuBuilder />} />
+                    <Route path="admin/menus/:id" element={<MenuBuilder />} />
                     <Route path="admin/settings" element={<SystemSettingIndex />} />
+
+                    {/* Static Pages */}
+                    <Route path="admin/pages" element={<PageIndex />} />
+                    <Route path="admin/pages/create" element={<PageForm />} />
+                    <Route path="admin/pages/:id/edit" element={<PageForm />} />
 
                     {/* Profile */}
                     <Route path="profile" element={<ProfileIndex />} />

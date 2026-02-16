@@ -17,6 +17,7 @@ class PageController extends Controller
         // Try to find by slug first, then fallback to type for backward compatibility
         $page = Page::where('slug', $identifier)
                     ->orWhere('type', $identifier)
+                    ->where('is_published', true) // improved security
                     ->first();
         
         if (!$page) {

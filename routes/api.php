@@ -216,6 +216,9 @@ Route::middleware(['auth:api'])->group(function () {
     // Master Data (Public Access for Registration)
     // Route::get('faculties', [App\Http\Controllers\FacultyController::class, 'index']);
     // Route::get('study-programs', [App\Http\Controllers\StudyProgramController::class, 'index']);
+
+    // Page Management (Admin)
+    Route::apiResource('admin/pages', App\Http\Controllers\Admin\PageController::class);
 });
 
 

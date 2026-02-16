@@ -90,6 +90,7 @@ export default function Sidebar() {
                 { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
                 { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
                 { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
+                { name: 'Halaman Statis', icon: <FileText size={20} />, path: '/admin/pages', permission: 'pages.view' },
                 { name: 'Sistem Setting', icon: <Settings size={20} />, path: '/admin/settings', permission: 'settings.view' }, // Admin only by default logic or add permission
             ]
         },
