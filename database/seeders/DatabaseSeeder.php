@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         // 1. Super Admin
         $admin = User::create([
             'name' => 'Administrator LPPM',
-            'email' => 'admin@uim.ac.id',
+            'email' => 'admin@umi.ac.id',
             'password' => Hash::make('password'),
         ]);
         $admin->assignRole('admin');
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         // 2. Dosen (Researcher)
         $dosen = User::create([
             'name' => 'Dr. Ahmad Fauzi, M.Kom',
-            'email' => 'dosen@uim.ac.id',
+            'email' => 'dosen@umi.ac.id',
             'password' => Hash::make('password'),
         ]);
         $dosen->assignRole('dosen');
@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
         // 3. Reviewer
         $reviewer = User::create([
             'name' => 'Prof. Dr. Budi Santoso',
-            'email' => 'reviewer@uim.ac.id',
+            'email' => 'reviewer@umi.ac.id',
             'password' => Hash::make('password'),
         ]);
         $reviewer->assignRole('reviewer');
@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
         // 4. Mahasiswa (KKN Participant)
         $mahasiswa = User::create([
             'name' => 'Siti Aminah',
-            'email' => 'mahasiswa@uim.ac.id',
+            'email' => 'mahasiswa@umi.ac.id',
             'password' => Hash::make('password'),
         ]);
         $mahasiswa->assignRole('mahasiswa');

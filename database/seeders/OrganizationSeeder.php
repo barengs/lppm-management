@@ -19,7 +19,7 @@ class OrganizationSeeder extends Seeder
 
         // Create or find users for organization members
         $ketuaUser = User::firstOrCreate(
-            ['email' => 'ketua.lppm@uim.ac.id'],
+            ['email' => 'ketua.lppm@umi.ac.id'],
             [
                 'name' => 'Dr. Ahmad Fauzi, M.Si.',
                 'password' => Hash::make('password'),
@@ -27,7 +27,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $sekretarisUser = User::firstOrCreate(
-            ['email' => 'sekretaris.lppm@uim.ac.id'],
+            ['email' => 'sekretaris.lppm@umi.ac.id'],
             [
                 'name' => 'Dr. Siti Aminah, M.Pd.',
                 'password' => Hash::make('password'),
@@ -35,7 +35,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $bendaharaUser = User::firstOrCreate(
-            ['email' => 'bendahara.lppm@uim.ac.id'],
+            ['email' => 'bendahara.lppm@umi.ac.id'],
             [
                 'name' => 'Ir. Budi Santoso, M.T.',
                 'password' => Hash::make('password'),
@@ -43,7 +43,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $kepalaPenelitianUser = User::firstOrCreate(
-            ['email' => 'p2m@uim.ac.id'],
+            ['email' => 'p2m@umi.ac.id'],
             [
                 'name' => 'Dr. Muhammad Rizki, M.Kom.',
                 'password' => Hash::make('password'),
@@ -51,7 +51,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $kepalaPengabdianUser = User::firstOrCreate(
-            ['email' => 'pengabdian@uim.ac.id'],
+            ['email' => 'pengabdian@umi.ac.id'],
             [
                 'name' => 'Dr. Fatimah Zahra, M.Sos.',
                 'password' => Hash::make('password'),
@@ -59,7 +59,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $kepalaPublikasiUser = User::firstOrCreate(
-            ['email' => 'publikasi@uim.ac.id'],
+            ['email' => 'publikasi@umi.ac.id'],
             [
                 'name' => 'Dr. Hasan Basri, M.Hum.',
                 'password' => Hash::make('password'),
@@ -68,7 +68,7 @@ class OrganizationSeeder extends Seeder
 
         // Staff users
         $staff1User = User::firstOrCreate(
-            ['email' => 'andi.wijaya@uim.ac.id'],
+            ['email' => 'andi.wijaya@umi.ac.id'],
             [
                 'name' => 'Andi Wijaya, S.Kom.',
                 'password' => Hash::make('password'),
@@ -76,7 +76,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $staff2User = User::firstOrCreate(
-            ['email' => 'dewi.lestari@uim.ac.id'],
+            ['email' => 'dewi.lestari@umi.ac.id'],
             [
                 'name' => 'Dewi Lestari, S.T.',
                 'password' => Hash::make('password'),
@@ -84,7 +84,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $staff3User = User::firstOrCreate(
-            ['email' => 'rudi.hartono@uim.ac.id'],
+            ['email' => 'rudi.hartono@umi.ac.id'],
             [
                 'name' => 'Rudi Hartono, S.Sos.',
                 'password' => Hash::make('password'),
@@ -92,7 +92,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $staff4User = User::firstOrCreate(
-            ['email' => 'sari.indah@uim.ac.id'],
+            ['email' => 'sari.indah@umi.ac.id'],
             [
                 'name' => 'Sari Indah, S.Pd.',
                 'password' => Hash::make('password'),
@@ -100,7 +100,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $staff5User = User::firstOrCreate(
-            ['email' => 'yusuf.rahman@uim.ac.id'],
+            ['email' => 'yusuf.rahman@umi.ac.id'],
             [
                 'name' => 'Yusuf Rahman, S.S.',
                 'password' => Hash::make('password'),
@@ -108,7 +108,7 @@ class OrganizationSeeder extends Seeder
         );
 
         $staff6User = User::firstOrCreate(
-            ['email' => 'nur.azizah@uim.ac.id'],
+            ['email' => 'nur.azizah@umi.ac.id'],
             [
                 'name' => 'Nur Azizah, S.I.Kom.',
                 'password' => Hash::make('password'),
