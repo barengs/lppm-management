@@ -354,7 +354,7 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
                 <div className="bg-white rounded-lg max-w-6xl w-full my-8">
                     {/* Header */}
                     <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
