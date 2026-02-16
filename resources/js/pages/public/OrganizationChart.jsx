@@ -91,7 +91,7 @@ export default function PublicOrganization() {
             // Build tree structure from flat data
             const buildTree = (items, parentId = null) => {
                 return items
-                    .filter(item => item.parent_id === parentId)
+                    .filter(item => item.parent_id == parentId) // Use loose equality for type safety
                     .sort((a, b) => a.order_index - b.order_index)
                     .map(item => ({
                         ...item,

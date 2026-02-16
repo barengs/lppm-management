@@ -5,10 +5,10 @@ import { toast } from 'react-toastify';
 export const authApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation({
-            query: ({ email, password }) => ({
+            query: ({ email, password, recaptcha_token }) => ({
                 url: '/auth/login',
                 method: 'POST',
-                body: { email, password },
+                body: { email, password, recaptcha_token },
             }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
