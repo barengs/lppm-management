@@ -14,10 +14,10 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const success = await login(email, password);
-        if (success) {
+        const loggedInUser = await login(email, password);
+        if (loggedInUser) {
             // Redirect mahasiswa to KKN dashboard, others to main dashboard
-            if (user?.role === 'mahasiswa') {
+            if (loggedInUser.role === 'mahasiswa') {
                 navigate('/dashboard/kkn');
             } else {
                 navigate('/dashboard');

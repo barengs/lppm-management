@@ -31,10 +31,10 @@ export const useAuth = () => {
      */
     const login = async (email, password) => {
         try {
-            await loginMutation({ email, password }).unwrap();
-            return true;
+            const response = await loginMutation({ email, password }).unwrap();
+            return response.user; // Return user object directly
         } catch (error) {
-            return false;
+            return null;
         }
     };
     
