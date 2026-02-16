@@ -260,7 +260,7 @@ export default function KknLocationsIndex() {
             </div>
 
              {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">{isEditing ? 'Edit Lokasi' : 'Tambah Lokasi'}</h2>
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
@@ -395,7 +395,7 @@ export default function KknLocationsIndex() {
 
              {/* Import Modal */}
              {showImportModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">Import Lokasi (Excel)</h2>

@@ -310,7 +310,7 @@ export default function UsersIndex() {
 
             {/* Main Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg w-full max-w-2xl shadow-xl flex flex-col max-h-[90vh]">
                         {/* Header */}
                         <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
@@ -514,7 +514,7 @@ export default function UsersIndex() {
 
             {/* Import Modal */}
             {showImportModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">Import Staff/Dosen (Excel)</h2>
