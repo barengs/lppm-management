@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     LineChart, Line
@@ -9,6 +10,7 @@ import { Users, MapPin, BookOpen, UserCheck } from 'lucide-react';
 
 export default function Dashboard() {
     const { user, token } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         participants_per_period: [],
         lecturer_count: 0,
@@ -18,6 +20,12 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Redirect student if they somehow access this page
+        if (user && user.role === 'mahasiswa') {
+            navigate('/dashboard/kkn', { replace: true });
+            return;
+        }
+
         console.log("Dashboard mounted. Token exists:", !!token);
         const fetchStats = async () => {
             console.log("Fetching dashboard stats...");
@@ -34,9 +42,9 @@ export default function Dashboard() {
             }
         };
 
-        if (token) fetchStats();
-        else console.log("No token available, skipping stats fetch");
-    }, [token]);
+        if (token && user?.role !== 'mahasiswa') fetchStats();
+        else if (!token) console.log("No token available, skipping stats fetch");
+    }, [token, user, navigate]);
 
     const StatCard = ({ title, value, icon, color }) => (
         <div className={`bg-white shadow p-6 border-l-4 ${color}`}>
