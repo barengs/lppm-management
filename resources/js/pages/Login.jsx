@@ -15,6 +15,9 @@ export default function Login() {
     const { login, isLoading, user } = useAuth();
     const settings = useSelector(selectSettings);
 
+    // Debugging Key
+    console.log('Current Site Key:', import.meta.env.VITE_RECAPTCHA_SITE_KEY);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
