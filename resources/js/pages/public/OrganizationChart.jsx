@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Tree, TreeNode } from 'react-organizational-chart';
 import styled from '@emotion/styled';
 import { Users, Mail, Phone, Building2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectSettings } from '../../store/slices/systemSlice';
 
 // Styled components for organization chart
 const StyledNode = styled.div`
@@ -73,6 +75,7 @@ const OrganizationNode = ({ member }) => {
 };
 
 export default function PublicOrganization() {
+    const settings = useSelector(selectSettings);
     const [organization, setOrganization] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -140,7 +143,7 @@ export default function PublicOrganization() {
                             Lembaga Penelitian dan Pengabdian kepada Masyarakat
                         </p>
                         <p className="text-gray-500 mt-2">
-                            Universitas Islam Madura
+                            {settings.university_name}
                         </p>
                     </div>
                 </div>

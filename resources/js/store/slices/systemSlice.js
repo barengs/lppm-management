@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
     settings: {
         system_name: 'LPPM UIM',
+        university_name: 'Universitas Islam Madura',
         description: 'Lembaga Penelitian dan Pengabdian kepada Masyarakat',
         address: 'Kompleks Pondok Pesantren Miftahul Ulum, Bettet, Pamekasan, Jawa Timur.',
         email: 'lppm@uim.ac.id',

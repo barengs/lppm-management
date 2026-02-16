@@ -80,7 +80,7 @@ export default function PublicLayout() {
                         </div>
                     </div>
                     <div className="text-sm text-gray-600 hidden md:block">
-                       Universitas Islam Madura
+                       {settings.university_name}
                     </div>
                 </div>
             </div>
@@ -216,7 +216,7 @@ export default function PublicLayout() {
                     <div>
                         <h3 className="text-lg font-bold mb-6 text-yellow-400">TAUTAN PENTING</h3>
                         <ul className="space-y-3 text-sm text-gray-300">
-                            <li><a href="https://uim.ac.id" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Universitas Islam Madura</a></li>
+                            <li><a href="https://uim.ac.id" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">{settings.university_name}</a></li>
                             <li><a href="https://sinta.kemdiktisaintek.go.id/" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">SINTA Kemdikbud</a></li>
                             <li><a href="https://garuda.kemdiktisaintek.go.id/" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">GARUDA</a></li>
                             <li><a href="https://scholar.google.com" className="hover:text-white hover:underline decoration-yellow-400 decoration-2 underline-offset-4">Google Scholar</a></li>
@@ -241,7 +241,7 @@ export default function PublicLayout() {
                     </div>
                 </div>
                 <div className="mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-                    &copy; {new Date().getFullYear()} Lembaga Penelitian dan Pengabdian Masyarakat Universitas Islam Madura. Developed by <a href="https://unggul.id" target="_blank" rel="noopener noreferrer" className="text-yellow-500 hover:text-yellow-400">PT. Unggul Mediatama Indonesia</a>
+                    &copy; {new Date().getFullYear()} Lembaga Penelitian dan Pengabdian Masyarakat {settings.university_name}. Developed by <a href="https://unggul.id" target="_blank" rel="noopener noreferrer" className="text-yellow-500 hover:text-yellow-400">PT. Unggul Mediatama Indonesia</a>
                 </div>
             </footer>
         </div>
