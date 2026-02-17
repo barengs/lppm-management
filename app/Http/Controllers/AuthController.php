@@ -33,13 +33,20 @@ class AuthController extends Controller
              return response()->json(['error' => 'Please complete the ReCaptcha.'], 422);
         }
 
-        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => env('RECAPTCHA_SECRET_KEY'),
-            'response' => $recaptchaToken,
-        ]);
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => env('RECAPTCHA_SECRET_KEY'),
+                'response' => $recaptchaToken,
+            ]);
 
-        if (!$response->json()['success']) {
-            return response()->json(['error' => 'ReCaptcha verification failed.'], 422);
+            if (!$response->successful() || !$response->json()['success']) {
+                 return response()->json(['error' => 'ReCaptcha verification failed.'], 422);
+            }
+        } catch (\Exception $e) {
+            // Log the error for admin
+            \Illuminate\Support\Facades\Log::error('ReCaptcha Connection Error: ' . $e->getMessage());
+            // Return user friendly message
+            return response()->json(['error' => 'Gagal terhubung ke Google ReCaptcha. Mohon coba lagi atau hubungi admin.'], 422);
         }
 
         if (! $token = auth('api')->attempt($credentials)) {
