@@ -11,12 +11,12 @@ export default function KknStudentRegistration() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
-    
+
     // Form States
     const [step, setStep] = useState(1);
     const [selectedFy, setSelectedFy] = useState('');
     const [filteredPrograms, setFilteredPrograms] = useState([]);
-    
+
     // Account Data (For Admin creating new student)
     const [accountData, setAccountData] = useState({
         email: '',
@@ -40,9 +40,13 @@ export default function KknStudentRegistration() {
         date_of_birth: '',
         jacket_size: '',
     });
-    const [documents, setDocuments] = useState([]);
+    const [documents, setDocuments] = useState([
+        { id: 'rekom_dekan', name: 'Surat Rekom Dekan', file: null, required: true, type: 'required' },
+        { id: 'pernyataan_kesanggupan', name: 'Surat Pernyataan kesanggupan', file: null, required: true, type: 'required' },
+        { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' }
+    ]);
     const [files, setFiles] = useState({ photo: null });
-    
+
     // RTK Query hooks
     const { data: fiscalYearsData } = useGetFiscalYearsQuery();
     const { data: facultiesData } = useGetFacultiesQuery();
@@ -51,16 +55,16 @@ export default function KknStudentRegistration() {
     const { data: registrationsData } = useGetRegistrationsQuery({}, { skip: isAdmin }); // Only for students
     const { data: documentTemplatesData } = useGetDocumentTemplatesQuery(
         { fiscal_year_id: accountData.fiscal_year_id },
-        { skip: !accountData.fiscal_year_id }
+        { skip: true } // Disabled to use hardcoded list
     );
     const [createRegistration, { isLoading: isSubmitting }] = useCreateRegistrationMutation();
-    
+
     // Derived data from RTK Query
     const fiscalYears = fiscalYearsData || [];
     const faculties = facultiesData || [];
     const studyPrograms = studyProgramsData || [];
     const registrations = registrationsData?.data || [];
-    
+
     // Photo Upload State
     const [isDragging, setIsDragging] = useState(false);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -71,7 +75,7 @@ export default function KknStudentRegistration() {
     // Password Visibility State
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    
+
     // Confirmation Modal State
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -113,29 +117,16 @@ export default function KknStudentRegistration() {
             // React handles simple referential inequality by re-render, but virtual DOM diff will be cheap.
             setFilteredPrograms(filtered);
         } else if (!profileData.fakultas) {
-             setFilteredPrograms([]);
+            setFilteredPrograms([]);
         }
     }, [profileData.fakultas, studyPrograms]);
 
-    // Transform document templates from RTK Query
-    useEffect(() => {
-        if (documentTemplatesData) {
-            const docs = documentTemplatesData.map(template => ({
-                id: template.slug,
-                name: template.name,
-                file: null,
-                required: template.is_required,
-                type: template.is_required ? 'required' : 'optional',
-                description: template.description
-            }));
-            setDocuments(docs);
-        }
-    }, [documentTemplatesData]);
+    // Using hardcoded documents now, skipped dynamic fetch from DB
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
         setProfileData({ ...profileData, [name]: value });
-        
+
         // Filter study programs when faculty changes
         if (name === 'fakultas') {
             const filtered = studyPrograms.filter(p => p.faculty_id == value);
@@ -155,9 +146,9 @@ export default function KknStudentRegistration() {
     };
 
     const handleDocumentNameChange = (index, name) => {
-         const newDocs = [...documents];
-         newDocs[index].name = name;
-         setDocuments(newDocs);
+        const newDocs = [...documents];
+        newDocs[index].name = name;
+        setDocuments(newDocs);
     };
 
     const addDocument = () => {
@@ -197,7 +188,7 @@ export default function KknStudentRegistration() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
+
             canvas.toBlob(blob => {
                 const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
                 setFiles({ ...files, photo: file });
@@ -216,7 +207,7 @@ export default function KknStudentRegistration() {
         e.preventDefault();
         setIsDragging(true);
     };
-    
+
     const onDragLeave = (e) => {
         e.preventDefault();
         setIsDragging(false);
@@ -266,10 +257,10 @@ export default function KknStudentRegistration() {
         // Documents (Dynamic)
         documents.forEach((doc, index) => {
             if (doc.file) {
-                 formData.append(`documents[${index}][name]`, doc.name);
-                 formData.append(`documents[${index}][file]`, doc.file);
-                 // Send doc.id (e.g. 'krs', 'transkrip') as the type identifier
-                 formData.append(`documents[${index}][type]`, doc.id);
+                formData.append(`documents[${index}][name]`, doc.name);
+                formData.append(`documents[${index}][file]`, doc.file);
+                // Send doc.id (e.g. 'krs', 'transkrip') as the type identifier
+                formData.append(`documents[${index}][type]`, doc.id);
             }
         });
 
@@ -279,22 +270,22 @@ export default function KknStudentRegistration() {
         try {
             await createRegistration(formData).unwrap();
             toast.success("Berhasil mendaftar KKN!");
-            
+
             // Redirect to participants page after short delay to show toast
             setTimeout(() => {
                 navigate('/kkn/participants');
             }, 1500);
         } catch (error) {
             console.error('Registration failed:', error);
-            
+
             // Handle specific error messages
             if (error.status === 500 && error.data?.message) {
                 const message = error.data.message;
-                
+
                 // Check for duplicate NPM
                 if (message.includes('Duplicate entry') && message.includes('npm')) {
                     toast.error("NPM sudah terdaftar! Gunakan NPM yang berbeda.");
-                } 
+                }
                 // Check for duplicate email
                 else if (message.includes('Duplicate entry') && message.includes('email')) {
                     toast.error("Email sudah terdaftar! Gunakan email yang berbeda.");
@@ -307,7 +298,7 @@ export default function KknStudentRegistration() {
                 else {
                     toast.error(message);
                 }
-            } 
+            }
             // Handle validation errors (422)
             else if (error.status === 422 && error.data?.errors) {
                 const errors = error.data.errors;
@@ -335,11 +326,10 @@ export default function KknStudentRegistration() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Anda Telah Terdaftar!</h2>
                 <div className="text-gray-600 mb-6">
                     <p>Lokasi: <span className="font-semibold text-gray-900">{myRegistration.location?.name}</span></p>
-                    <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                        myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                        'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {myRegistration.status.toUpperCase()}
                     </span></p>
                     {myRegistration.dpl && <p className="mt-2 text-sm">DPL: {myRegistration.dpl.name}</p>}
@@ -348,8 +338,8 @@ export default function KknStudentRegistration() {
                     <p>Validation Notes: {myRegistration.validation_notes || "Belum ada catatan validasi."}</p>
                 </div>
                 <div className="mt-6">
-                    <a 
-                        href="/kkn/status" 
+                    <a
+                        href="/kkn/status"
                         className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                     >
                         Lihat Detail Status
@@ -369,8 +359,8 @@ export default function KknStudentRegistration() {
             <div className="flex justify-between items-center mb-8">
                 {[
                     ...(isAdmin ? ['Akun & Data Akademik'] : []), // Updated Label
-                    isAdmin ? 'Data Pribadi' : 'Data Diri & Akademik', 
-                    'Dokumen Pendukung', 
+                    isAdmin ? 'Data Pribadi' : 'Data Diri & Akademik',
+                    'Dokumen Pendukung',
                     'Upload Foto'
                 ].map((label, idx) => (
                     <div key={idx} className={`flex flex-col items-center flex-1 cursor-pointer ${step === idx + 1 ? 'opacity-100' : 'opacity-50'}`} onClick={() => setStep(idx + 1)}>
@@ -383,25 +373,25 @@ export default function KknStudentRegistration() {
             </div>
 
             <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
-                
+
                 {/* Step 1 (Admin Only): Account & Academic Data */}
                 {isAdmin && step === 1 && (
                     <div className="space-y-4">
-                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Buat Akun Mahasiswa</h3>
-                         
-                         {/* Account Info */}
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
+                        <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Buat Akun Mahasiswa</h3>
+
+                        {/* Account Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="email" 
-                                    value={accountData.email} 
+                                <input
+                                    type="email"
+                                    value={accountData.email}
                                     onChange={e => {
-                                        setAccountData({...accountData, email: e.target.value});
-                                        if (errors.email) setErrors({...errors, email: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.email ? 'border-red-500' : 'border-gray-300'}`} 
-                                    required 
+                                        setAccountData({ ...accountData, email: e.target.value });
+                                        if (errors.email) setErrors({ ...errors, email: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
                                 />
                                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                             </div>
@@ -410,15 +400,15 @@ export default function KknStudentRegistration() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <input 
-                                        type={showPassword ? "text" : "password"} 
-                                        value={accountData.password} 
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={accountData.password}
                                         onChange={e => {
-                                            setAccountData({...accountData, password: e.target.value});
-                                            if (errors.password) setErrors({...errors, password: ''});
-                                        }} 
-                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.password ? 'border-red-500' : 'border-gray-300'}`} 
-                                        required 
+                                            setAccountData({ ...accountData, password: e.target.value });
+                                            if (errors.password) setErrors({ ...errors, password: '' });
+                                        }}
+                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                        required
                                     />
                                     <button
                                         type="button"
@@ -433,15 +423,15 @@ export default function KknStudentRegistration() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Konfirmasi Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
-                                    <input 
-                                        type={showConfirmPassword ? "text" : "password"} 
-                                        value={accountData.confirmPassword} 
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={accountData.confirmPassword}
                                         onChange={e => {
-                                            setAccountData({...accountData, confirmPassword: e.target.value});
-                                            if (errors.confirmPassword) setErrors({...errors, confirmPassword: ''});
-                                        }} 
-                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} 
-                                        required 
+                                            setAccountData({ ...accountData, confirmPassword: e.target.value });
+                                            if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                                        }}
+                                        className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 pr-10 bg-white ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                                        required
                                     />
                                     <button
                                         type="button"
@@ -461,45 +451,45 @@ export default function KknStudentRegistration() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Nama Lengkap <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="text" 
-                                    name="name" 
-                                    value={profileData.name} 
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={profileData.name}
                                     onChange={(e) => {
                                         handleProfileChange(e);
-                                        if (errors.name) setErrors({...errors, name: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.name ? 'border-red-500' : 'border-gray-300'}`} 
-                                    required 
+                                        if (errors.name) setErrors({ ...errors, name: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
                                 />
                                 {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">NPM <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="text" 
-                                    name="npm" 
-                                    value={profileData.npm} 
+                                <input
+                                    type="text"
+                                    name="npm"
+                                    value={profileData.npm}
                                     onChange={(e) => {
                                         handleProfileChange(e);
-                                        if (errors.npm) setErrors({...errors, npm: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.npm ? 'border-red-500' : 'border-gray-300'}`} 
-                                    required 
+                                        if (errors.npm) setErrors({ ...errors, npm: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.npm ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
                                 />
                                 {errors.npm && <p className="text-red-500 text-xs mt-1">{errors.npm}</p>}
                             </div>
                             {/* info fakultas dan prodi */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Fakultas <span className="text-red-500">*</span></label>
-                                <select 
-                                    name="fakultas" 
-                                    value={profileData.fakultas} 
+                                <select
+                                    name="fakultas"
+                                    value={profileData.fakultas}
                                     onChange={(e) => {
                                         handleProfileChange(e);
-                                        if (errors.fakultas) setErrors({...errors, fakultas: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.fakultas ? 'border-red-500' : 'border-gray-300'}`} 
+                                        if (errors.fakultas) setErrors({ ...errors, fakultas: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.fakultas ? 'border-red-500' : 'border-gray-300'}`}
                                     required
                                 >
                                     <option value="">Pilih Fakultas</option>
@@ -510,15 +500,15 @@ export default function KknStudentRegistration() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Program Studi <span className="text-red-500">*</span></label>
-                                <select 
-                                    name="prodi" 
-                                    value={profileData.prodi} 
+                                <select
+                                    name="prodi"
+                                    value={profileData.prodi}
                                     onChange={(e) => {
                                         handleProfileChange(e);
-                                        if (errors.prodi) setErrors({...errors, prodi: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.prodi ? 'border-red-500' : 'border-gray-300'}`} 
-                                    required 
+                                        if (errors.prodi) setErrors({ ...errors, prodi: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.prodi ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
                                     disabled={!profileData.fakultas}
                                 >
                                     <option value="">Pilih Program Studi</option>
@@ -529,10 +519,10 @@ export default function KknStudentRegistration() {
 
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
-                                <select 
-                                    value={accountData.fiscal_year_id} 
-                                    onChange={e => setAccountData({...accountData, fiscal_year_id: e.target.value})} 
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" 
+                                <select
+                                    value={accountData.fiscal_year_id}
+                                    onChange={e => setAccountData({ ...accountData, fiscal_year_id: e.target.value })}
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border"
                                     required
                                 >
                                     <option value="">Pilih Tahun Akademik</option>
@@ -547,13 +537,13 @@ export default function KknStudentRegistration() {
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                        <input 
-                                            type="radio" 
-                                            name="registration_type" 
-                                            value="reguler" 
+                                        <input
+                                            type="radio"
+                                            name="registration_type"
+                                            value="reguler"
                                             checked={accountData.registration_type === 'reguler'}
-                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
-                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                            onChange={e => setAccountData({ ...accountData, registration_type: e.target.value })}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                         />
                                         <div className="ml-3">
                                             <span className="font-medium text-gray-900">Reguler</span>
@@ -561,13 +551,13 @@ export default function KknStudentRegistration() {
                                         </div>
                                     </label>
                                     <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                        <input 
-                                            type="radio" 
-                                            name="registration_type" 
+                                        <input
+                                            type="radio"
+                                            name="registration_type"
                                             value="program_khusus"
                                             checked={accountData.registration_type === 'program_khusus'}
-                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
-                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                            onChange={e => setAccountData({ ...accountData, registration_type: e.target.value })}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                         />
                                         <div className="ml-3">
                                             <span className="font-medium text-gray-900">Program Khusus</span>
@@ -575,13 +565,13 @@ export default function KknStudentRegistration() {
                                         </div>
                                     </label>
                                     <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                        <input 
-                                            type="radio" 
-                                            name="registration_type" 
+                                        <input
+                                            type="radio"
+                                            name="registration_type"
                                             value="santri"
                                             checked={accountData.registration_type === 'santri'}
-                                            onChange={e => setAccountData({...accountData, registration_type: e.target.value})}
-                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                            onChange={e => setAccountData({ ...accountData, registration_type: e.target.value })}
+                                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                         />
                                         <div className="ml-3">
                                             <span className="font-medium text-gray-900">Santri</span>
@@ -590,17 +580,17 @@ export default function KknStudentRegistration() {
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos <span className="text-red-500">*</span></label>
-                                <select 
-                                    name="jacket_size" 
-                                    value={profileData.jacket_size} 
+                                <select
+                                    name="jacket_size"
+                                    value={profileData.jacket_size}
                                     onChange={(e) => {
                                         handleProfileChange(e);
-                                        if (errors.jacket_size) setErrors({...errors, jacket_size: ''});
-                                    }} 
-                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.jacket_size ? 'border-red-500' : 'border-gray-300'}`} 
+                                        if (errors.jacket_size) setErrors({ ...errors, jacket_size: '' });
+                                    }}
+                                    className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white ${errors.jacket_size ? 'border-red-500' : 'border-gray-300'}`}
                                     required
                                 >
                                     <option value="">Pilih Ukuran</option>
@@ -613,7 +603,7 @@ export default function KknStudentRegistration() {
                         </div>
 
                         <div className="flex justify-end mt-6">
-                            <button 
+                            <button
                                 onClick={() => {
                                     // Validation for Step 1
                                     const newErrors = {};
@@ -628,7 +618,7 @@ export default function KknStudentRegistration() {
                                     if (accountData.password !== accountData.confirmPassword) {
                                         newErrors.confirmPassword = "Password tidak cocok";
                                     }
-                                    
+
                                     if (!profileData.name) newErrors.name = "Nama wajib diisi";
                                     if (!profileData.npm) newErrors.npm = "NPM wajib diisi";
                                     if (!profileData.fakultas) newErrors.fakultas = "Fakultas wajib dipilih";
@@ -642,7 +632,7 @@ export default function KknStudentRegistration() {
                                         setErrors({});
                                         setStep(2);
                                     }
-                                }} 
+                                }}
                                 className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
                             >
                                 Lanjut
@@ -656,7 +646,7 @@ export default function KknStudentRegistration() {
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> {isAdmin ? 'Data Pribadi' : 'Data Diri'}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            
+
                             {/* Student Fields (Only show in Step 1 for Non-Admin) */}
                             {!isAdmin && (
                                 <>
@@ -679,7 +669,7 @@ export default function KknStudentRegistration() {
                                     <option value="P">Perempuan</option>
                                 </select>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Tempat Lahir</label>
@@ -723,7 +713,7 @@ export default function KknStudentRegistration() {
                                 <label className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
                                 <textarea name="address" rows="3" value={profileData.address} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required></textarea>
                             </div>
-                            
+
                             {!isAdmin && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos</label>
@@ -747,7 +737,7 @@ export default function KknStudentRegistration() {
                 {(isAdmin ? step === 3 : step === 2) && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen Pendukung</h3>
-                        
+
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
@@ -767,9 +757,9 @@ export default function KknStudentRegistration() {
                                                         <span className="text-xs text-red-500">*Wajib</span>
                                                     </div>
                                                 ) : (
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Nama Dokumen..." 
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nama Dokumen..."
                                                         className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-2 border"
                                                         value={doc.name}
                                                         onChange={(e) => handleDocumentNameChange(index, e.target.value)}
@@ -778,8 +768,8 @@ export default function KknStudentRegistration() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center justify-center cursor-pointer group">
-                                                    <input 
-                                                        type="file" 
+                                                    <input
+                                                        type="file"
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                         onChange={(e) => handleDocumentFileChange(index, e.target.files[0])}
                                                         accept=".pdf,.jpg,.jpeg,.png"
@@ -801,7 +791,7 @@ export default function KknStudentRegistration() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 {!doc.required && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => removeDocument(index)}
                                                         className="text-red-500 hover:text-red-700 font-medium text-sm"
                                                     >
@@ -815,7 +805,7 @@ export default function KknStudentRegistration() {
                             </table>
                         </div>
 
-                        <button 
+                        <button
                             onClick={addDocument}
                             className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
                         >
@@ -833,7 +823,7 @@ export default function KknStudentRegistration() {
                 {(isAdmin ? step === 4 : step === 3) && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Left Column: Input Area */}
                             <div>
@@ -841,15 +831,15 @@ export default function KknStudentRegistration() {
                                     <div className="relative rounded-lg overflow-hidden bg-black aspect-[3/4] flex items-center justify-center">
                                         <video ref={videoRef} autoPlay className="w-full h-full object-cover transform scale-x-[-1]" />
                                         <div className="absolute bottom-4 flex space-x-2">
-                                            <button 
-                                                onClick={capturePhoto} 
+                                            <button
+                                                onClick={capturePhoto}
                                                 className="bg-white text-black p-3 rounded-full hover:bg-gray-200 shadow-lg"
                                                 title="Ambil Foto"
                                             >
                                                 <Camera size={24} />
                                             </button>
-                                            <button 
-                                                onClick={stopCamera} 
+                                            <button
+                                                onClick={stopCamera}
                                                 className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 shadow-lg"
                                                 title="Batal"
                                             >
@@ -859,7 +849,7 @@ export default function KknStudentRegistration() {
                                         <canvas ref={canvasRef} className="hidden" />
                                     </div>
                                 ) : (
-                                    <div 
+                                    <div
                                         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full flex flex-col items-center justify-center cursor-pointer ${isDragging ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}
                                         onDragOver={onDragOver}
                                         onDragLeave={onDragLeave}
@@ -869,19 +859,19 @@ export default function KknStudentRegistration() {
                                             <Camera className={`mx-auto h-16 w-16 mb-4 ${isDragging ? 'text-green-500' : 'text-gray-400'}`} />
                                             <p className="text-lg font-medium text-gray-700 mb-2">Drag & Drop Foto di sini</p>
                                             <p className="text-sm text-gray-500 mb-4">atau klik untuk upload (Max 2MB)</p>
-                                            <input 
+                                            <input
                                                 id="photo-upload"
-                                                type="file" 
-                                                name="photo" 
-                                                onChange={handlePhotoChange} 
-                                                className="hidden" 
-                                                accept=".jpg,.jpeg,.png" 
+                                                type="file"
+                                                name="photo"
+                                                onChange={handlePhotoChange}
+                                                className="hidden"
+                                                accept=".jpg,.jpeg,.png"
                                             />
                                         </div>
-                                        
+
                                         <div className="my-4 text-gray-400 text-xs">- ATAU -</div>
-                                        
-                                        <button 
+
+                                        <button
                                             onClick={startCamera}
                                             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
                                         >
@@ -896,9 +886,9 @@ export default function KknStudentRegistration() {
                                 <span className="text-sm font-medium text-gray-500 mb-4">Preview Foto</span>
                                 {files.photo ? (
                                     <div className="relative shadow-md rounded-lg overflow-hidden">
-                                        <img 
-                                            src={URL.createObjectURL(files.photo)} 
-                                            alt="Preview" 
+                                        <img
+                                            src={URL.createObjectURL(files.photo)}
+                                            alt="Preview"
                                             className="w-48 h-64 object-cover"
                                         />
                                         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 text-center truncate px-2">
@@ -915,8 +905,8 @@ export default function KknStudentRegistration() {
 
                         <div className="flex justify-between mt-8 border-t pt-6">
                             <button onClick={() => setStep(isAdmin ? 3 : 2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
-                            <button 
-                                onClick={handleRegisterClick} 
+                            <button
+                                onClick={handleRegisterClick}
                                 disabled={isSubmitting}
                                 className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
                             >
@@ -955,7 +945,7 @@ export default function KknStudentRegistration() {
                             </p>
                             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
                                 <p className="text-sm text-yellow-800">
-                                    <strong>Perhatian:</strong> Pastikan semua informasi yang Anda berikan akurat. 
+                                    <strong>Perhatian:</strong> Pastikan semua informasi yang Anda berikan akurat.
                                     Data yang salah dapat menyebabkan penolakan pendaftaran.
                                 </p>
                             </div>
