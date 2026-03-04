@@ -7,13 +7,14 @@ import DataTable from '../../../components/DataTable';
 export default function OrganizationIndex() {
     const { token } = useAuth();
     const [members, setMembers] = useState([]);
+    const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
-    const [formData, setFormData] = useState({ name: '', position: '', order_index: 0 });
+    const [formData, setFormData] = useState({ user_id: '', position: '', order_index: 0 });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchMembers = async () => {
@@ -29,18 +30,32 @@ export default function OrganizationIndex() {
         setIsLoading(false);
     };
 
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get('/api/users', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Failed to fetch users", error);
+        }
+    };
+
     useEffect(() => {
         fetchMembers();
+        if (token) {
+            fetchUsers();
+        }
     }, [token]);
 
     const handleAddClick = () => {
-        setFormData({ name: '', position: '', order_index: members.length + 1 });
+        setFormData({ user_id: '', position: '', order_index: members.length + 1 });
         setIsEditing(false);
         setShowModal(true);
     };
 
     const handleEditClick = (member) => {
-        setFormData({ name: member.name, position: member.position, order_index: member.order_index });
+        setFormData({ user_id: member.user_id || '', position: member.position || '', order_index: member.order_index || 0 });
         setSelectedId(member.id);
         setIsEditing(true);
         setShowModal(true);
@@ -120,7 +135,7 @@ export default function OrganizationIndex() {
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                     <Users className="mr-2 text-green-700" /> Struktur Organisasi
                 </h1>
-                <button 
+                <button
                     onClick={handleAddClick}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center shadow-sm"
                 >
@@ -129,8 +144,8 @@ export default function OrganizationIndex() {
             </div>
 
             <div className="bg-white shadow rounded-lg p-4">
-                <DataTable 
-                    data={members} 
+                <DataTable
+                    data={members}
                     columns={columns}
                     options={{
                         enableGlobalFilter: true,
@@ -139,7 +154,7 @@ export default function OrganizationIndex() {
                         initialPageSize: 10,
                         searchPlaceholder: 'Cari anggota...',
                         emptyMessage: 'Tidak ada data anggota'
-                    }} 
+                    }}
                 />
             </div>
 
@@ -151,13 +166,17 @@ export default function OrganizationIndex() {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                                <input
-                                    type="text"
+                                <select
                                     required
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                />
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2 bg-white"
+                                    value={formData.user_id}
+                                    onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                                >
+                                    <option value="">-- Pilih Anggota --</option>
+                                    {users.map(user => (
+                                        <option key={user.id} value={user.id}>{user.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700">Jabatan</label>
@@ -166,7 +185,7 @@ export default function OrganizationIndex() {
                                     required
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2"
                                     value={formData.position}
-                                    onChange={(e) => setFormData({...formData, position: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                                 />
                             </div>
                             <div className="mb-6">
@@ -176,7 +195,7 @@ export default function OrganizationIndex() {
                                     required
                                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2"
                                     value={formData.order_index}
-                                    onChange={(e) => setFormData({...formData, order_index: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, order_index: e.target.value })}
                                 />
                             </div>
                             <div className="flex justify-end space-x-3">
