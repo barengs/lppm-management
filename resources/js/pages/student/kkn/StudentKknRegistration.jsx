@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../../utils/api'; 
+import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -10,12 +10,12 @@ export default function KknStudentRegistration() {
     const [fiscalYears, setFiscalYears] = useState([]);
     const [selectedFy, setSelectedFy] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Master Data
     const [faculties, setFaculties] = useState([]);
     const [studyPrograms, setStudyPrograms] = useState([]);
     const [filteredPrograms, setFilteredPrograms] = useState([]);
-    
+
     // Form States
     const [step, setStep] = useState(1);
     const [profileData, setProfileData] = useState({
@@ -34,10 +34,9 @@ export default function KknStudentRegistration() {
         registration_type: 'reguler', // Default value
     });
     const [documents, setDocuments] = useState([
-        { id: 'krs', name: 'Kartu Rencana Studi (KRS)', file: null, required: true, type: 'required' },
-        { id: 'transkrip', name: 'Transkrip Nilai Sementara', file: null, required: true, type: 'required' },
+        { id: 'rekom_dekan', name: 'Surat Rekom Dekan', file: null, required: true, type: 'required' },
+        { id: 'pernyataan_kesanggupan', name: 'Surat Pernyataan kesanggupan', file: null, required: true, type: 'required' },
         { id: 'ortu', name: 'Surat Izin Orang Tua', file: null, required: true, type: 'required' },
-        { id: 'sehat', name: 'Surat Keterangan Sehat', file: null, required: false, type: 'optional' },
     ]);
     const [files, setFiles] = useState({ photo: null }); // Keep photo separate as it is in Step 3
 
@@ -60,7 +59,7 @@ export default function KknStudentRegistration() {
             setFiscalYears(fyRes.data);
             setFaculties(facRes.data);
             setStudyPrograms(prodiRes.data);
-            if(fyRes.data.length > 0) setSelectedFy(fyRes.data[0].id);
+            if (fyRes.data.length > 0) setSelectedFy(fyRes.data[0].id);
         } catch (error) {
             console.error("Failed to fetch data", error);
             toast.error("Failed to load KKN data");
@@ -99,14 +98,14 @@ export default function KknStudentRegistration() {
             const filtered = studyPrograms.filter(p => p.faculty_id == profileData.fakultas);
             setFilteredPrograms(filtered);
         } else {
-             setFilteredPrograms([]);
+            setFilteredPrograms([]);
         }
     }, [profileData.fakultas, studyPrograms]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
         setProfileData({ ...profileData, [name]: value });
-        
+
         // Filter study programs when faculty changes
         if (name === 'fakultas') {
             const filtered = studyPrograms.filter(p => p.faculty_id == value);
@@ -126,9 +125,9 @@ export default function KknStudentRegistration() {
     };
 
     const handleDocumentNameChange = (index, name) => {
-         const newDocs = [...documents];
-         newDocs[index].name = name;
-         setDocuments(newDocs);
+        const newDocs = [...documents];
+        newDocs[index].name = name;
+        setDocuments(newDocs);
     };
 
     const addDocument = () => {
@@ -166,9 +165,9 @@ export default function KknStudentRegistration() {
         // Documents (Dynamic)
         documents.forEach((doc, index) => {
             if (doc.file) {
-                 formData.append(`documents[${index}][name]`, doc.name);
-                 formData.append(`documents[${index}][file]`, doc.file);
-                 formData.append(`documents[${index}][type]`, doc.type);
+                formData.append(`documents[${index}][name]`, doc.name);
+                formData.append(`documents[${index}][file]`, doc.file);
+                formData.append(`documents[${index}][type]`, doc.type);
             }
         });
 
@@ -202,11 +201,10 @@ export default function KknStudentRegistration() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Anda Telah Terdaftar!</h2>
                 <div className="text-gray-600 mb-6">
                     <p>Lokasi: <span className="font-semibold text-gray-900">{myRegistration.location?.name}</span></p>
-                    <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                        myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                        'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {myRegistration.status.toUpperCase()}
                     </span></p>
                     {myRegistration.dpl && <p className="mt-2 text-sm">DPL: {myRegistration.dpl.name}</p>}
@@ -215,8 +213,8 @@ export default function KknStudentRegistration() {
                     <p>Validation Notes: {myRegistration.validation_notes || "Belum ada catatan validasi."}</p>
                 </div>
                 <div className="mt-6">
-                    <a 
-                        href="/dashboard/kkn/status" 
+                    <a
+                        href="/dashboard/kkn/status"
                         className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                     >
                         Lihat Detail Status
@@ -245,12 +243,12 @@ export default function KknStudentRegistration() {
             </div>
 
             <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
-                
+
                 {/* Step 1: Profile */}
                 {step === 1 && (
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><UserIcon className="mr-2 w-5 h-5" /> Data Diri</h3>
-                        
+
                         {/* Registration Type Selection */}
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                             <label className="block text-sm font-medium text-gray-900 mb-3">
@@ -258,13 +256,13 @@ export default function KknStudentRegistration() {
                             </label>
                             <div className="space-y-2">
                                 <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                    <input 
-                                        type="radio" 
-                                        name="registration_type" 
-                                        value="reguler" 
+                                    <input
+                                        type="radio"
+                                        name="registration_type"
+                                        value="reguler"
                                         checked={profileData.registration_type === 'reguler'}
                                         onChange={handleProfileChange}
-                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                     />
                                     <div className="ml-3">
                                         <span className="font-medium text-gray-900">Reguler</span>
@@ -272,13 +270,13 @@ export default function KknStudentRegistration() {
                                     </div>
                                 </label>
                                 <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                    <input 
-                                        type="radio" 
-                                        name="registration_type" 
+                                    <input
+                                        type="radio"
+                                        name="registration_type"
                                         value="program_khusus"
                                         checked={profileData.registration_type === 'program_khusus'}
                                         onChange={handleProfileChange}
-                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                     />
                                     <div className="ml-3">
                                         <span className="font-medium text-gray-900">Program Khusus</span>
@@ -286,13 +284,13 @@ export default function KknStudentRegistration() {
                                     </div>
                                 </label>
                                 <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                    <input 
-                                        type="radio" 
-                                        name="registration_type" 
+                                    <input
+                                        type="radio"
+                                        name="registration_type"
                                         value="santri"
                                         checked={profileData.registration_type === 'santri'}
                                         onChange={handleProfileChange}
-                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300" 
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300"
                                     />
                                     <div className="ml-3">
                                         <span className="font-medium text-gray-900">Santri</span>
@@ -320,7 +318,7 @@ export default function KknStudentRegistration() {
                                     <option value="P">Perempuan</option>
                                 </select>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Tempat Lahir</label>
@@ -358,7 +356,7 @@ export default function KknStudentRegistration() {
                                 <label className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
                                 <textarea name="address" rows="3" value={profileData.address} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required></textarea>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Ukuran Jaket/Kaos</label>
                                 <select name="jacket_size" value={profileData.jacket_size} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required>
@@ -379,7 +377,7 @@ export default function KknStudentRegistration() {
                 {step === 2 && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><FileText className="mr-2 w-5 h-5" /> Unggah Dokumen Pendukung</h3>
-                        
+
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
@@ -399,9 +397,9 @@ export default function KknStudentRegistration() {
                                                         <span className="text-xs text-red-500">*Wajib</span>
                                                     </div>
                                                 ) : (
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Nama Dokumen..." 
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nama Dokumen..."
                                                         className="w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm p-2 border"
                                                         value={doc.name}
                                                         onChange={(e) => handleDocumentNameChange(index, e.target.value)}
@@ -410,8 +408,8 @@ export default function KknStudentRegistration() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-2 hover:bg-gray-50 transition-colors flex items-center justify-center cursor-pointer group">
-                                                    <input 
-                                                        type="file" 
+                                                    <input
+                                                        type="file"
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                         onChange={(e) => handleDocumentFileChange(index, e.target.files[0])}
                                                         accept=".pdf,.jpg,.jpeg,.png"
@@ -433,7 +431,7 @@ export default function KknStudentRegistration() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 {!doc.required && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => removeDocument(index)}
                                                         className="text-red-500 hover:text-red-700 font-medium text-sm"
                                                     >
@@ -447,7 +445,7 @@ export default function KknStudentRegistration() {
                             </table>
                         </div>
 
-                        <button 
+                        <button
                             onClick={addDocument}
                             className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
                         >
@@ -465,17 +463,17 @@ export default function KknStudentRegistration() {
                 {step === 3 && (
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
-                        
+
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors">
                             <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
                             <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
                             <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
-                            <input 
-                                type="file" 
-                                name="photo" 
-                                onChange={handlePhotoChange} 
-                                className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" 
-                                accept=".jpg,.jpeg,.png" 
+                            <input
+                                type="file"
+                                name="photo"
+                                onChange={handlePhotoChange}
+                                className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                accept=".jpg,.jpeg,.png"
                             />
                             {files.photo && (
                                 <div className="mt-4 text-sm text-green-600 font-medium">
@@ -486,8 +484,8 @@ export default function KknStudentRegistration() {
 
                         <div className="flex justify-between mt-8 border-t pt-6">
                             <button onClick={() => setStep(2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
-                            <button 
-                                onClick={handleRegister} 
+                            <button
+                                onClick={handleRegister}
                                 disabled={isLoading}
                                 className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
                             >
