@@ -4,9 +4,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectIsCollapsed, toggleSidebar as toggleSidebarAction } from '../store/slices/sidebarSlice';
 import { selectSettings } from '../store/slices/systemSlice';
-import { 
-    Home, FileText, MapPin, ClipboardList, 
-    Newspaper, FolderOpen, Image, 
+import {
+    Home, FileText, MapPin, ClipboardList,
+    Newspaper, FolderOpen, Image,
     User, Award, Users, LogOut,
     LayoutDashboard, PlusCircle, BarChart2,
     Calendar, Settings, TrendingUp, Shield, Star,
@@ -35,10 +35,10 @@ export default function Sidebar() {
         {
             title: 'Main',
             items: [
-                { 
-                    name: 'Dashboard', 
-                    icon: <LayoutDashboard size={20} />, 
-                    path: user?.role === 'mahasiswa' ? '/dashboard/kkn' : '/dashboard' 
+                {
+                    name: 'Dashboard',
+                    icon: <LayoutDashboard size={20} />,
+                    path: user?.role === 'mahasiswa' ? '/dashboard/kkn' : '/dashboard'
                 },
             ]
         },
@@ -53,28 +53,28 @@ export default function Sidebar() {
         {
             title: 'KKN (Kuliah Kerja Nyata)',
             items: [
-                 // Student Only - Status KKN
-                 ...(user?.role === 'mahasiswa' ? [
+                // Student Only - Status KKN
+                ...(user?.role === 'mahasiswa' ? [
                     { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
-                 ] : []),
-                 { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
-                 { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
-                 { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
-                 { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
-                 { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
-                 // Student/Dosen Only (Requires My Posto context)
-                 ...(user?.role !== 'admin' ? [
+                ] : []),
+                { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
+                { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
+                { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
+                { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
+                { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
+                // Student/Dosen Only (Requires My Posto context)
+                ...(user?.role !== 'admin' ? [
                     { name: 'Bimbingan', icon: <MessageSquare size={20} />, path: '/dashboard/kkn/guidance', permission: 'kkn_guidance.view' },
                     { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
-                 ] : []),
-                 // Admin/Dosen Monitoring
-                 { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
-                 { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
+                ] : []),
+                // Admin/Dosen Monitoring
+                { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
+                { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
             ]
         },
         {
             title: 'Master Data',
-            permission: 'faculties.view', 
+            permission: 'faculties.view',
             items: [
                 { name: 'Fakultas', icon: <Building size={20} />, path: '/master/faculties', permission: 'faculties.view' },
                 { name: 'Program Studi', icon: <School size={20} />, path: '/master/study-programs', permission: 'study_programs.view' },
@@ -126,14 +126,14 @@ export default function Sidebar() {
     return (
         <div className={`${isCollapsed ? 'w-20' : 'w-64'} text-white h-full flex flex-col shadow-xl transition-all duration-300`} style={{ backgroundColor: 'var(--primary-color)' }}>
             {/* Brand */}
-            <div className={`h-16 flex-shrink-0 flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-6 space-x-3'} bg-black/20 border-b border-white/10 transition-all duration-300`}>
-                 <img 
-                    src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"} 
-                    alt="Logo" 
-                    className="h-10 w-10 object-contain" 
-                 />
+            <Link to="/" className={`h-16 flex-shrink-0 flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-6 space-x-3'} bg-black/20 border-b border-white/10 transition-all duration-300 hover:bg-black/30 cursor-pointer`}>
+                <img
+                    src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"}
+                    alt="Logo"
+                    className="h-10 w-10 object-contain"
+                />
                 {!isCollapsed && <span className="text-xl font-bold tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">{settings.system_name}</span>}
-            </div>
+            </Link>
 
             {/* Menu */}
             <div className="flex-grow py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-800 hover:scrollbar-thumb-green-700">
@@ -146,17 +146,16 @@ export default function Sidebar() {
                         )}
                         {/* Divider for collapsed mode to separate groups visually */}
                         {isCollapsed && groupIdx > 0 && <div className="mx-4 border-t border-green-800 my-2"></div>}
-                        
+
                         <ul>
                             {group.items.map((item, itemIdx) => (
                                 <li key={itemIdx} title={isCollapsed ? item.name : ''}>
                                     <Link
                                         to={item.path}
-                                        className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} py-2.5 text-sm font-medium transition-colors ${
-                                            isActive(item.path) 
+                                        className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} py-2.5 text-sm font-medium transition-colors ${isActive(item.path)
                                                 ? 'bg-green-700 text-white ' + (!isCollapsed ? 'border-r-4 border-yellow-400' : 'bg-opacity-100 rounded-lg mx-2')
                                                 : 'text-gray-300 hover:bg-green-800 hover:text-white'
-                                        }`}
+                                            }`}
                                     >
                                         <span className={`${!isCollapsed ? 'mr-3' : ''}`}>{item.icon}</span>
                                         {!isCollapsed && <span>{item.name}</span>}
