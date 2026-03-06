@@ -7,9 +7,9 @@ const baseQuery = fetchBaseQuery({
     prepareHeaders: (headers, { getState }) => {
         // Get token from Redux state (more reliable than localStorage)
         const token = getState().auth?.token || localStorage.getItem('token');
-        
 
-        
+
+
         if (token) {
             headers.set('Authorization', `Bearer ${token}`);
         }
@@ -22,13 +22,13 @@ const baseQuery = fetchBaseQuery({
 // Base query with error handling
 const baseQueryWithReauth = async (args, api, extraOptions) => {
     let result = await baseQuery(args, api, extraOptions);
-    
+
     if (result.error && result.error.status === 401) {
         // Token expired, logout user
         localStorage.removeItem('token');
         window.location.href = '/login';
     }
-    
+
     return result;
 };
 
@@ -45,8 +45,19 @@ export const baseApi = createApi({
         'Faculties',
         'StudyPrograms',
         'KknLocations',
+        'KknLocation',
         'Postos',
-        'User'
+        'Posto',
+        'KknGrades',
+        'AvailableStudents',
+        'KknPeriods',
+        'KknPeriod',
+        'Users',
+        'User',
+        'Provinces',
+        'Cities',
+        'Districts',
+        'Villages'
     ],
     endpoints: () => ({}),
 });

@@ -78,7 +78,7 @@ export default function Sidebar() {
             items: [
                 { name: 'Fakultas', icon: <Building size={20} />, path: '/master/faculties', permission: 'faculties.view' },
                 { name: 'Program Studi', icon: <School size={20} />, path: '/master/study-programs', permission: 'study_programs.view' },
-                { name: 'Tahun Anggaran', icon: <Calendar size={20} />, path: '/master/fiscal-years', permission: 'fiscal_years.view' },
+                { name: 'Tahun Akademik', icon: <Calendar size={20} />, path: '/master/fiscal-years', permission: 'fiscal_years.view' },
                 { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
                 { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
             ]
@@ -153,8 +153,8 @@ export default function Sidebar() {
                                     <Link
                                         to={item.path}
                                         className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} py-2.5 text-sm font-medium transition-colors ${isActive(item.path)
-                                                ? 'bg-green-700 text-white ' + (!isCollapsed ? 'border-r-4 border-yellow-400' : 'bg-opacity-100 rounded-lg mx-2')
-                                                : 'text-gray-300 hover:bg-green-800 hover:text-white'
+                                            ? 'bg-green-700 text-white ' + (!isCollapsed ? 'border-r-4 border-yellow-400' : 'bg-opacity-100 rounded-lg mx-2')
+                                            : 'text-gray-300 hover:bg-green-800 hover:text-white'
                                             }`}
                                     >
                                         <span className={`${!isCollapsed ? 'mr-3' : ''}`}>{item.icon}</span>

@@ -9,7 +9,7 @@ import 'react-quill-new/dist/quill.snow.css';
 export default function CreateProposal() {
     const navigate = useNavigate();
     const { token } = useAuth();
-    
+
     // Form State
     const [title, setTitle] = useState('');
     const [abstract, setAbstract] = useState('');
@@ -18,7 +18,7 @@ export default function CreateProposal() {
     const [budget, setBudget] = useState('');
     const [file, setFile] = useState(null);
     const [location, setLocation] = useState('');
-    
+
     // Data State
     const [schemes, setSchemes] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
@@ -34,7 +34,7 @@ export default function CreateProposal() {
                 ]);
                 setSchemes(schemesRes.data);
                 setFiscalYears(fyRes.data);
-                
+
                 if (fyRes.data.length > 0) {
                     setFiscalYearId(fyRes.data[0].id);
                 }
@@ -67,12 +67,12 @@ export default function CreateProposal() {
 
         try {
             await axios.post('/api/proposals', formData, {
-                headers: { 
+                headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            
+
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
@@ -90,7 +90,7 @@ export default function CreateProposal() {
                 </h1>
                 <p className="text-green-100 text-sm mt-1">Lengkapi formulir di bawah ini untuk mengajukan proposal penelitian atau pengabdian.</p>
             </div>
-            
+
             <div className="p-8">
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-sm border border-red-200 flex items-start">
@@ -103,8 +103,8 @@ export default function CreateProposal() {
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Anggaran</label>
-                            <select 
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik</label>
+                            <select
                                 required
                                 className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-gray-50"
                                 value={fiscalYearId}
@@ -117,7 +117,7 @@ export default function CreateProposal() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Skema Hibah</label>
-                            <select 
+                            <select
                                 required
                                 className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-white"
                                 value={schemeId}
@@ -134,8 +134,8 @@ export default function CreateProposal() {
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Judul Proposal</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             required
                             placeholder="Judul lengkap penelitian/pengabdian..."
                             className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
@@ -148,7 +148,7 @@ export default function CreateProposal() {
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Abstrak / Ringkasan</label>
                         <div className="bg-white">
-                             <ReactQuill 
+                            <ReactQuill
                                 theme="snow"
                                 value={abstract}
                                 onChange={setAbstract}
@@ -157,12 +157,12 @@ export default function CreateProposal() {
                                     toolbar: [
                                         [{ 'header': [1, 2, false] }],
                                         ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                                         ['link'],
                                         ['clean']
                                     ],
                                 }}
-                             />
+                            />
                         </div>
                     </div>
 
@@ -174,8 +174,8 @@ export default function CreateProposal() {
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span className="text-gray-500 sm:text-sm">Rp</span>
                                 </div>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     required
                                     min="0"
                                     placeholder="0"
@@ -185,10 +185,10 @@ export default function CreateProposal() {
                                 />
                             </div>
                         </div>
-                         <div>
+                        <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Lokasi (Opsional)</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 placeholder="Lokasi kegiatan (jika ada)..."
                                 className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
                                 value={location}
@@ -207,9 +207,9 @@ export default function CreateProposal() {
                                     <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Klik untuk unggah</span> atau drag and drop</p>
                                     <p className="text-xs text-gray-500">PDF (MAX. 10MB)</p>
                                 </div>
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    className="hidden"
                                     accept=".pdf"
                                     required
                                     onChange={handleFileChange}
@@ -225,14 +225,14 @@ export default function CreateProposal() {
                     </div>
 
                     <div className="flex justify-end pt-6 border-t border-gray-100 space-x-3">
-                        <button 
+                        <button
                             type="button"
                             onClick={() => navigate('/dashboard')}
                             className="px-6 py-2.5 border border-gray-300 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Batal
                         </button>
-                        <button 
+                        <button
                             type="submit"
                             disabled={isLoading}
                             className={`px-6 py-2.5 border border-transparent rounded-sm shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
