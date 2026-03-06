@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-    CheckCircle, XCircle, AlertCircle, Clock, Upload, 
+import {
+    CheckCircle, XCircle, AlertCircle, Clock, Upload,
     User, FileText, MapPin, Calendar, Award, Mail, Phone,
     RefreshCw, Download, Eye
 } from 'lucide-react';
@@ -92,7 +92,7 @@ export default function StudentKknStatus() {
         setUploading(true);
         try {
             await axios.post('/api/student/kkn/reupload', formData, {
-                headers: { 
+                headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
@@ -275,26 +275,20 @@ export default function StudentKknStatus() {
                     Dokumen Pendaftaran
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <DocumentCard
-                        document={registration.documents?.krs}
-                        title="KRS"
-                        onPreview={() => handlePreview(registration.documents?.krs, 'Kartu Rencana Studi (KRS)')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.health}
-                        title="Surat Sehat"
-                        onPreview={() => handlePreview(registration.documents?.health, 'Surat Keterangan Sehat')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.transcript}
-                        title="Transkrip Nilai"
-                        onPreview={() => handlePreview(registration.documents?.transcript, 'Transkrip Nilai')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.photo}
-                        title="Foto"
-                        onPreview={() => handlePreview(registration.documents?.photo, 'Foto Mahasiswa')}
-                    />
+                    {registration.documents && Object.values(registration.documents).length > 0 ? (
+                        Object.values(registration.documents).map((doc, index) => (
+                            <DocumentCard
+                                key={index}
+                                document={doc}
+                                title={doc.name || 'Dokumen'}
+                                onPreview={() => handlePreview(doc, doc.name || 'Dokumen')}
+                            />
+                        ))
+                    ) : (
+                        <div className="col-span-2 text-center text-gray-500 py-4">
+                            Tidak ada dokumen pendaftaran.
+                        </div>
+                    )}
                 </div>
 
                 {/* Re-upload Section */}

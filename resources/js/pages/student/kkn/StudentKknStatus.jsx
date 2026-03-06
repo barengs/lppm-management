@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
-import { 
-    CheckCircle, Clock, XCircle, AlertCircle, FileText, 
-    MapPin, User, Calendar, Download, Upload 
+import {
+    CheckCircle, Clock, XCircle, AlertCircle, FileText,
+    MapPin, User, Calendar, Download, Upload, Eye
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import DocumentPreview from '../../../components/DocumentPreview';
 
 export default function StudentKknStatus() {
     const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function StudentKknStatus() {
     const [registration, setRegistration] = useState(null);
     const [profile, setProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [previewDoc, setPreviewDoc] = useState(null);
+    const [previewTitle, setPreviewTitle] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -85,6 +88,11 @@ export default function StudentKknStatus() {
         return configs[status] || configs.pending;
     };
 
+    const handlePreview = (doc, title) => {
+        setPreviewDoc(doc);
+        setPreviewTitle(title);
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -139,32 +147,64 @@ export default function StudentKknStatus() {
                             <User className="w-5 h-5 mr-2 text-green-600" />
                             Data Mahasiswa
                         </h3>
-                        <div className="space-y-3 text-sm">
-                            <div>
-                                <span className="text-gray-600">Nama:</span>
-                                <span className="ml-2 font-medium text-gray-900">
-                                    {profile?.name || user?.name || '-'}
-                                </span>
+                        <div className="flex flex-col sm:flex-row gap-6">
+                            {/* User Photo */}
+                            <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
+                                <div className="w-32 h-40 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                    {(() => {
+                                        let photoDoc = null;
+                                        if (registration.documents) {
+                                            const docs = Object.values(registration.documents);
+                                            photoDoc = docs.find(d =>
+                                                d.doc_type === 'required_photo' ||
+                                                d.doc_type === 'photo' ||
+                                                (d.name && d.name.toLowerCase().includes('foto'))
+                                            );
+                                        }
+
+                                        return photoDoc ? (
+                                            <img
+                                                src={`/storage/${photoDoc.file_path}`}
+                                                alt="Foto Profil"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                <User size={48} />
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-gray-600">NPM:</span>
-                                <span className="ml-2 font-medium text-gray-900">
-                                    {profile?.mahasiswa_profile?.npm || '-'}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Program Studi:</span>
-                                <span className="ml-2 font-medium text-gray-900">
-                                    {profile?.mahasiswa_profile?.study_program?.name || 
-                                     profile?.mahasiswa_profile?.prodi || '-'}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Fakultas:</span>
-                                <span className="ml-2 font-medium text-gray-900">
-                                    {profile?.mahasiswa_profile?.faculty?.name || 
-                                     profile?.mahasiswa_profile?.fakultas || '-'}
-                                </span>
+
+                            {/* Details */}
+                            <div className="space-y-3 text-sm flex-1">
+                                <div>
+                                    <span className="text-gray-600">Nama:</span>
+                                    <span className="ml-2 font-medium text-gray-900">
+                                        {profile?.name || user?.name || '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">NPM:</span>
+                                    <span className="ml-2 font-medium text-gray-900">
+                                        {profile?.mahasiswa_profile?.npm || '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Program Studi:</span>
+                                    <span className="ml-2 font-medium text-gray-900">
+                                        {profile?.mahasiswa_profile?.study_program?.name ||
+                                            profile?.mahasiswa_profile?.prodi || '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Fakultas:</span>
+                                    <span className="ml-2 font-medium text-gray-900">
+                                        {profile?.mahasiswa_profile?.faculty?.name ||
+                                            profile?.mahasiswa_profile?.fakultas || '-'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -205,68 +245,37 @@ export default function StudentKknStatus() {
                         Dokumen Pendaftaran
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {registration.documents?.krs && (
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-700">KRS</span>
+                        {registration.documents && Object.values(registration.documents).length > 0 ? (
+                            Object.values(registration.documents).map((doc, index) => (
+                                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <FileText className="w-5 h-5 text-gray-600" />
+                                        <span className="text-sm font-medium text-gray-700">{doc.name || 'Dokumen'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handlePreview(doc, doc.name || 'Dokumen')}
+                                            className="text-blue-600 hover:text-blue-700 bg-blue-50 p-2 rounded-full"
+                                            title="Preview Dokumen"
+                                        >
+                                            <Eye className="w-5 h-5" />
+                                        </button>
+                                        <a
+                                            href={`/storage/${doc.file_path}`}
+                                            download
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-green-600 hover:text-green-700 bg-green-50 p-2 rounded-full"
+                                            title="Download Dokumen"
+                                        >
+                                            <Download className="w-5 h-5" />
+                                        </a>
+                                    </div>
                                 </div>
-                                <a 
-                                    href={`/storage/${registration.documents.krs}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700"
-                                >
-                                    <Download className="w-5 h-5" />
-                                </a>
-                            </div>
-                        )}
-                        {registration.documents?.transcript && (
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-700">Transkrip</span>
-                                </div>
-                                <a 
-                                    href={`/storage/${registration.documents.transcript}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700"
-                                >
-                                    <Download className="w-5 h-5" />
-                                </a>
-                            </div>
-                        )}
-                        {registration.documents?.health && (
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-700">Surat Sehat</span>
-                                </div>
-                                <a 
-                                    href={`/storage/${registration.documents.health}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700"
-                                >
-                                    <Download className="w-5 h-5" />
-                                </a>
-                            </div>
-                        )}
-                        {registration.documents?.photo && (
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-700">Pas Foto</span>
-                                </div>
-                                <a 
-                                    href={`/storage/${registration.documents.photo}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700"
-                                >
-                                    <Download className="w-5 h-5" />
-                                </a>
+                            ))
+                        ) : (
+                            <div className="col-span-2 text-center text-gray-500 py-4">
+                                Tidak ada dokumen pendaftaran.
                             </div>
                         )}
                     </div>
@@ -284,6 +293,15 @@ export default function StudentKknStatus() {
                     )}
                 </div>
             </div>
+
+            {/* Document Preview Modal */}
+            {previewDoc && (
+                <DocumentPreview
+                    document={previewDoc}
+                    title={previewTitle}
+                    onClose={() => setPreviewDoc(null)}
+                />
+            )}
         </div>
     );
 }

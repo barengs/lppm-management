@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-    Users, Search, Filter, CheckCircle, XCircle, 
-    AlertCircle, Clock, Eye, FileText, Download 
+import {
+    Users, Search, Filter, CheckCircle, XCircle,
+    AlertCircle, Clock, Eye, FileText, Download
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -88,7 +88,7 @@ export default function KknParticipants() {
 
     const handleApprove = async (id, note) => {
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/approve`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/approve`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -108,7 +108,7 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/reject`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/reject`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -128,7 +128,7 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/revise`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/revise`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -347,11 +347,10 @@ export default function KknParticipants() {
                                         <button
                                             key={i + 1}
                                             onClick={() => fetchRegistrations(i + 1)}
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                pagination.current_page === i + 1
+                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${pagination.current_page === i + 1
                                                     ? 'z-10 bg-green-50 border-green-500 text-green-600'
                                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                            }`}
+                                                }`}
                                         >
                                             {i + 1}
                                         </button>
@@ -387,7 +386,7 @@ function RegistrationDetailModal({ registration, onClose, onApprove, onReject, o
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold mb-4">Detail Pendaftaran KKN</h2>
-                    
+
                     {/* Student Info */}
                     <div className="mb-6">
                         <h3 className="font-semibold mb-2">Informasi Mahasiswa</h3>
@@ -408,16 +407,16 @@ function RegistrationDetailModal({ registration, onClose, onApprove, onReject, o
                         <div className="mb-6">
                             <h3 className="font-semibold mb-2">Dokumen</h3>
                             <div className="space-y-2">
-                                {Object.entries(registration.documents).map(([key, url]) => (
+                                {Object.values(registration.documents).map((doc, index) => (
                                     <a
-                                        key={key}
-                                        href={url}
+                                        key={index}
+                                        href={`/storage/${doc.file_path}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center text-blue-600 hover:text-blue-800"
                                     >
                                         <FileText size={16} className="mr-2" />
-                                        {key}
+                                        {doc.name || 'Dokumen'}
                                     </a>
                                 ))}
                             </div>
