@@ -8,10 +8,21 @@ use App\Models\Faculty;
 use App\Models\StudyProgram;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Support\Facades\Hash;
 
-class UsersImport implements ToModel, WithHeadingRow
+class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading
 {
+    private $faculties;
+    private $prodis;
+
+    public function __construct()
+    {
+        $this->faculties = Faculty::pluck('name', 'code')->toArray();
+        $this->prodis = StudyProgram::pluck('name', 'code')->toArray();
+    }
+
     /**
     * @param array $row
     *
@@ -39,16 +50,19 @@ class UsersImport implements ToModel, WithHeadingRow
 
         // Handle Dosen Profile
         if (in_array($role, ['dosen', 'staff', 'admin'])) {
-            // Resolve Faculty & Prodi Names from Codes
-            $facultyName = $row['faculty_code'] ? Faculty::where('code', $row['faculty_code'])->value('name') : null;
-            $prodiName = $row['prodi_code'] ? StudyProgram::where('code', $row['prodi_code'])->value('name') : null;
+            // Resolve Faculty & Prodi Names from Codes using Cache
+            $facultyCode = $row['faculty_code'] ?? null;
+            $prodiCode = $row['prodi_code'] ?? null;
+            
+            $facultyName = $facultyCode && isset($this->faculties[$facultyCode]) ? $this->faculties[$facultyCode] : $facultyCode;
+            $prodiName = $prodiCode && isset($this->prodis[$prodiCode]) ? $this->prodis[$prodiCode] : $prodiCode;
 
             DosenProfile::updateOrCreate(
                 ['user_id' => $user->id],
                 [
                     'nidn' => $row['nidn'] ?? null,
-                    'fakultas' => $facultyName ?? $row['faculty_code'], // Fallback to code if name not found
-                    'prodi' => $prodiName ?? $row['prodi_code'],     // Fallback to code
+                    'fakultas' => $facultyName,
+                    'prodi' => $prodiName,
                     'scopus_id' => $row['scopus_id'] ?? null,
                     'sinta_id' => $row['sinta_id'] ?? null,
                     'google_scholar_id' => $row['google_scholar_id'] ?? null,
@@ -56,6 +70,16 @@ class UsersImport implements ToModel, WithHeadingRow
             );
         }
 
-        return $user;
+        return clone $user;
+    }
+
+    public function batchSize(): int
+    {
+        return 100;
+    }
+    
+    public function chunkSize(): int
+    {
+        return 500;
     }
 }
