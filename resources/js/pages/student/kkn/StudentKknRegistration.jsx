@@ -40,6 +40,51 @@ export default function KknStudentRegistration() {
     ]);
     const [files, setFiles] = useState({ photo: null }); // Keep photo separate as it is in Step 3
 
+    // Camera states
+    const [showCamera, setShowCamera] = useState(false);
+    const videoRef = React.useRef(null);
+    const canvasRef = React.useRef(null);
+
+    const startCamera = async () => {
+        setShowCamera(true);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Tidak dapat mengakses kamera perangkat.");
+            setShowCamera(false);
+        }
+    };
+
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        }
+        setShowCamera(false);
+    };
+
+    const capturePhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+                    setFiles({ ...files, photo: file });
+                    stopCamera();
+                }
+            }, 'image/jpeg', 0.8);
+        }
+    };
+
     // Fetch initial data
     useEffect(() => {
         fetchData();
@@ -202,8 +247,8 @@ export default function KknStudentRegistration() {
                 <div className="text-gray-600 mb-6">
                     <p>Lokasi: <span className="font-semibold text-gray-900">{myRegistration.location?.name}</span></p>
                     <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                'bg-yellow-100 text-yellow-800'
+                        myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
                         }`}>
                         {myRegistration.status.toUpperCase()}
                     </span></p>
@@ -464,20 +509,84 @@ export default function KknStudentRegistration() {
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
 
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors">
-                            <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                            <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
-                            <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
-                            <input
-                                type="file"
-                                name="photo"
-                                onChange={handlePhotoChange}
-                                className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                accept=".jpg,.jpeg,.png"
-                            />
-                            {files.photo && (
-                                <div className="mt-4 text-sm text-green-600 font-medium">
-                                    ✓ File dipilih: {files.photo.name}
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 transition-colors relative">
+                            {showCamera ? (
+                                <div className="flex flex-col items-center">
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        playsInline
+                                        className="w-full max-w-sm rounded-lg shadow-md bg-black"
+                                    ></video>
+                                    <canvas ref={canvasRef} className="hidden"></canvas>
+                                    <div className="flex gap-4 mt-4">
+                                        <button
+                                            type="button"
+                                            onClick={capturePhoto}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                                        >
+                                            <Camera className="w-4 h-4 mr-2" /> Ambil Foto
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={stopCamera}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                                    <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
+                                    <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
+
+                                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                name="photo"
+                                                id="photo-upload"
+                                                onChange={handlePhotoChange}
+                                                className="hidden"
+                                                accept=".jpg,.jpeg,.png"
+                                                capture="user"
+                                            />
+                                            <label
+                                                htmlFor="photo-upload"
+                                                className="cursor-pointer px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                                            >
+                                                <Upload className="w-4 h-4 mr-2" />
+                                                Pilih File / Galeri
+                                            </label>
+                                        </div>
+                                        <span className="text-gray-400">atau</span>
+                                        <button
+                                            type="button"
+                                            onClick={startCamera}
+                                            className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                                        >
+                                            <Camera className="w-4 h-4 mr-2" />
+                                            Gunakan Kamera
+                                        </button>
+                                    </div>
+
+                                    {files.photo && (
+                                        <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg inline-block">
+                                            <div className="text-sm text-green-700 font-medium flex items-center justify-center">
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                File dipilih: {files.photo.name}
+                                            </div>
+                                            {files.photo.type && files.photo.type.startsWith('image/') && (
+                                                <img
+                                                    src={URL.createObjectURL(files.photo)}
+                                                    alt="Preview"
+                                                    className="mt-3 max-h-40 mx-auto rounded border border-green-200 shadow-sm"
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

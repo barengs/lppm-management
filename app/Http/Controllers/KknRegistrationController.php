@@ -20,11 +20,11 @@ class KknRegistrationController extends Controller
 
         // Students only see their own registrations
         if ($user->role === 'mahasiswa') {
-            return response()->json(KknRegistration::with(['location', 'dpl'])->where('student_id', $user->id)->get());
+            return response()->json(KknRegistration::with(['location', 'dpl', 'kknRegistrationDocuments'])->where('student_id', $user->id)->get());
         }
 
         // Admin sees all, formatted for table
-        return response()->json(KknRegistration::with(['student.mahasiswaProfile', 'location', 'dpl'])->get());
+        return response()->json(KknRegistration::with(['student.mahasiswaProfile', 'location', 'dpl', 'kknRegistrationDocuments'])->get());
     }
 
     /**

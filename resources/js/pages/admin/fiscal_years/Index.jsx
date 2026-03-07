@@ -107,7 +107,7 @@ export default function FiscalYearsIndex() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Manage Fiscal Years</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Manage Academic Years</h1>
                 <button
                     onClick={() => {
                         setEditId(null);
@@ -121,8 +121,8 @@ export default function FiscalYearsIndex() {
             </div>
 
             <div className="bg-white shadow rounded-lg p-4">
-                <DataTable 
-                    data={years} 
+                <DataTable
+                    data={years}
                     columns={columns}
                     options={{
                         enableGlobalFilter: true,
@@ -130,8 +130,8 @@ export default function FiscalYearsIndex() {
                         enablePagination: true,
                         initialPageSize: 10,
                         searchPlaceholder: 'Search years...',
-                        emptyMessage: 'No fiscal years found'
-                    }} 
+                        emptyMessage: 'No academic years found'
+                    }}
                 />
             </div>
 
@@ -139,7 +139,7 @@ export default function FiscalYearsIndex() {
             {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">{editId ? 'Edit Fiscal Year' : 'New Fiscal Year'}</h2>
+                        <h2 className="text-xl font-bold mb-4">{editId ? 'Edit Academic Year' : 'New Academic Year'}</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700">Year</label>

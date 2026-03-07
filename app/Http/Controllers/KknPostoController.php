@@ -135,6 +135,12 @@ class KknPostoController extends Controller
             ], 422);
         }
 
+        $activeFiscalYear = \App\Models\FiscalYear::where('is_active', true)->first();
+        if (!$activeFiscalYear) {
+            return response()->json(['message' => 'Tahun ajaran aktif belum diatur'], 422);
+        }
+        $validated['fiscal_year_id'] = $activeFiscalYear->id;
+
         $posto = KknPosto::create($validated);
         $posto->load(['location', 'kknPeriod', 'dpl']);
 
