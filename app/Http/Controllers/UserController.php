@@ -207,6 +207,10 @@ class UserController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
 
+        // Increase time and memory limits for large imports
+        ini_set('max_execution_time', 0); // 0 = unlimited
+        ini_set('memory_limit', '512M');  // Adjust as needed
+
         Excel::import(new UsersImport, $request->file('file'));
         
         return response()->json(['message' => 'Import successful']);
