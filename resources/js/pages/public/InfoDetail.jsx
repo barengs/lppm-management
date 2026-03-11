@@ -38,19 +38,19 @@ export default function InfoDetail() {
     }, [slug]);
 
     if (loading) {
-         return (
+        return (
             <div className="bg-gray-50 min-h-screen flex items-center justify-center">
-                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto"></div>
             </div>
-         );
+        );
     }
 
     if (!info) {
         return (
             <div className="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
-                 <div className="text-gray-400 mb-4">
+                <div className="text-gray-400 mb-4">
                     <Info size={48} />
-                 </div>
+                </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Informasi Tidak Ditemukan</h2>
                 <Link to="/" className="text-green-600 hover:text-green-800 font-semibold">Kembali ke Beranda</Link>
             </div>
@@ -59,10 +59,10 @@ export default function InfoDetail() {
 
     return (
         <div className="bg-gray-50 min-h-screen font-sans">
-             {/* Header */}
-             <div className="bg-yellow-500 text-green-900 py-12">
+            {/* Header */}
+            <div className="bg-yellow-500 text-green-900 py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                     <Link to="/" className="inline-flex items-center text-green-900/70 hover:text-green-900 mb-6 transition-colors">
+                    <Link to="/" className="inline-flex items-center text-green-900/70 hover:text-green-900 mb-6 transition-colors">
                         <ArrowLeft size={16} className="mr-2" /> Kembali ke Beranda
                     </Link>
                     <h1 className="text-3xl md:text-4xl font-bold">{info.title}</h1>
@@ -76,13 +76,13 @@ export default function InfoDetail() {
                     <div className="lg:w-2/3">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
                             {info.image && (
-                                <img 
-                                    src={info.image} 
-                                    alt={info.title} 
+                                <img
+                                    src={info.image}
+                                    alt={info.title}
                                     className="w-full h-64 object-cover rounded-lg mb-8"
                                 />
                             )}
-                            
+
                             <div className="flex items-center text-sm text-gray-500 mb-6 space-x-4 border-b pb-4">
                                 <span className="flex items-center">
                                     <Calendar size={16} className="mr-2" />
@@ -94,7 +94,7 @@ export default function InfoDetail() {
                                 </span>
                             </div>
 
-                            <div className="prose prose-green max-w-none">
+                            <div className="prose prose-green max-w-none overflow-hidden break-words [&_*]:!whitespace-pre-wrap [&_*]:!break-words">
                                 <div dangerouslySetInnerHTML={{ __html: info.content || '<p>Belum ada rincian konten untuk informasi ini.</p>' }} />
                             </div>
                         </div>
@@ -102,10 +102,10 @@ export default function InfoDetail() {
 
                     {/* Sidebar */}
                     <div className="lg:w-1/3">
-                        <PublicSidebar 
-                            announcements={sidebarData.announcements} 
-                            agendas={sidebarData.agendas} 
-                            video={sidebarData.video} 
+                        <PublicSidebar
+                            announcements={sidebarData.announcements}
+                            agendas={sidebarData.agendas}
+                            video={sidebarData.video}
                         />
                     </div>
                 </div>
