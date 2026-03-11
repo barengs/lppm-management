@@ -57,6 +57,44 @@ class KknRegistrationController extends Controller
     }
 
     /**
+     * Update registration details (e.g. registration type)
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'registration_type' => 'required|string|in:reguler,progsus,santri',
+            // Or add any other fields you want Admin to be able to edit later
+        ]);
+
+        $registration = KknRegistration::findOrFail($id);
+
+        DB::transaction(function () use ($registration, $request) {
+            $oldType = $registration->registration_type;
+            
+            $registration->update([
+                'registration_type' => $request->registration_type,
+            ]);
+
+            // Create log if type changed
+            if ($oldType !== $request->registration_type) {
+                KknRegistrationLog::create([
+                    'registration_id' => $registration->id,
+                    'created_by' => Auth::id(),
+                    'action' => 'updated',
+                    'old_status' => $registration->status,
+                    'new_status' => $registration->status,
+                    'note' => "Admin mengubah jenis pendaftaran dari '{$oldType}' menjadi '{$request->registration_type}'",
+                ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Data pendaftaran berhasil diperbarui',
+            'registration' => $registration->fresh(['student', 'reviewer'])
+        ]);
+    }
+
+    /**
      * Approve registration
      */
     public function approve(Request $request, $id)

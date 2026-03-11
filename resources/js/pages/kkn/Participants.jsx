@@ -9,7 +9,11 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
 } from 'recharts';
-import { useGetRegistrationsQuery, useGetStatisticsQuery, useGetRegistrationByIdQuery, useApproveRegistrationMutation, useRejectRegistrationMutation, useRequestRevisionMutation, useAddNoteMutation } from '../../store/api/kknApi';
+import {
+    useGetRegistrationsQuery, useGetStatisticsQuery, useGetRegistrationByIdQuery,
+    useApproveRegistrationMutation, useRejectRegistrationMutation,
+    useRequestRevisionMutation, useAddNoteMutation, useUpdateRegistrationMutation
+} from '../../store/api/kknApi';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import DataTable from '../../components/DataTable';
@@ -198,8 +202,8 @@ export default function KknParticipants() {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div
                         className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'all'
-                                ? 'bg-gray-100 border-gray-300'
-                                : 'bg-white border-transparent hover:border-gray-200 hover:bg-gray-50'
+                            ? 'bg-gray-100 border-gray-300'
+                            : 'bg-white border-transparent hover:border-gray-200 hover:bg-gray-50'
                             }`}
                         onClick={() => {
                             if (viewMode === 'table' && filters.status === 'all') setViewMode('dashboard');
@@ -214,8 +218,8 @@ export default function KknParticipants() {
                     </div>
                     <div
                         className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'pending'
-                                ? 'bg-yellow-100 border-yellow-300'
-                                : 'bg-yellow-50 border-yellow-100 hover:bg-yellow-100 hover:border-yellow-200'
+                            ? 'bg-yellow-100 border-yellow-300'
+                            : 'bg-yellow-50 border-yellow-100 hover:bg-yellow-100 hover:border-yellow-200'
                             }`}
                         onClick={() => {
                             if (viewMode === 'table' && filters.status === 'pending') setViewMode('dashboard');
@@ -230,8 +234,8 @@ export default function KknParticipants() {
                     </div>
                     <div
                         className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'approved'
-                                ? 'bg-green-100 border-green-300'
-                                : 'bg-green-50 border-green-100 hover:bg-green-100 hover:border-green-200'
+                            ? 'bg-green-100 border-green-300'
+                            : 'bg-green-50 border-green-100 hover:bg-green-100 hover:border-green-200'
                             }`}
                         onClick={() => {
                             if (viewMode === 'table' && filters.status === 'approved') setViewMode('dashboard');
@@ -246,8 +250,8 @@ export default function KknParticipants() {
                     </div>
                     <div
                         className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'needs_revision'
-                                ? 'bg-orange-100 border-orange-300'
-                                : 'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-200'
+                            ? 'bg-orange-100 border-orange-300'
+                            : 'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-200'
                             }`}
                         onClick={() => {
                             if (viewMode === 'table' && filters.status === 'needs_revision') setViewMode('dashboard');
@@ -262,8 +266,8 @@ export default function KknParticipants() {
                     </div>
                     <div
                         className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'rejected'
-                                ? 'bg-red-100 border-red-300'
-                                : 'bg-red-50 border-red-100 hover:bg-red-100 hover:border-red-200'
+                            ? 'bg-red-100 border-red-300'
+                            : 'bg-red-50 border-red-100 hover:bg-red-100 hover:border-red-200'
                             }`}
                         onClick={() => {
                             if (viewMode === 'table' && filters.status === 'rejected') setViewMode('dashboard');
@@ -560,8 +564,22 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
     const [activeTab, setActiveTab] = useState('profile'); // profile, documents, timeline
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewTitle, setPreviewTitle] = useState('');
+    const [isEditingType, setIsEditingType] = useState(false);
+    const [editedType, setEditedType] = useState(registration.registration_type || 'reguler');
+    const [updateRegistration, { isLoading: isUpdating }] = useUpdateRegistrationMutation();
 
     const profile = registration.student?.mahasiswa_profile || {};
+
+    const handleSaveType = async () => {
+        try {
+            await updateRegistration({ id: registration.id, registration_type: editedType }).unwrap();
+            setIsEditingType(false);
+            alert('Jenis pendaftaran berhasil diperbarui');
+        } catch (error) {
+            console.error('Failed to update registration type:', error);
+            alert('Gagal memperbarui jenis pendaftaran');
+        }
+    };
 
     const handlePreview = (doc, title) => {
         setPreviewDoc(doc);
@@ -732,6 +750,44 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                     </h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="text-sm font-medium text-gray-600">Jenis Pendaftaran</label>
+                                                {!isEditingType ? (
+                                                    <button onClick={() => setIsEditingType(true)} className="text-xs text-blue-600 hover:text-blue-800">
+                                                        Edit
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => setIsEditingType(false)} className="text-xs text-gray-500 hover:text-gray-700">
+                                                        Batal
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {!isEditingType ? (
+                                                <p className="text-gray-900 font-semibold uppercase">
+                                                    {registration.registration_type || 'REGULER'}
+                                                </p>
+                                            ) : (
+                                                <div className="flex items-center space-x-2">
+                                                    <select
+                                                        value={editedType}
+                                                        onChange={(e) => setEditedType(e.target.value)}
+                                                        className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-green-500 focus:border-green-500"
+                                                    >
+                                                        <option value="reguler">Reguler</option>
+                                                        <option value="progsus">Progsus</option>
+                                                        <option value="santri">Santri</option>
+                                                    </select>
+                                                    <button
+                                                        onClick={handleSaveType}
+                                                        disabled={isUpdating}
+                                                        className="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50"
+                                                    >
+                                                        {isUpdating ? '...' : 'Simpan'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
                                             <label className="text-sm font-medium text-gray-600">Lokasi KKN</label>
                                             <p className="text-gray-900 font-semibold">{registration.location?.name || 'Belum dipilih'}</p>
                                         </div>
@@ -740,7 +796,7 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                             <p className="text-gray-900">{registration.fiscal_year?.year || '-'}</p>
                                         </div>
                                         {registration.reviewer && (
-                                            <div className="col-span-2">
+                                            <div>
                                                 <label className="text-sm font-medium text-gray-600">Direview oleh</label>
                                                 <p className="text-gray-900">{registration.reviewer.name}</p>
                                             </div>

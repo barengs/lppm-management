@@ -35,6 +35,19 @@ export const kknApi = baseApi.injectEndpoints({
             invalidatesTags: ['Registrations', 'Statistics'],
         }),
 
+        updateRegistration: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/admin/kkn-registrations/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'Registration', id },
+                'Registrations',
+                'Statistics',
+            ],
+        }),
+
         approveRegistration: builder.mutation({
             query: ({ id, note }) => ({
                 url: `/admin/kkn-registrations/${id}/approve`,
@@ -468,6 +481,7 @@ export const {
     useGetRegistrationByIdQuery,
     useGetStatisticsQuery,
     useCreateRegistrationMutation,
+    useUpdateRegistrationMutation,
     useApproveRegistrationMutation,
     useRejectRegistrationMutation,
     useRequestRevisionMutation,
