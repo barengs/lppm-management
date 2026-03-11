@@ -223,13 +223,71 @@ class KknRegistrationController extends Controller
      */
     public function statistics()
     {
+        $registrations = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram', 'location'])->get();
+
         $stats = [
-            'total' => KknRegistration::count(),
-            'pending' => KknRegistration::where('status', 'pending')->count(),
-            'approved' => KknRegistration::where('status', 'approved')->count(),
-            'rejected' => KknRegistration::where('status', 'rejected')->count(),
-            'needs_revision' => KknRegistration::where('status', 'needs_revision')->count(),
+            'total' => $registrations->count(),
+            'pending' => $registrations->where('status', 'pending')->count(),
+            'approved' => $registrations->where('status', 'approved')->count(),
+            'rejected' => $registrations->where('status', 'rejected')->count(),
+            'needs_revision' => $registrations->where('status', 'needs_revision')->count(),
+            'by_faculty' => [],
+            'by_prodi' => [],
+            'by_jacket_size' => [],
+            'by_location' => [],
+            'map_data' => []
         ];
+
+        $byFaculty = [];
+        $byProdi = [];
+        $byJacketSize = [];
+        $byLocation = [];
+
+        foreach ($registrations as $reg) {
+            $profile = $reg->student->mahasiswaProfile ?? null;
+
+            // Faculty
+            $facultyName = ($profile && $profile->faculty) ? $profile->faculty->name : ($profile->fakultas ?? 'Tidak Diketahui');
+            $byFaculty[$facultyName] = ($byFaculty[$facultyName] ?? 0) + 1;
+
+            // Prodi
+            $prodiName = ($profile && $profile->studyProgram) ? $profile->studyProgram->name : ($profile->prodi ?? 'Tidak Diketahui');
+            $byProdi[$prodiName] = ($byProdi[$prodiName] ?? 0) + 1;
+
+            // Jacket Size
+            $jacket = ($profile && $profile->jacket_size) ? $profile->jacket_size : 'Tidak Diketahui';
+            $byJacketSize[$jacket] = ($byJacketSize[$jacket] ?? 0) + 1;
+
+            // Location
+            $locationName = $reg->location ? $reg->location->name : 'Belum Ditentukan';
+            $byLocation[$locationName] = ($byLocation[$locationName] ?? 0) + 1;
+        }
+
+        // Format for Recharts
+        $formatChartData = function($counts) {
+            $data = [];
+            foreach ($counts as $name => $val) {
+                $data[] = ['name' => (string)$name, 'value' => $val];
+            }
+            usort($data, fn($a, $b) => $b['value'] <=> $a['value']);
+            return $data;
+        };
+
+        $stats['by_faculty'] = $formatChartData($byFaculty);
+        $stats['by_prodi'] = $formatChartData($byProdi);
+        $stats['by_jacket_size'] = $formatChartData($byJacketSize);
+        $stats['by_location'] = $formatChartData($byLocation);
+
+        $locationsWithCoords = \App\Models\KknLocation::whereNotNull('latitude')->whereNotNull('longitude')->withCount('registrations')->get();
+        $stats['map_data'] = $locationsWithCoords->map(function($loc) {
+            return [
+                'id' => $loc->id,
+                'name' => $loc->name,
+                'latitude' => $loc->latitude,
+                'longitude' => $loc->longitude,
+                'participants_count' => $loc->registrations_count,
+            ];
+        });
 
         return response()->json($stats);
     }
