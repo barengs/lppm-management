@@ -2,8 +2,13 @@ import React, { useState, useMemo } from 'react';
 import {
     Users, Search, Filter, CheckCircle, XCircle,
     AlertCircle, Clock, Eye, User, MapPin, Calendar,
-    Mail, Phone, GraduationCap, Award, FileText
+    Mail, Phone, GraduationCap, Award, FileText,
+    BarChart2, PieChart as PieChartIcon, Map, ArrowLeft
 } from 'lucide-react';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell
+} from 'recharts';
 import { useGetRegistrationsQuery, useGetStatisticsQuery, useGetRegistrationByIdQuery, useApproveRegistrationMutation, useRejectRegistrationMutation, useRequestRevisionMutation, useAddNoteMutation } from '../../store/api/kknApi';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
@@ -32,6 +37,8 @@ const STATUS_CONFIG = {
     }
 };
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#F87171', '#60A5FA', '#34D399', '#FBBF24'];
+
 export default function KknParticipants() {
     const [filters, setFilters] = useState({
         status: 'all',
@@ -41,7 +48,7 @@ export default function KknParticipants() {
     });
     const [selectedId, setSelectedId] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-
+    const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'table'
     // RTK Query hooks
     const { data: registrationsData, isLoading: loading, refetch } = useGetRegistrationsQuery(filters);
     const { data: statistics } = useGetStatisticsQuery();
@@ -189,139 +196,295 @@ export default function KknParticipants() {
             {/* Statistics Cards */}
             {statistics && (
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-lg shadow p-4">
+                    <div
+                        className={`rounded-lg shadow p-4 border-2 transition-colors ${viewMode === 'dashboard' ? 'bg-white cursor-pointer hover:bg-gray-50 border-transparent hover:border-gray-200' : 'bg-green-50 border-green-200'}`}
+                        onClick={() => setViewMode(viewMode === 'dashboard' ? 'table' : 'dashboard')}
+                    >
                         <div className="text-sm text-gray-600">Total Pendaftar</div>
-                        <div className="text-2xl font-bold text-gray-900">{statistics.total}</div>
+                        <div className="text-2xl font-bold text-gray-900">{statistics.total || 0}</div>
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'dashboard' ? 'text-blue-500' : 'text-green-600 font-medium'}`}>
+                            {viewMode === 'dashboard' ? 'Lihat Detail Tabel →' : '← Kembali ke Dashboard'}
+                        </div>
                     </div>
-                    <div className="bg-yellow-50 rounded-lg shadow p-4">
+                    <div className="bg-yellow-50 rounded-lg shadow p-4 border border-yellow-100">
                         <div className="text-sm text-yellow-800">Menunggu Review</div>
-                        <div className="text-2xl font-bold text-yellow-900">{statistics.pending}</div>
+                        <div className="text-2xl font-bold text-yellow-900">{statistics.pending || 0}</div>
                     </div>
-                    <div className="bg-green-50 rounded-lg shadow p-4">
+                    <div className="bg-green-50 rounded-lg shadow p-4 border border-green-100">
                         <div className="text-sm text-green-800">Disetujui</div>
-                        <div className="text-2xl font-bold text-green-900">{statistics.approved}</div>
+                        <div className="text-2xl font-bold text-green-900">{statistics.approved || 0}</div>
                     </div>
-                    <div className="bg-orange-50 rounded-lg shadow p-4">
+                    <div className="bg-orange-50 rounded-lg shadow p-4 border border-orange-100">
                         <div className="text-sm text-orange-800">Perlu Revisi</div>
-                        <div className="text-2xl font-bold text-orange-900">{statistics.needs_revision}</div>
+                        <div className="text-2xl font-bold text-orange-900">{statistics.needs_revision || 0}</div>
                     </div>
-                    <div className="bg-red-50 rounded-lg shadow p-4">
+                    <div className="bg-red-50 rounded-lg shadow p-4 border border-red-100">
                         <div className="text-sm text-red-800">Ditolak</div>
-                        <div className="text-2xl font-bold text-red-900">{statistics.rejected}</div>
+                        <div className="text-2xl font-bold text-red-900">{statistics.rejected || 0}</div>
                     </div>
                 </div>
             )}
 
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Cari nama atau NIM..."
-                            className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2"
-                            value={filters.search}
-                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                        />
+            {viewMode === 'dashboard' && statistics && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+                    {/* Fakultas Chart */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                            <PieChartIcon className="mr-2 text-indigo-500" size={20} />
+                            Peserta Berdasarkan Fakultas
+                        </h3>
+                        {statistics.by_faculty && statistics.by_faculty.length > 0 ? (
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={statistics.by_faculty} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                                            {statistics.by_faculty.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <RechartsTooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data</div>
+                        )}
                     </div>
-                    <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                        <select
-                            className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2"
-                            value={filters.status}
-                            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                        >
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Menunggu Review</option>
-                            <option value="approved">Disetujui</option>
-                            <option value="rejected">Ditolak</option>
-                            <option value="needs_revision">Perlu Revisi</option>
-                        </select>
+
+                    {/* Prodi Chart */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                            <BarChart2 className="mr-2 text-blue-500" size={20} />
+                            Peserta Berdasarkan Program Studi
+                        </h3>
+                        {statistics.by_prodi && statistics.by_prodi.length > 0 ? (
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={statistics.by_prodi}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis />
+                                        <RechartsTooltip />
+                                        <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                                            {statistics.by_prodi.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data</div>
+                        )}
                     </div>
-                    <div>
-                        <select
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                            value={filters.per_page}
-                            onChange={(e) => setFilters({ ...filters, per_page: e.target.value })}
-                        >
-                            <option value="10">10 per halaman</option>
-                            <option value="25">25 per halaman</option>
-                            <option value="50">50 per halaman</option>
-                            <option value="100">100 per halaman</option>
-                        </select>
+
+                    {/* Jacket Size Chart */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                            <User className="mr-2 text-orange-500" size={20} />
+                            Statistik Ukuran Jaket
+                        </h3>
+                        {statistics.by_jacket_size && statistics.by_jacket_size.length > 0 ? (
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={statistics.by_jacket_size} layout="vertical" margin={{ left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" />
+                                        <YAxis dataKey="name" type="category" width={50} />
+                                        <RechartsTooltip />
+                                        <Bar dataKey="value" fill="#f97316" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data</div>
+                        )}
                     </div>
-                </div>
-            </div>
 
-            {/* DataTable */}
-            <div className="bg-white rounded-lg shadow p-4">
-                {loading ? (
-                    <div className="text-center py-8 text-gray-500">Loading...</div>
-                ) : (
-                    <>
-                        <DataTable
-                            data={registrations}
-                            columns={columns}
-                            options={{
-                                enableGlobalFilter: false, // Using custom filters above
-                                enableSorting: true,
-                                enablePagination: false, // Using server-side pagination
-                                searchPlaceholder: '',
-                                emptyMessage: 'Tidak ada data pendaftaran',
-                            }}
-                        />
+                    {/* Posko Chart */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                            <MapPin className="mr-2 text-green-500" size={20} />
+                            Peserta Berdasarkan Lokasi KKN
+                        </h3>
+                        {statistics.by_location && statistics.by_location.length > 0 ? (
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={statistics.by_location}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis />
+                                        <RechartsTooltip />
+                                        <Bar dataKey="value" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center text-gray-400">Belum ada data</div>
+                        )}
+                    </div>
 
-                        {/* Server-side Pagination - Always show info */}
-                        {pagination && pagination.total > 0 && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="text-sm text-gray-700">
-                                        Menampilkan <span className="font-medium">{pagination.from || 0}</span> sampai{' '}
-                                        <span className="font-medium">{pagination.to || 0}</span> dari{' '}
-                                        <span className="font-medium">{pagination.total}</span> hasil
-                                    </div>
-
-                                    {/* Show pagination controls only if more than 1 page */}
-                                    {pagination.last_page > 1 && (
-                                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            <button
-                                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page - 1 }))}
-                                                disabled={pagination.current_page === 1}
-                                                className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-l-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Previous
-                                            </button>
-                                            {[...Array(Math.min(pagination.last_page, 5))].map((_, i) => {
-                                                const page = i + 1;
-                                                return (
-                                                    <button
-                                                        key={page}
-                                                        onClick={() => setFilters(prev => ({ ...prev, page }))}
-                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${pagination.current_page === page
-                                                                ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
-                                                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                            }`}
-                                                    >
-                                                        {page}
-                                                    </button>
-                                                );
-                                            })}
-                                            <button
-                                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page + 1 }))}
-                                                disabled={pagination.current_page === pagination.last_page}
-                                                className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Next
-                                            </button>
-                                        </nav>
-                                    )}
-                                </div>
+                    {/* Peta Sebaran KKN List fallback */}
+                    <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
+                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                            <Map className="mr-2 text-teal-500" size={20} />
+                            Peta Sebaran KKN
+                        </h3>
+                        {statistics.map_data && statistics.map_data.length > 0 ? (
+                            <div className="rounded-lg border bg-gray-50 overflow-hidden">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Koordinat</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Peserta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {statistics.map_data.map(loc => (
+                                            <tr key={loc.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{loc.name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
+                                                    {loc.latitude}, {loc.longitude}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                                                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium border border-green-200">
+                                                        {loc.participants_count} Peserta
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="h-48 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                                Koordinat lokasi KKN belum tersedia
                             </div>
                         )}
-                    </>
-                )}
-            </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Table View */}
+            {viewMode === 'table' && (
+                <div className="space-y-6 slide-in-bottom">
+                    {/* Filters */}
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama atau NIM..."
+                                    className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow"
+                                    value={filters.search}
+                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                />
+                            </div>
+                            <div className="relative">
+                                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <select
+                                    className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow appearance-none"
+                                    value={filters.status}
+                                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                                >
+                                    <option value="all">Semua Status</option>
+                                    <option value="pending">Menunggu Review</option>
+                                    <option value="approved">Disetujui</option>
+                                    <option value="rejected">Ditolak</option>
+                                    <option value="needs_revision">Perlu Revisi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow appearance-none"
+                                    value={filters.per_page}
+                                    onChange={(e) => setFilters({ ...filters, per_page: e.target.value })}
+                                >
+                                    <option value="10">10 per halaman</option>
+                                    <option value="25">25 per halaman</option>
+                                    <option value="50">50 per halaman</option>
+                                    <option value="100">100 per halaman</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DataTable */}
+                    <div className="bg-white rounded-lg shadow p-4">
+                        {loading ? (
+                            <div className="text-center py-8 text-gray-500 flex flex-col items-center justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-2"></div>
+                                Memuat Data...
+                            </div>
+                        ) : (
+                            <>
+                                <DataTable
+                                    data={registrations}
+                                    columns={columns}
+                                    options={{
+                                        enableGlobalFilter: false, // Using custom filters above
+                                        enableSorting: true,
+                                        enablePagination: false, // Using server-side pagination
+                                        searchPlaceholder: '',
+                                        emptyMessage: 'Tidak ada data pendaftaran',
+                                    }}
+                                />
+
+                                {/* Server-side Pagination - Always show info */}
+                                {pagination && pagination.total > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="text-sm text-gray-700">
+                                                Menampilkan <span className="font-medium">{pagination.from || 0}</span> sampai{' '}
+                                                <span className="font-medium">{pagination.to || 0}</span> dari{' '}
+                                                <span className="font-medium">{pagination.total}</span> hasil
+                                            </div>
+
+                                            {/* Show pagination controls only if more than 1 page */}
+                                            {pagination.last_page > 1 && (
+                                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                                    <button
+                                                        onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page - 1 }))}
+                                                        disabled={pagination.current_page === 1}
+                                                        className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-l-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        Previous
+                                                    </button>
+                                                    {[...Array(Math.min(pagination.last_page, 5))].map((_, i) => {
+                                                        const page = i + 1;
+                                                        return (
+                                                            <button
+                                                                key={page}
+                                                                onClick={() => setFilters(prev => ({ ...prev, page }))}
+                                                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${pagination.current_page === page
+                                                                        ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
+                                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                                    }`}
+                                                            >
+                                                                {page}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                    <button
+                                                        onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page + 1 }))}
+                                                        disabled={pagination.current_page === pagination.last_page}
+                                                        className="relative inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </nav>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Enhanced Detail Modal */}
             {showDetailModal && selectedRegistration && (
@@ -387,8 +550,8 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                             <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
-                                        ? 'border-green-500 text-green-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-green-500 text-green-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 <User className="inline mr-2" size={16} />
@@ -397,8 +560,8 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                             <button
                                 onClick={() => setActiveTab('documents')}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'documents'
-                                        ? 'border-green-500 text-green-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-green-500 text-green-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 <FileText className="inline mr-2" size={16} />
@@ -407,8 +570,8 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                             <button
                                 onClick={() => setActiveTab('timeline')}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'timeline'
-                                        ? 'border-green-500 text-green-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-green-500 text-green-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 <Clock className="inline mr-2" size={16} />
