@@ -197,30 +197,84 @@ export default function KknParticipants() {
             {statistics && (
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div
-                        className={`rounded-lg shadow p-4 border-2 transition-colors ${viewMode === 'dashboard' ? 'bg-white cursor-pointer hover:bg-gray-50 border-transparent hover:border-gray-200' : 'bg-green-50 border-green-200'}`}
-                        onClick={() => setViewMode(viewMode === 'dashboard' ? 'table' : 'dashboard')}
+                        className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'all'
+                                ? 'bg-gray-100 border-gray-300'
+                                : 'bg-white border-transparent hover:border-gray-200 hover:bg-gray-50'
+                            }`}
+                        onClick={() => {
+                            if (viewMode === 'table' && filters.status === 'all') setViewMode('dashboard');
+                            else { setViewMode('table'); setFilters({ ...filters, status: 'all' }); }
+                        }}
                     >
                         <div className="text-sm text-gray-600">Total Pendaftar</div>
                         <div className="text-2xl font-bold text-gray-900">{statistics.total || 0}</div>
-                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'dashboard' ? 'text-blue-500' : 'text-green-600 font-medium'}`}>
-                            {viewMode === 'dashboard' ? 'Lihat Detail Tabel →' : '← Kembali ke Dashboard'}
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'table' && filters.status === 'all' ? 'text-gray-600 font-medium' : 'text-blue-500 hover:text-blue-600'}`}>
+                            {viewMode === 'table' && filters.status === 'all' ? '← Kembali' : 'Lihat Detail Tabel →'}
                         </div>
                     </div>
-                    <div className="bg-yellow-50 rounded-lg shadow p-4 border border-yellow-100">
+                    <div
+                        className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'pending'
+                                ? 'bg-yellow-100 border-yellow-300'
+                                : 'bg-yellow-50 border-yellow-100 hover:bg-yellow-100 hover:border-yellow-200'
+                            }`}
+                        onClick={() => {
+                            if (viewMode === 'table' && filters.status === 'pending') setViewMode('dashboard');
+                            else { setViewMode('table'); setFilters({ ...filters, status: 'pending' }); }
+                        }}
+                    >
                         <div className="text-sm text-yellow-800">Menunggu Review</div>
                         <div className="text-2xl font-bold text-yellow-900">{statistics.pending || 0}</div>
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'table' && filters.status === 'pending' ? 'text-yellow-700 font-medium' : 'text-blue-500 hover:text-blue-600'}`}>
+                            {viewMode === 'table' && filters.status === 'pending' ? '← Kembali' : 'Lihat Detail Tabel →'}
+                        </div>
                     </div>
-                    <div className="bg-green-50 rounded-lg shadow p-4 border border-green-100">
+                    <div
+                        className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'approved'
+                                ? 'bg-green-100 border-green-300'
+                                : 'bg-green-50 border-green-100 hover:bg-green-100 hover:border-green-200'
+                            }`}
+                        onClick={() => {
+                            if (viewMode === 'table' && filters.status === 'approved') setViewMode('dashboard');
+                            else { setViewMode('table'); setFilters({ ...filters, status: 'approved' }); }
+                        }}
+                    >
                         <div className="text-sm text-green-800">Disetujui</div>
                         <div className="text-2xl font-bold text-green-900">{statistics.approved || 0}</div>
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'table' && filters.status === 'approved' ? 'text-green-700 font-medium' : 'text-blue-500 hover:text-blue-600'}`}>
+                            {viewMode === 'table' && filters.status === 'approved' ? '← Kembali' : 'Lihat Detail Tabel →'}
+                        </div>
                     </div>
-                    <div className="bg-orange-50 rounded-lg shadow p-4 border border-orange-100">
+                    <div
+                        className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'needs_revision'
+                                ? 'bg-orange-100 border-orange-300'
+                                : 'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-200'
+                            }`}
+                        onClick={() => {
+                            if (viewMode === 'table' && filters.status === 'needs_revision') setViewMode('dashboard');
+                            else { setViewMode('table'); setFilters({ ...filters, status: 'needs_revision' }); }
+                        }}
+                    >
                         <div className="text-sm text-orange-800">Perlu Revisi</div>
                         <div className="text-2xl font-bold text-orange-900">{statistics.needs_revision || 0}</div>
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'table' && filters.status === 'needs_revision' ? 'text-orange-700 font-medium' : 'text-blue-500 hover:text-blue-600'}`}>
+                            {viewMode === 'table' && filters.status === 'needs_revision' ? '← Kembali' : 'Lihat Detail Tabel →'}
+                        </div>
                     </div>
-                    <div className="bg-red-50 rounded-lg shadow p-4 border border-red-100">
+                    <div
+                        className={`rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${viewMode === 'table' && filters.status === 'rejected'
+                                ? 'bg-red-100 border-red-300'
+                                : 'bg-red-50 border-red-100 hover:bg-red-100 hover:border-red-200'
+                            }`}
+                        onClick={() => {
+                            if (viewMode === 'table' && filters.status === 'rejected') setViewMode('dashboard');
+                            else { setViewMode('table'); setFilters({ ...filters, status: 'rejected' }); }
+                        }}
+                    >
                         <div className="text-sm text-red-800">Ditolak</div>
                         <div className="text-2xl font-bold text-red-900">{statistics.rejected || 0}</div>
+                        <div className={`text-xs mt-1 flex items-center ${viewMode === 'table' && filters.status === 'rejected' ? 'text-red-700 font-medium' : 'text-blue-500 hover:text-blue-600'}`}>
+                            {viewMode === 'table' && filters.status === 'rejected' ? '← Kembali' : 'Lihat Detail Tabel →'}
+                        </div>
                     </div>
                 </div>
             )}
@@ -460,8 +514,8 @@ export default function KknParticipants() {
                                                                 key={page}
                                                                 onClick={() => setFilters(prev => ({ ...prev, page }))}
                                                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${pagination.current_page === page
-                                                                        ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
-                                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                                    ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
+                                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                                                     }`}
                                                             >
                                                                 {page}
