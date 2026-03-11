@@ -214,19 +214,139 @@ class KknRegistrationController extends Controller
 
     public function update(Request $request, KknRegistration $kknRegistration)
     {
+        $user = auth('api')->user();
+
         // Admin updates status or assigns DPL
-        $validated = $request->validate([
-            'dpl_id' => 'nullable|exists:users,id',
-            'status' => 'in:pending,approved,rejected,needs_revision',
-            'notes' => 'nullable|string',
-            'validation_notes' => 'nullable|string',
-        ]);
+        if ($user->role !== 'mahasiswa') {
+            $validated = $request->validate([
+                'dpl_id' => 'nullable|exists:users,id',
+                'status' => 'in:pending,approved,rejected,needs_revision',
+                'notes' => 'nullable|string',
+                'validation_notes' => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+            try {
+                $kknRegistration->update($validated);
+                DB::commit();
+                return response()->json($kknRegistration);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
+            }
+        }
+
+        // Student updates their own registration
+        if ($kknRegistration->student_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if (!in_array($kknRegistration->status, ['pending', 'needs_revision'])) {
+            return response()->json(['message' => 'Hanya pendaftaran dengan status Pending atau Perlu Revisi yang dapat diedit.'], 403);
+        }
+
+        $rules = [
+            'fiscal_year_id' => 'required|exists:fiscal_years,id',
+            'registration_type' => 'required|in:reguler,program_khusus,santri',
+            
+            // Profile Data
+            'name' => 'required|string|max:255',
+            'npm' => 'required|string|max:255',
+            'prodi' => 'required|string',
+            'fakultas' => 'required|string',
+            'phone' => 'required|string',
+            'address' => 'required|string',
+            'ips' => 'required|numeric|min:0|max:4.00',
+            'gender' => 'required|in:L,P',
+            'place_of_birth' => 'required|string',
+            'date_of_birth' => 'required|date',
+            'jacket_size' => 'required|in:S,M,L,XL,XXL,XXXL',
+            
+            // Documents & Photo
+            'documents' => 'array',
+            'documents.*.name' => 'required|string',
+            'documents.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ];
+
+        $validated = $request->validate($rules);
 
         DB::beginTransaction();
         try {
-            $kknRegistration->update($validated);
+            // Update User Data
+            $user->update(['name' => $validated['name']]);
+
+            // Update Profile Data
+            $user->mahasiswaProfile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'npm' => $validated['npm'],
+                    'prodi' => $validated['prodi'],
+                    'fakultas' => $validated['fakultas'],
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'ips' => $validated['ips'],
+                    'gender' => $validated['gender'],
+                    'place_of_birth' => $validated['place_of_birth'],
+                    'date_of_birth' => $validated['date_of_birth'],
+                    'jacket_size' => $validated['jacket_size'],
+                ]
+            );
+
+            // Fetch KKN Period based on Fiscal Year
+            $fiscalYear = \App\Models\FiscalYear::find($validated['fiscal_year_id']);
+            $kknPeriod = \App\Models\KknPeriod::where('year', $fiscalYear->year)->first();
+
+            // Update Registration details
+            $kknRegistration->update([
+                'fiscal_year_id' => $validated['fiscal_year_id'],
+                'kkn_period_id' => $kknPeriod ? $kknPeriod->id : $kknRegistration->kkn_period_id,
+                'registration_type' => $validated['registration_type'],
+                'status' => 'pending', // Reset to pending
+            ]);
+
+            // Handle Photo
+            if ($request->hasFile('photo')) {
+                 $photoPath = $request->file('photo')->store('kkn_photos', 'public');
+                 $user->mahasiswaProfile()->update(['avatar' => $photoPath]); 
+
+                 $kknRegistration->kknRegistrationDocuments()->where('doc_type', 'required_photo')->delete();
+                 $kknRegistration->kknRegistrationDocuments()->create([
+                    'name' => 'Pas Foto',
+                    'file_path' => $photoPath,
+                    'file_type' => $request->file('photo')->extension(),
+                    'doc_type' => 'required_photo',
+                ]);
+            }
+
+            // Handle Dynamic Documents
+            if ($request->has('documents')) {
+                $docs = $request->documents;
+                foreach ($docs as $index => $docData) {
+                    if ($request->hasFile("documents.{$index}.file")) {
+                        $file = $request->file("documents.{$index}.file");
+                        $path = $file->store('kkn_documents', 'public');
+                        
+                        // Delete old document with same name
+                        $kknRegistration->kknRegistrationDocuments()
+                            ->where('name', $docData['name'])
+                            ->delete();
+                        
+                        $kknRegistration->kknRegistrationDocuments()->create([
+                            'name' => $docData['name'] ?? 'Dokumen',
+                            'file_path' => $path,
+                            'file_type' => $file->extension(),
+                            'doc_type' => $docData['type'] ?? 'custom', 
+                        ]);
+                    } elseif (isset($docData['name']) && $request->has("documents.{$index}.type")) {
+                        // If only name changed? Not strictly handled yet but keeping simple
+                    }
+                }
+            }
+
             DB::commit();
-            return response()->json($kknRegistration);
+            return response()->json($kknRegistration->load(['location', 'dpl', 'kknRegistrationDocuments']));
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);

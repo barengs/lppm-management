@@ -10,6 +10,7 @@ export default function KknStudentRegistration() {
     const [fiscalYears, setFiscalYears] = useState([]);
     const [selectedFy, setSelectedFy] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Master Data
     const [faculties, setFaculties] = useState([]);
@@ -185,6 +186,23 @@ export default function KknStudentRegistration() {
         setDocuments(newDocs);
     };
 
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setStep(1);
+
+        // Populate specific registration data if needed
+        if (myRegistration) {
+            setSelectedFy(myRegistration.fiscal_year_id);
+            setProfileData(prev => ({
+                ...prev,
+                registration_type: myRegistration.registration_type || 'reguler'
+            }));
+
+            // Note: We don't pre-fill files as HTML file inputs can't be pre-filled for security.
+            // The backend should ignore missing files and keep the old ones on update.
+        }
+    };
+
     const handleRegister = async () => {
         if (!confirm("Apakah Anda yakin data dan dokumen sudah benar?")) return;
 
@@ -219,15 +237,22 @@ export default function KknStudentRegistration() {
         // Photo (Step 3)
         if (files.photo) formData.append('photo', files.photo);
 
+        const isUpdating = isEditing && myRegistration;
+        if (isUpdating) {
+            formData.append('_method', 'PUT'); // Laravel method spoofing for form-data
+        }
+
         try {
             setIsLoading(true);
-            await api.post('/kkn-registrations', formData, {
+            const url = isUpdating ? `/kkn-registrations/${myRegistration.id}` : '/kkn-registrations';
+            await api.post(url, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Berhasil mendaftar KKN!");
+            toast.success(isUpdating ? "Berhasil mengupdate pendaftaran KKN!" : "Berhasil mendaftar KKN!");
+            setIsEditing(false);
             fetchData();
         } catch (error) {
-            toast.error(error.response?.data?.message || "Gagal mendaftar.");
+            toast.error(error.response?.data?.message || "Gagal menyimpan data.");
         } finally {
             setIsLoading(false);
         }
@@ -257,13 +282,21 @@ export default function KknStudentRegistration() {
                 <div className="bg-gray-50 p-4 rounded-lg text-left text-sm text-gray-500">
                     <p>Validation Notes: {myRegistration.validation_notes || "Belum ada catatan validasi."}</p>
                 </div>
-                <div className="mt-6">
+                <div className="mt-6 flex justify-center space-x-4">
                     <a
                         href="/dashboard/kkn/status"
                         className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                     >
                         Lihat Detail Status
                     </a>
+                    {(myRegistration.status === 'pending' || myRegistration.status === 'needs_revision') && (
+                        <button
+                            onClick={handleEditClick}
+                            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer"
+                        >
+                            Edit Pendaftaran
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -599,7 +632,7 @@ export default function KknStudentRegistration() {
                                 className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
                             >
                                 <Save className="mr-2 w-5 h-5" />
-                                {isLoading ? 'Proses Mendaftar...' : 'Selesaikan Pendaftaran'}
+                                {isLoading ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Selesaikan Pendaftaran')}
                             </button>
                         </div>
                     </div>
