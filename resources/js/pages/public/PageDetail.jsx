@@ -35,21 +35,21 @@ export default function PageDetail() {
     const { content } = page;
     // Handle both structured content (hero_desc) or simple HTML string if that's what we stored?
     // In seeder we used array with hero_title, hero_desc, body.
-    
+
     // Fallback if content is just a string? Migration said JSON. Seeder used array.
     // If we change schema to text/longText for content, we might store raw HTML.
     // Assuming JSON structure from seeder:
     // content: { hero_title, hero_desc, body }
-    
+
     // Note: KKN page has complex info_cards structure in content.
     // Generic pages have 'body'.
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800">
-             {/* Hero Section */}
-             <div className="bg-green-900 text-white py-16">
+            {/* Hero Section */}
+            <div className="bg-green-900 text-white py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                     <Link to="/" className="inline-flex items-center text-green-200 hover:text-white mb-6 transition-colors text-sm uppercase tracking-wider font-semibold">
+                    <Link to="/" className="inline-flex items-center text-green-200 hover:text-white mb-6 transition-colors text-sm uppercase tracking-wider font-semibold">
                         <ArrowLeft size={16} className="mr-2" /> Kembali
                     </Link>
                     <h1 className="text-3xl md:text-5xl font-bold mb-4">{content?.hero_title || page.title}</h1>
@@ -63,15 +63,15 @@ export default function PageDetail() {
 
             {/* Content Body */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                 <div className="prose prose-lg prose-green max-w-none text-gray-600">
+                <div className="prose prose-lg prose-green max-w-none text-gray-600 overflow-hidden break-words [&_*]:!whitespace-pre-wrap [&_*]:!break-words">
                     {content?.body && (
                         <div dangerouslySetInnerHTML={{ __html: content.body }} />
                     )}
                     {/* If content is just a string (legacy/fallback) */}
                     {typeof page.content === 'string' && (
-                         <div dangerouslySetInnerHTML={{ __html: page.content }} />
+                        <div dangerouslySetInnerHTML={{ __html: page.content }} />
                     )}
-                 </div>
+                </div>
             </div>
         </div>
     );
