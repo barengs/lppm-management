@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { 
-    Users, Search, Filter, CheckCircle, XCircle, 
+import {
+    Users, Search, Filter, CheckCircle, XCircle,
     AlertCircle, Clock, Eye, User, MapPin, Calendar,
     Mail, Phone, GraduationCap, Award, FileText
 } from 'lucide-react';
@@ -41,17 +41,17 @@ export default function KknParticipants() {
     });
     const [selectedId, setSelectedId] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    
+
     // RTK Query hooks
     const { data: registrationsData, isLoading: loading, refetch } = useGetRegistrationsQuery(filters);
     const { data: statistics } = useGetStatisticsQuery();
     const { data: selectedRegistration } = useGetRegistrationByIdQuery(selectedId, { skip: !selectedId });
-    
+
     const [approveRegistration] = useApproveRegistrationMutation();
     const [rejectRegistration] = useRejectRegistrationMutation();
     const [requestRevision] = useRequestRevisionMutation();
     const [addNote] = useAddNoteMutation();
-    
+
     const registrations = registrationsData?.data || [];
     const pagination = registrationsData;
 
@@ -281,7 +281,7 @@ export default function KknParticipants() {
                                         <span className="font-medium">{pagination.to || 0}</span> dari{' '}
                                         <span className="font-medium">{pagination.total}</span> hasil
                                     </div>
-                                    
+
                                     {/* Show pagination controls only if more than 1 page */}
                                     {pagination.last_page > 1 && (
                                         <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
@@ -298,11 +298,10 @@ export default function KknParticipants() {
                                                     <button
                                                         key={page}
                                                         onClick={() => setFilters(prev => ({ ...prev, page }))}
-                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
-                                                            pagination.current_page === page
+                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${pagination.current_page === page
                                                                 ? 'z-10 bg-green-50 border-green-500 text-green-600 font-semibold'
                                                                 : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {page}
                                                     </button>
@@ -387,33 +386,30 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                         <nav className="flex space-x-8 px-6" aria-label="Tabs">
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'profile'
+                                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
                                         ? 'border-green-500 text-green-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                    }`}
                             >
                                 <User className="inline mr-2" size={16} />
                                 Profil Mahasiswa
                             </button>
                             <button
                                 onClick={() => setActiveTab('documents')}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'documents'
+                                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'documents'
                                         ? 'border-green-500 text-green-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                    }`}
                             >
                                 <FileText className="inline mr-2" size={16} />
                                 Dokumen
                             </button>
                             <button
                                 onClick={() => setActiveTab('timeline')}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'timeline'
+                                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'timeline'
                                         ? 'border-green-500 text-green-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                    }`}
                             >
                                 <Clock className="inline mr-2" size={16} />
                                 Riwayat Aktivitas
@@ -478,11 +474,11 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                         </div>
                                         <div>
                                             <label className="text-sm font-medium text-gray-600">Program Studi</label>
-                                            <p className="text-gray-900">{profile.prodi || '-'}</p>
+                                            <p className="text-gray-900">{profile.study_program?.name || profile.prodi || '-'}</p>
                                         </div>
                                         <div>
                                             <label className="text-sm font-medium text-gray-600">Fakultas</label>
-                                            <p className="text-gray-900">{profile.fakultas || '-'}</p>
+                                            <p className="text-gray-900">{profile.faculty?.name || profile.fakultas || '-'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -542,12 +538,12 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                             <div className="grid grid-cols-2 gap-4">
                                 {registration.documents && Object.entries(registration.documents).map(([key, doc]) => {
                                     if (!doc || !doc.file_path) return null;
-                                    
+
                                     // Generate readable title from key or use doc name
-                                    const title = doc.name || key.split('_').map(word => 
+                                    const title = doc.name || key.split('_').map(word =>
                                         word.charAt(0).toUpperCase() + word.slice(1)
                                     ).join(' ');
-                                    
+
                                     return (
                                         <DocumentCard
                                             key={key}

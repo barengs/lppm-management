@@ -24,7 +24,7 @@ class KknRegistrationController extends Controller
         }
 
         // Admin sees all, formatted for table
-        return response()->json(KknRegistration::with(['student.mahasiswaProfile', 'location', 'dpl', 'kknRegistrationDocuments'])->get());
+        return response()->json(KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram', 'location', 'dpl', 'kknRegistrationDocuments'])->get());
     }
 
     /**
