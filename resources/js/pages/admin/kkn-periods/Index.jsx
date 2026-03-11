@@ -158,7 +158,7 @@ export default function KknPeriodsIndex() {
     }
 
     return (
-        <div className="space-y-6 p-8">
+        <div className="space-y-6 p-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Periode KKN</h1>
@@ -172,7 +172,7 @@ export default function KknPeriodsIndex() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <DataTable
                     data={periods}
                     columns={columns}
