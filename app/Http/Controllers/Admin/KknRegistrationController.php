@@ -43,7 +43,8 @@ class KknRegistrationController extends Controller
     public function show($id)
     {
         $registration = KknRegistration::with([
-            'student.mahasiswaProfile',
+            'student.mahasiswaProfile.faculty',
+            'student.mahasiswaProfile.studyProgram',
             'location',
             'fiscalYear',
             'dpl',

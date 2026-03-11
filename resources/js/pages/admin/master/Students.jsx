@@ -157,7 +157,7 @@ export default function StudentsIndex() {
 
     // Filter program studi berdasarkan fakultas
     const filteredStudyPrograms = formData.fakultas
-        ? studyPrograms.filter(p => p.faculty_id == faculties.find(f => f.name === formData.fakultas)?.id || p.faculty_id == formData.fakultas)
+        ? studyPrograms.filter(p => p.faculty_id == formData.fakultas)
         : [];
 
     const columns = React.useMemo(() => [
@@ -179,12 +179,21 @@ export default function StudentsIndex() {
         {
             accessorKey: 'info',
             header: 'Program Studi / Fakultas',
-            cell: ({ row }) => (
-                <div className="text-sm text-gray-500">
-                    <div>{row.original.mahasiswa_profile?.prodi || '-'}</div>
-                    <div className="text-xs">{row.original.mahasiswa_profile?.fakultas || '-'}</div>
-                </div>
-            )
+            cell: ({ row }) => {
+                const profile = row.original.mahasiswa_profile || {};
+                const prodiVal = profile.prodi;
+                const fakultasVal = profile.fakultas;
+
+                const prodiName = studyPrograms.find(p => p.id == prodiVal)?.name || prodiVal || '-';
+                const fakultasName = faculties.find(f => f.id == fakultasVal)?.name || fakultasVal || '-';
+
+                return (
+                    <div className="text-sm text-gray-500">
+                        <div>{prodiName}</div>
+                        <div className="text-xs">{fakultasName}</div>
+                    </div>
+                );
+            }
         },
         {
             id: 'actions',
@@ -350,7 +359,7 @@ export default function StudentsIndex() {
                                             >
                                                 <option value="">Pilih Fakultas...</option>
                                                 {faculties.map(f => (
-                                                    <option key={f.id} value={f.name}>{f.name}</option>
+                                                    <option key={f.id} value={f.id}>{f.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -364,7 +373,7 @@ export default function StudentsIndex() {
                                             >
                                                 <option value="">Pilih Program Studi...</option>
                                                 {filteredStudyPrograms.map(p => (
-                                                    <option key={p.id} value={p.name}>{p.name}</option>
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
                                                 ))}
                                             </select>
                                         </div>
