@@ -138,6 +138,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\KknRegistrationController::class, 'index']);
         Route::get('/statistics', [App\Http\Controllers\Admin\KknRegistrationController::class, 'statistics']);
         Route::get('/{id}', [App\Http\Controllers\Admin\KknRegistrationController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Admin\KknRegistrationController::class, 'update']);
         Route::post('/{id}/approve', [App\Http\Controllers\Admin\KknRegistrationController::class, 'approve']);
         Route::post('/{id}/reject', [App\Http\Controllers\Admin\KknRegistrationController::class, 'reject']);
         Route::post('/{id}/revise', [App\Http\Controllers\Admin\KknRegistrationController::class, 'requestRevision']);
