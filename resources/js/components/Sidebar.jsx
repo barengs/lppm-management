@@ -81,6 +81,7 @@ export default function Sidebar() {
                 { name: 'Tahun Akademik', icon: <Calendar size={20} />, path: '/master/fiscal-years', permission: 'fiscal_years.view' },
                 { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
                 { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
+                { name: 'Daftar Mahasiswa', icon: <Users size={20} />, path: '/master/students', permission: 'users.view' },
             ]
         },
         {
