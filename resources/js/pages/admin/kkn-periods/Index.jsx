@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-    useGetKknPeriodsQuery, 
-    useCreateKknPeriodMutation, 
-    useUpdateKknPeriodMutation, 
+import {
+    useGetKknPeriodsQuery,
+    useCreateKknPeriodMutation,
+    useUpdateKknPeriodMutation,
     useDeleteKknPeriodMutation,
     useCreateRegistrationPeriodMutation,
     useUpdateRegistrationPeriodMutation,
@@ -15,7 +15,7 @@ import { toast } from 'react-toastify';
 export default function KknPeriodsIndex() {
     const { data: periodsData, isLoading } = useGetKknPeriodsQuery();
     const periods = periodsData?.data || [];
-    
+
     const [createPeriod] = useCreateKknPeriodMutation();
     const [updatePeriod] = useUpdateKknPeriodMutation();
     const [deletePeriod] = useDeleteKknPeriodMutation();
@@ -128,7 +128,7 @@ export default function KknPeriodsIndex() {
             header: 'Gelombang',
             id: 'waves',
             cell: ({ row }) => (
-                <button 
+                <button
                     onClick={() => handleOpenWaveManager(row.original)}
                     className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
                 >
@@ -158,24 +158,24 @@ export default function KknPeriodsIndex() {
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-8">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Periode KKN</h1>
                     <p className="text-gray-600">Manajemen Periode KKN dan Gelombang Pendaftaran</p>
                 </div>
-                <button 
-                    onClick={handleCreatePeriod} 
+                <button
+                    onClick={handleCreatePeriod}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors shadow-sm"
                 >
                     <Plus size={20} /> Tambah Periode
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <DataTable 
-                    data={periods} 
-                    columns={columns} 
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <DataTable
+                    data={periods}
+                    columns={columns}
                     isLoading={isLoading}
                     options={{
                         enableGlobalFilter: true,
@@ -198,61 +198,61 @@ export default function KknPeriodsIndex() {
                         <form onSubmit={handleSavePeriod} className="p-4 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama Periode</label>
-                                <input 
+                                <input
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
                                     value={periodFormData.name}
-                                    onChange={e => setPeriodFormData({...periodFormData, name: e.target.value})}
+                                    onChange={e => setPeriodFormData({ ...periodFormData, name: e.target.value })}
                                     placeholder="Contoh: KKN Reguler 2026"
                                     required
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
-                                <input 
+                                <input
                                     type="number"
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
                                     value={periodFormData.year}
-                                    onChange={e => setPeriodFormData({...periodFormData, year: parseInt(e.target.value)})}
+                                    onChange={e => setPeriodFormData({ ...periodFormData, year: parseInt(e.target.value) })}
                                     required
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
                                         value={periodFormData.start_date}
-                                        onChange={e => setPeriodFormData({...periodFormData, start_date: e.target.value})}
+                                        onChange={e => setPeriodFormData({ ...periodFormData, start_date: e.target.value })}
                                         required
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
                                         value={periodFormData.end_date}
-                                        onChange={e => setPeriodFormData({...periodFormData, end_date: e.target.value})}
+                                        onChange={e => setPeriodFormData({ ...periodFormData, end_date: e.target.value })}
                                         required
                                     />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                                <textarea 
+                                <textarea
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
                                     rows="3"
                                     value={periodFormData.description}
-                                    onChange={e => setPeriodFormData({...periodFormData, description: e.target.value})}
+                                    onChange={e => setPeriodFormData({ ...periodFormData, description: e.target.value })}
                                 />
                             </div>
                             <div className="flex items-center gap-2">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     id="is_active"
                                     checked={periodFormData.is_active}
-                                    onChange={e => setPeriodFormData({...periodFormData, is_active: e.target.checked})}
+                                    onChange={e => setPeriodFormData({ ...periodFormData, is_active: e.target.checked })}
                                     className="rounded border-gray-300 text-green-600 focus:ring-green-500 h-4 w-4"
                                 />
                                 <label htmlFor="is_active" className="text-sm text-gray-700 font-medium">Set sebagai Periode Aktif</label>
@@ -268,9 +268,9 @@ export default function KknPeriodsIndex() {
 
             {/* Wave Manager Modal */}
             {selectedPeriod && isWaveManagerOpen && (
-                <WaveManager 
-                    onClose={() => setIsWaveManagerOpen(false)} 
-                    period={selectedPeriod} 
+                <WaveManager
+                    onClose={() => setIsWaveManagerOpen(false)}
+                    period={selectedPeriod}
                 />
             )}
         </div>
@@ -337,16 +337,16 @@ function WaveManager({ onClose, period }) {
         e.preventDefault();
         try {
             if (editingWave) {
-                await updateWave({ 
-                    id: editingWave.id, 
+                await updateWave({
+                    id: editingWave.id,
                     kkn_period_id: period.id, // For invalidation tag context if needed
-                    ...waveFormData 
+                    ...waveFormData
                 }).unwrap();
                 toast.success('Wave updated');
             } else {
-                await createWave({ 
-                    kkn_period_id: period.id, 
-                    ...waveFormData 
+                await createWave({
+                    kkn_period_id: period.id,
+                    ...waveFormData
                 }).unwrap();
                 toast.success('Wave created');
             }
@@ -365,12 +365,12 @@ function WaveManager({ onClose, period }) {
                         <X size={24} />
                     </button>
                 </div>
-                
+
                 <div className="p-4 space-y-6">
                     {!isFormOpen ? (
                         <>
                             <div className="flex justify-end">
-                                <button 
+                                <button
                                     onClick={handleCreateWave}
                                     className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                                 >
@@ -426,10 +426,10 @@ function WaveManager({ onClose, period }) {
                             <h4 className="font-medium text-gray-800 border-b pb-2">{editingWave ? 'Edit Gelombang' : 'Tambah Gelombang Baru'}</h4>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama Gelombang</label>
-                                <input 
+                                <input
                                     className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                     value={waveFormData.name}
-                                    onChange={e => setWaveFormData({...waveFormData, name: e.target.value})}
+                                    onChange={e => setWaveFormData({ ...waveFormData, name: e.target.value })}
                                     placeholder="Contoh: Gelombang 1"
                                     required
                                 />
@@ -437,31 +437,31 @@ function WaveManager({ onClose, period }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Mulai</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                         value={waveFormData.start_date}
-                                        onChange={e => setWaveFormData({...waveFormData, start_date: e.target.value})}
+                                        onChange={e => setWaveFormData({ ...waveFormData, start_date: e.target.value })}
                                         required
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Selesai</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                         value={waveFormData.end_date}
-                                        onChange={e => setWaveFormData({...waveFormData, end_date: e.target.value})}
+                                        onChange={e => setWaveFormData({ ...waveFormData, end_date: e.target.value })}
                                         required
                                     />
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     id="wave_active"
                                     checked={waveFormData.is_active}
-                                    onChange={e => setWaveFormData({...waveFormData, is_active: e.target.checked})}
+                                    onChange={e => setWaveFormData({ ...waveFormData, is_active: e.target.checked })}
                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                                 />
                                 <label htmlFor="wave_active" className="text-sm text-gray-700 font-medium">Status Aktif</label>
