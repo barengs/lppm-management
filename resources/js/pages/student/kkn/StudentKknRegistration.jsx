@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
@@ -6,6 +7,7 @@ import { toast } from 'react-toastify';
 
 export default function KknStudentRegistration() {
     const { token, user } = useAuth();
+    const location = useLocation();
     const [registrations, setRegistrations] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
     const [selectedFy, setSelectedFy] = useState('');
@@ -90,7 +92,13 @@ export default function KknStudentRegistration() {
     useEffect(() => {
         fetchData();
         fetchProfile();
-    }, [token]);
+
+        // Check if we reached here from "Upload Ulang" or "Edit" button
+        if (location.state?.edit) {
+            setIsEditing(true);
+            setStep(2); // Go straight to documents if it's a revision
+        }
+    }, [token, location]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -260,9 +268,9 @@ export default function KknStudentRegistration() {
 
     const myRegistration = registrations.length > 0 ? registrations[0] : null;
 
-    // Only show "already registered" message for students (mahasiswa)
+    // Only show "already registered" message for students (mahasiswa) and when not editing
     // Admin/staff should always see the form to register other students
-    if (myRegistration && user?.role === 'mahasiswa') {
+    if (myRegistration && user?.role === 'mahasiswa' && !isEditing) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-green-100 p-8 text-center max-w-2xl mx-auto mt-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
