@@ -285,7 +285,10 @@ export default function StudentKknStatus() {
                             <p className="text-sm text-orange-800 mb-3">
                                 Dokumen Anda perlu diperbaiki. Silakan upload ulang dokumen yang diminta.
                             </p>
-                            <button className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium">
+                            <button
+                                onClick={() => navigate('/dashboard/kkn/register', { state: { edit: true } })}
+                                className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
+                            >
                                 <Upload className="w-4 h-4 mr-2" />
                                 Upload Ulang Dokumen
                             </button>
