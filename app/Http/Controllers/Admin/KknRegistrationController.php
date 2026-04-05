@@ -24,6 +24,13 @@ class KknRegistrationController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Filter by Prodi
+        if ($request->has('prodi_id') && $request->prodi_id) {
+            $query->whereHas('student.mahasiswaProfile', function($q) use ($request) {
+                $q->where('prodi', $request->prodi_id);
+            });
+        }
+
         // Search by name or NIM
         if ($request->has('search') && $request->search) {
             $query->whereHas('student', function ($q) use ($request) {
@@ -131,6 +138,9 @@ class KknRegistrationController extends Controller
                 'new_status' => 'approved',
                 'note' => $request->note ?? 'Pendaftaran disetujui',
             ]);
+
+            // Notify student
+            $registration->student->notify(new \App\Notifications\KknStatusNotification($registration, 'approved', $request->note));
         });
 
         return response()->json([
@@ -176,6 +186,9 @@ class KknRegistrationController extends Controller
                 'new_status' => 'rejected',
                 'note' => $request->note,
             ]);
+
+            // Notify student
+            $registration->student->notify(new \App\Notifications\KknStatusNotification($registration, 'rejected', $request->note));
         });
 
         return response()->json([
@@ -221,6 +234,9 @@ class KknRegistrationController extends Controller
                 'new_status' => 'needs_revision',
                 'note' => $request->note,
             ]);
+
+            // Notify student
+            $registration->student->notify(new \App\Notifications\KknStatusNotification($registration, 'needs_revision', $request->note));
         });
 
         return response()->json([
@@ -328,5 +344,46 @@ class KknRegistrationController extends Controller
         });
 
         return response()->json($stats);
+    }
+
+    /**
+     * Export registrations as PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram', 'location', 'fiscalYear'])
+            ->orderBy('created_at', 'desc');
+
+        // Apply same filters as Index
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('prodi_id') && $request->prodi_id) {
+            $query->whereHas('student.mahasiswaProfile', function($q) use ($request) {
+                $q->where('prodi', $request->prodi_id);
+            });
+        }
+
+        if ($request->has('search') && $request->search) {
+            $query->whereHas('student', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $registrations = $query->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.kkn_registrations', [
+            'registrations' => $registrations,
+            'filters' => [
+                'status' => $request->status ?? 'semua',
+                'prodi' => $request->prodi_id ? \App\Models\StudyProgram::find($request->prodi_id)?->name : 'Semua Prodi',
+                'search' => $request->search ?? null,
+            ]
+        ]);
+        
+        $pdf->setPaper('A4', 'landscape');
+        return $pdf->stream('Rekap-Pendaftar-KKN.pdf');
     }
 }

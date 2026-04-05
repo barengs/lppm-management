@@ -24,4 +24,14 @@ class DosenProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function faculty()
+    {
+        return $this->belongsTo(Faculty::class, 'fakultas');
+    }
+
+    public function studyProgram()
+    {
+        return $this->belongsTo(StudyProgram::class, 'prodi');
+    }
 }

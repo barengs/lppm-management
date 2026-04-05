@@ -38,14 +38,14 @@ class KknController extends Controller
         if (!$registration) {
             return response()->json([
                 'registration' => null,
-                'profile' => $user->mahasiswaProfile,
+                'profile' => $user->mahasiswaProfile()->with(['faculty', 'studyProgram'])->first(),
                 'message' => 'Belum ada pendaftaran KKN'
             ]);
         }
         
         return response()->json([
             'registration' => $registration,
-            'profile' => $user->mahasiswaProfile,
+            'profile' => $user->mahasiswaProfile()->with(['faculty', 'studyProgram'])->first(),
         ]);
     }
     
@@ -73,58 +73,56 @@ class KknController extends Controller
             ], 403);
         }
         
-        $validated = $request->validate([
-            'krs_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'health_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'transcript_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
-        
-        $documents = $registration->documents ?? [];
         $uploadedDocs = [];
+        $files = $request->allFiles();
         
-        // Handle file uploads and delete old files
-        if ($request->hasFile('krs_file')) {
-            if (isset($documents['krs'])) {
-                Storage::disk('public')->delete($documents['krs']);
-            }
-            $documents['krs'] = $request->file('krs_file')->store('kkn_documents', 'public');
-            $uploadedDocs[] = 'KRS';
-        }
-        
-        if ($request->hasFile('health_file')) {
-            if (isset($documents['health'])) {
-                Storage::disk('public')->delete($documents['health']);
-            }
-            $documents['health'] = $request->file('health_file')->store('kkn_documents', 'public');
-            $uploadedDocs[] = 'Surat Sehat';
-        }
-        
-        if ($request->hasFile('transcript_file')) {
-            if (isset($documents['transcript'])) {
-                Storage::disk('public')->delete($documents['transcript']);
-            }
-            $documents['transcript'] = $request->file('transcript_file')->store('kkn_documents', 'public');
-            $uploadedDocs[] = 'Transkrip';
-        }
-        
-        if ($request->hasFile('photo')) {
-            if (isset($documents['photo'])) {
-                Storage::disk('public')->delete($documents['photo']);
-            }
-            $documents['photo'] = $request->file('photo')->store('kkn_photos', 'public');
-            $uploadedDocs[] = 'Foto';
-        }
-        
-        if (empty($uploadedDocs)) {
+        if (empty($files)) {
             return response()->json([
                 'message' => 'Tidak ada dokumen yang diupload'
             ], 400);
         }
+
+        foreach ($files as $key => $file) {
+            // Find document by ID if key is 'doc_ID' or 'DOC_TYPE'
+            $doc = null;
+            if (str_starts_with($key, 'doc_')) {
+                $docId = substr($key, 4);
+                $doc = \App\Models\KknRegistrationDocument::find($docId);
+            } else {
+                // Find by doc_type match
+                $docType = $key;
+                // Map some common frontend keys to doc_types if needed
+                if ($key === 'transcript_file') $docType = 'transkrip';
+                if ($key === 'health_file') $docType = 'sehat';
+                if ($key === 'krs_file') $docType = 'krs';
+                if ($key === 'photo') $docType = 'required_photo';
+                
+                $doc = $registration->kknRegistrationDocuments()->where('doc_type', $docType)->first();
+            }
+
+            if ($doc && $doc->kkn_registration_id == $registration->id) {
+                // Delete old file
+                if ($doc->file_path) {
+                    Storage::disk('public')->delete($doc->file_path);
+                }
+                
+                // Store new file
+                $directory = ($doc->doc_type === 'required_photo' || $key === 'photo') ? 'kkn_photos' : 'kkn_documents';
+                $path = $file->store($directory, 'public');
+                
+                $doc->update(['file_path' => $path]);
+                $uploadedDocs[] = $doc->name;
+            }
+        }
         
-        // Update documents
+        if (empty($uploadedDocs)) {
+            return response()->json([
+                'message' => 'Tidak ada dokumen valid yang diupdate. Pastikan dokumen yang Anda upload sesuai.'
+            ], 400);
+        }
+        
+        // Update registration status
         $registration->update([
-            'documents' => $documents,
             'status' => 'pending', // Reset to pending after re-upload
         ]);
         
@@ -135,14 +133,14 @@ class KknController extends Controller
             'action' => 'document_uploaded',
             'old_status' => 'needs_revision',
             'new_status' => 'pending',
-            'note' => 'Mahasiswa mengupload ulang dokumen: ' . implode(', ', $uploadedDocs),
+            'note' => 'Mahasiswa merevisi dokumen: ' . implode(', ', $uploadedDocs),
             'metadata' => [
                 'uploaded_documents' => $uploadedDocs
             ]
         ]);
         
         return response()->json([
-            'message' => 'Dokumen berhasil diupload ulang',
+            'message' => 'Dokumen berhasil direvisi dan sedang menunggu review ulang.',
             'registration' => $registration->fresh(['location', 'fiscalYear', 'logs.creator'])
         ]);
     }
@@ -156,7 +154,7 @@ class KknController extends Controller
         
         return response()->json([
             'user' => $user,
-            'profile' => $user->mahasiswaProfile,
+            'profile' => $user->mahasiswaProfile()->with(['faculty', 'studyProgram'])->first(),
         ]);
     }
 }
