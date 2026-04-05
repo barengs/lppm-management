@@ -86,13 +86,13 @@ export default function KknStudentRegistration() {
         }
     }, [fiscalYears, selectedFy]);
 
-    // Load profile data from RTK Query
+    // Load profile and existing registration/draft data
     useEffect(() => {
         if (!isAdmin && fetchedProfile) {
             const profile = fetchedProfile.mahasiswa_profile;
             if (profile) {
                 setProfileData({
-                    name: fetchedProfile.name,
+                    name: fetchedProfile.name || '',
                     npm: profile.npm || '',
                     prodi: profile.prodi || '',
                     fakultas: profile.fakultas || '',
@@ -106,7 +106,25 @@ export default function KknStudentRegistration() {
                 });
             }
         }
-    }, [fetchedProfile, isAdmin]);
+
+        // Resume draft if exists
+        if (!isAdmin && registrations.length > 0) {
+            const latest = registrations[0];
+            if (latest.status === 'draft') {
+                setAccountData(prev => ({
+                    ...prev,
+                    fiscal_year_id: latest.fiscal_year_id || prev.fiscal_year_id,
+                    registration_type: latest.registration_type || prev.registration_type,
+                }));
+                setSelectedFy(latest.fiscal_year_id || selectedFy);
+                setStep(latest.current_step || 1);
+                
+                // Note: documents and photo are handled by the controller's load, 
+                // but we might need to map them back to state if we want to show previews.
+                // For now, focusing on the core flow.
+            }
+        }
+    }, [fetchedProfile, isAdmin, registrations, selectedFy]);
 
     // Ensure filtered programs are updated when faculty or study programs change
     useEffect(() => {
@@ -221,6 +239,57 @@ export default function KknStudentRegistration() {
         }
     };
 
+    const handleSaveDraft = async (targetStep = step) => {
+        const formData = new FormData();
+        formData.append('is_draft', 'true');
+        formData.append('current_step', targetStep);
+        
+        // Add whatever data is currently available
+        formData.append('fiscal_year_id', selectedFy || accountData.fiscal_year_id);
+        formData.append('registration_type', accountData.registration_type);
+        
+        if (profileData.name) formData.append('name', profileData.name);
+        if (profileData.npm) formData.append('npm', profileData.npm);
+        if (profileData.prodi) formData.append('prodi', profileData.prodi);
+        if (profileData.fakultas) formData.append('fakultas', profileData.fakultas);
+        if (profileData.phone) formData.append('phone', profileData.phone);
+        if (profileData.address) formData.append('address', profileData.address);
+        if (profileData.ips) formData.append('ips', profileData.ips);
+        if (profileData.gender) formData.append('gender', profileData.gender);
+        if (profileData.place_of_birth) formData.append('place_of_birth', profileData.place_of_birth);
+        if (profileData.date_of_birth) formData.append('date_of_birth', profileData.date_of_birth);
+        if (profileData.jacket_size) formData.append('jacket_size', profileData.jacket_size);
+
+        // Files
+        if (files.photo) formData.append('photo', files.photo);
+        documents.forEach((doc, index) => {
+            if (doc.file) {
+                formData.append(`documents[${index}][name]`, doc.name);
+                formData.append(`documents[${index}][file]`, doc.file);
+                formData.append(`documents[${index}][type]`, doc.id);
+            }
+        });
+
+        try {
+            await createRegistration(formData).unwrap();
+            toast.info("Draft berhasil disimpan", { autoClose: 2000 });
+        } catch (error) {
+            console.error('Draft save failed:', error);
+        }
+    };
+
+    const handleNextStep = async () => {
+        const nextStep = step + 1;
+        setStep(nextStep);
+        if (!isAdmin) {
+            await handleSaveDraft(nextStep);
+        }
+    };
+
+    const handlePrevStep = () => {
+        setStep(step - 1);
+    };
+
     const handleRegisterClick = () => {
         setShowConfirmModal(true);
     };
@@ -315,9 +384,8 @@ export default function KknStudentRegistration() {
 
     const myRegistration = registrations.length > 0 ? registrations[0] : null;
 
-    // Only show "already registered" message for students (mahasiswa)
-    // Admin/staff should always see the form to register other students
-    if (myRegistration && user?.role === 'mahasiswa') {
+    // Only show "already registered" message for students (mahasiswa) if status is NOT draft
+    if (myRegistration && user?.role === 'mahasiswa' && myRegistration.status !== 'draft') {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-green-100 p-8 text-center max-w-2xl mx-auto mt-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -602,7 +670,15 @@ export default function KknStudentRegistration() {
                             </div>
                         </div>
 
-                        <div className="flex justify-end mt-6">
+                        <div className="flex justify-end mt-6 space-x-3">
+                            {!isAdmin && (
+                                <button
+                                    onClick={() => handleSaveDraft(step)}
+                                    className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 flex items-center"
+                                >
+                                    <Save className="mr-2 w-4 h-4" /> Simpan Draft
+                                </button>
+                            )}
                             <button
                                 onClick={() => {
                                     // Validation for Step 1
@@ -630,7 +706,7 @@ export default function KknStudentRegistration() {
                                         toast.error("Mohon lengkapi data dengan benar.");
                                     } else {
                                         setErrors({});
-                                        setStep(2);
+                                        handleNextStep();
                                     }
                                 }}
                                 className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
@@ -726,9 +802,17 @@ export default function KknStudentRegistration() {
                                 </div>
                             )}
                         </div>
-                        <div className="flex justify-end mt-6">
-                            {isAdmin && <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2 mr-2">Kembali</button>}
-                            <button onClick={() => setStep(isAdmin ? 3 : 2)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
+                        <div className="flex justify-end mt-6 space-x-3">
+                            <button onClick={handlePrevStep} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                            {!isAdmin && (
+                                <button
+                                    onClick={() => handleSaveDraft(step)}
+                                    className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 flex items-center"
+                                >
+                                    <Save className="mr-2 w-4 h-4" /> Simpan Draft
+                                </button>
+                            )}
+                            <button onClick={handleNextStep} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
                         </div>
                     </div>
                 )}
@@ -812,9 +896,17 @@ export default function KknStudentRegistration() {
                             + Tambah Dokumen Lain
                         </button>
 
-                        <div className="flex justify-between mt-6">
-                            <button onClick={() => setStep(isAdmin ? 2 : 1)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
-                            <button onClick={() => setStep(isAdmin ? 4 : 3)} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
+                        <div className="flex justify-end mt-6 space-x-3">
+                            <button onClick={handlePrevStep} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                            {!isAdmin && (
+                                <button
+                                    onClick={() => handleSaveDraft(step)}
+                                    className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 flex items-center"
+                                >
+                                    <Save className="mr-2 w-4 h-4" /> Simpan Draft
+                                </button>
+                            )}
+                            <button onClick={handleNextStep} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Lanjut</button>
                         </div>
                     </div>
                 )}
@@ -903,8 +995,16 @@ export default function KknStudentRegistration() {
                             </div>
                         </div>
 
-                        <div className="flex justify-between mt-8 border-t pt-6">
-                            <button onClick={() => setStep(isAdmin ? 3 : 2)} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                        <div className="flex justify-end mt-8 border-t pt-6 space-x-3">
+                            <button onClick={handlePrevStep} className="text-gray-600 hover:text-gray-900 px-4 py-2">Kembali</button>
+                            {!isAdmin && (
+                                <button
+                                    onClick={() => handleSaveDraft(step)}
+                                    className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 flex items-center"
+                                >
+                                    <Save className="mr-2 w-4 h-4" /> Simpan Draft
+                                </button>
+                            )}
                             <button
                                 onClick={handleRegisterClick}
                                 disabled={isSubmitting}

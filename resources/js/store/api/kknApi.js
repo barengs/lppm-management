@@ -472,6 +472,24 @@ export const kknApi = baseApi.injectEndpoints({
                 },
             }),
         }),
+        exportKknRegistrations: builder.mutation({
+            query: (params = {}) => ({
+                url: '/admin/kkn-registrations/export',
+                params,
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Rekap_Pendaftar_KKN_${new Date().getTime()}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
+        }),
     }),
 });
 
@@ -520,6 +538,7 @@ export const {
     useGetKknGradesQuery,
     useSaveKknGradeMutation,
     useExportKknGradesMutation,
+    useExportKknRegistrationsMutation,
 
     // KKN Periods
     useGetKknPeriodsQuery,

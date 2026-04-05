@@ -136,6 +136,7 @@ Route::middleware(['auth:api'])->group(function () {
     // Admin KKN Registration Management
     Route::prefix('admin/kkn-registrations')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\KknRegistrationController::class, 'index']);
+        Route::get('/export', [App\Http\Controllers\Admin\KknRegistrationController::class, 'exportPdf']);
         Route::get('/statistics', [App\Http\Controllers\Admin\KknRegistrationController::class, 'statistics']);
         Route::get('/{id}', [App\Http\Controllers\Admin\KknRegistrationController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\Admin\KknRegistrationController::class, 'update']);

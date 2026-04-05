@@ -22,7 +22,8 @@ class ProfileController extends Controller
         $user->load([
             'mahasiswaProfile.faculty', 
             'mahasiswaProfile.studyProgram',
-            'dosenProfile', 
+            'dosenProfile.faculty',
+            'dosenProfile.studyProgram',
             'scholarStats'
         ]);
         
@@ -38,6 +39,13 @@ class ProfileController extends Controller
         $user = auth('api')->user();
         
         $validated = $request->validate([
+            // User fields
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            
+            // Profile fields
             'nidn' => 'nullable|string',
             'npm' => 'nullable|string',
             'prodi' => 'nullable|string',
@@ -53,39 +61,78 @@ class ProfileController extends Controller
             'gender' => 'nullable|in:L,P',
         ]);
 
-        $profile = null;
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
+            // Update User
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+            ];
+            
+            if ($request->filled('password')) {
+                $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+            }
+            
+            $user->update($userData);
 
-        if ($user->role === 'mahasiswa') {
-            $profile = $user->mahasiswaProfile()->updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'npm' => $request->npm ?? $user->mahasiswaProfile?->npm, // Keep existing if not provided
-                    'prodi' => $request->prodi,
-                    'fakultas' => $request->fakultas,
+            $profileData = [
+                'prodi' => $request->prodi,
+                'fakultas' => $request->fakultas,
+            ];
+
+            // Handle Avatar Upload
+            if ($request->hasFile('avatar')) {
+                // Delete old avatar if exists
+                $oldAvatar = ($user->role === 'mahasiswa') 
+                    ? $user->mahasiswaProfile?->avatar 
+                    : $user->dosenProfile?->avatar;
+                
+                if ($oldAvatar) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($oldAvatar);
+                }
+                
+                $profileData['avatar'] = $request->file('avatar')->store('profile_avatars', 'public');
+            }
+
+            if ($user->role === 'mahasiswa') {
+                $profileData = array_merge($profileData, [
+                    'npm' => $request->npm,
                     'jacket_size' => $request->jacket_size,
                     'phone' => $request->phone,
                     'address' => $request->address,
                     'place_of_birth' => $request->place_of_birth,
                     'date_of_birth' => $request->date_of_birth,
                     'gender' => $request->gender,
-                ]
-            );
-        } else {
-            // Dosen & Reviewer
-            $profile = $user->dosenProfile()->updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'nidn' => $request->nidn ?? $user->dosenProfile?->nidn,
-                    'prodi' => $request->prodi,
-                    'fakultas' => $request->fakultas,
+                ]);
+                
+                $user->mahasiswaProfile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    $profileData
+                );
+            } else {
+                // Dosen & Reviewer
+                $profileData = array_merge($profileData, [
+                    'nidn' => $request->nidn,
                     'scopus_id' => $request->scopus_id,
                     'sinta_id' => $request->sinta_id,
                     'google_scholar_id' => $request->google_scholar_id,
-                ]
-            );
-        }
+                ]);
+                
+                $user->dosenProfile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    $profileData
+                );
+            }
 
-        return response()->json($profile);
+            return response()->json([
+                'message' => 'Profil berhasil diperbarui',
+                'user' => $user->fresh([
+                    'mahasiswaProfile.faculty', 
+                    'mahasiswaProfile.studyProgram', 
+                    'dosenProfile.faculty', 
+                    'dosenProfile.studyProgram'
+                ])
+            ]);
+        });
     }
 
     /**

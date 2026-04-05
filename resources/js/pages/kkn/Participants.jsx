@@ -3,7 +3,7 @@ import {
     Users, Search, Filter, CheckCircle, XCircle,
     AlertCircle, Clock, Eye, User, MapPin, Calendar,
     Mail, Phone, GraduationCap, Award, FileText,
-    BarChart2, PieChart as PieChartIcon, Map, ArrowLeft
+    BarChart2, PieChart as PieChartIcon, Map, ArrowLeft, Download
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
@@ -12,8 +12,10 @@ import {
 import {
     useGetRegistrationsQuery, useGetStatisticsQuery, useGetRegistrationByIdQuery,
     useApproveRegistrationMutation, useRejectRegistrationMutation,
-    useRequestRevisionMutation, useAddNoteMutation, useUpdateRegistrationMutation
+    useRequestRevisionMutation, useAddNoteMutation, useUpdateRegistrationMutation,
+    useExportKknRegistrationsMutation
 } from '../../store/api/kknApi';
+import { useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import DataTable from '../../components/DataTable';
@@ -47,6 +49,7 @@ export default function KknParticipants() {
     const [filters, setFilters] = useState({
         status: 'all',
         search: '',
+        prodi_id: '',
         per_page: 10,
         page: 1
     });
@@ -57,11 +60,13 @@ export default function KknParticipants() {
     const { data: registrationsData, isLoading: loading, refetch } = useGetRegistrationsQuery(filters);
     const { data: statistics } = useGetStatisticsQuery();
     const { data: selectedRegistration } = useGetRegistrationByIdQuery(selectedId, { skip: !selectedId });
+    const { data: studyPrograms = [] } = useGetStudyProgramsQuery();
 
     const [approveRegistration] = useApproveRegistrationMutation();
     const [rejectRegistration] = useRejectRegistrationMutation();
     const [requestRevision] = useRequestRevisionMutation();
     const [addNote] = useAddNoteMutation();
+    const [exportRegistrations, { isLoading: isExporting }] = useExportKknRegistrationsMutation();
 
     const registrations = registrationsData?.data || [];
     const pagination = registrationsData;
@@ -109,6 +114,15 @@ export default function KknParticipants() {
         } catch (error) {
             console.error('Failed to request revision:', error);
             alert('Gagal mengirim permintaan revisi');
+        }
+    };
+
+    const handleExportPdf = async () => {
+        try {
+            await exportRegistrations(filters).unwrap();
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            alert('Gagal mengekspor PDF');
         }
     };
 
@@ -194,6 +208,14 @@ export default function KknParticipants() {
                             Kelola pendaftaran dan approval peserta KKN
                         </p>
                     </div>
+                    <button
+                        onClick={handleExportPdf}
+                        disabled={isExporting}
+                        className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        <Download size={18} />
+                        <span>{isExporting ? 'Mengekspor...' : 'Ekspor PDF'}</span>
+                    </button>
                 </div>
             </div>
 
@@ -430,7 +452,7 @@ export default function KknParticipants() {
                 <div className="space-y-6 slide-in-bottom">
                     {/* Filters */}
                     <div className="bg-white rounded-lg shadow p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                                 <input
@@ -453,6 +475,18 @@ export default function KknParticipants() {
                                     <option value="approved">Disetujui</option>
                                     <option value="rejected">Ditolak</option>
                                     <option value="needs_revision">Perlu Revisi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow appearance-none"
+                                    value={filters.prodi_id}
+                                    onChange={(e) => setFilters({ ...filters, prodi_id: e.target.value })}
+                                >
+                                    <option value="">Semua Program Studi</option>
+                                    {studyPrograms.map(prodi => (
+                                        <option key={prodi.id} value={prodi.id}>{prodi.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
