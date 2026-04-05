@@ -16,6 +16,7 @@ class KknRegistration extends Model
         'registration_type',
         'dpl_id',
         'status',
+        'current_step',
         'notes',
         'documents',
         'validation_notes',
