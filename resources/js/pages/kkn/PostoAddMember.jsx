@@ -15,8 +15,8 @@ export default function PostoAddMember() {
     // RTK Query hooks
     const { data: posto, isLoading: isLoadingPosto } = useGetPostoByIdQuery(id);
     const { data: availableStudentsData, isLoading: isLoadingStudents } = useGetAvailableStudentsQuery(
-        { fiscal_year_id: posto?.fiscal_year?.id },
-        { skip: !posto?.fiscal_year?.id } // Skip until we have fiscal year
+        { kkn_period_id: posto?.kkn_period_id || posto?.kkn_period?.id },
+        { skip: !(posto?.kkn_period_id || posto?.kkn_period?.id) } // Skip until we have period ID
     );
     const [addPostoMember] = useAddPostoMemberMutation();
 
@@ -25,6 +25,9 @@ export default function PostoAddMember() {
         if (!availableStudentsData) return [];
         return availableStudentsData.map(item => ({
             ...item.student,
+            npm: item.student?.mahasiswa_profile?.npm || '-',
+            faculty: item.student?.mahasiswa_profile?.faculty?.name || '-',
+            study_program: item.student?.mahasiswa_profile?.study_program?.name || '-',
             registration_id: item.registration_id
         }));
     }, [availableStudentsData]);

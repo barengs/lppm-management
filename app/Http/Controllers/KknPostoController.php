@@ -17,7 +17,7 @@ class KknPostoController extends Controller
     public function index(Request $request)
     {
         $user = auth('api')->user();
-        $query = KknPosto::with(['location', 'kknPeriod', 'dpl', 'members']);
+        $query = KknPosto::with(['location', 'kknPeriod', 'fiscalYear', 'dpl', 'members']);
 
         // RESTRICT: Dosen only sees their supervised Postos
         if ($user && $user->role === 'dosen') {
@@ -42,7 +42,18 @@ class KknPostoController extends Controller
                 'id' => $posto->id,
                 'name' => $posto->name,
                 'location' => $posto->location,
-                'kkn_period' => $posto->kknPeriod,
+                'kkn_period_id' => $posto->kkn_period_id,
+                'kkn_period' => $posto->kknPeriod ? [
+                    'id' => $posto->kknPeriod->id,
+                    'name' => $posto->kknPeriod->name,
+                    'year' => $posto->kknPeriod->year,
+                ] : null,
+                'fiscal_year_id' => $posto->fiscal_year_id,
+                'fiscal_year' => $posto->fiscalYear ? [
+                    'id' => $posto->fiscalYear->id,
+                    'name' => $posto->fiscalYear->name,
+                    'year' => $posto->fiscalYear->year,
+                ] : null,
                 'dpl' => $posto->dpl,
                 'status' => $posto->status,
                 'member_count' => $posto->getMemberCount(),
@@ -155,6 +166,7 @@ class KknPostoController extends Controller
         $posto = KknPosto::with([
             'location',
             'kknPeriod',
+            'fiscalYear',
             'dpl',
             'members.student.mahasiswaProfile.faculty',
             'members.student.mahasiswaProfile.studyProgram',
@@ -164,7 +176,18 @@ class KknPostoController extends Controller
             'id' => $posto->id,
             'name' => $posto->name,
             'location' => $posto->location,
-            'kkn_period' => $posto->kknPeriod,
+            'kkn_period_id' => $posto->kkn_period_id,
+            'kkn_period' => $posto->kknPeriod ? [
+                'id' => $posto->kknPeriod->id,
+                'name' => $posto->kknPeriod->name,
+                'year' => $posto->kknPeriod->year,
+            ] : null,
+            'fiscal_year_id' => $posto->fiscal_year_id,
+            'fiscal_year' => $posto->fiscalYear ? [
+                'id' => $posto->fiscalYear->id,
+                'name' => $posto->fiscalYear->name,
+                'year' => $posto->fiscalYear->year,
+            ] : null,
             'dpl' => $posto->dpl,
             'status' => $posto->status,
             'start_date' => $posto->start_date,
@@ -418,28 +441,21 @@ class KknPostoController extends Controller
      */
     public function availableStudents(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info('availableStudents REQUEST:', $request->all());
         $validated = $request->validate([
             'kkn_location_id' => 'nullable|exists:kkn_locations,id',
-            'fiscal_year_id' => 'required|exists:fiscal_years,id',
+            'kkn_period_id' => 'required|exists:kkn_periods,id',
         ]);
 
-        // Get approved registrations for this year
-        // Filter out students who are already assigned to ANY posto in this fiscal year (checking kkn_posto_members table)
-        
         $assignedStudentIds = KknPostoMember::whereHas('posto', function($q) use ($validated) {
-            $q->where('fiscal_year_id', $validated['fiscal_year_id']);
+            $q->where('kkn_period_id', $validated['kkn_period_id']);
         })->pluck('student_id');
 
         $query = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram'])
-            ->where('fiscal_year_id', $validated['fiscal_year_id'])
+            ->where('kkn_period_id', $validated['kkn_period_id'])
             ->where('status', 'approved')
-            ->whereNull('kkn_posto_id') // Keep this for redundancy
-            ->whereNotIn('student_id', $assignedStudentIds); // Strict check against member table
-
-        // Optionally filter by location if provided
-        if (!empty($validated['kkn_location_id'])) {
-            $query->where('kkn_location_id', $validated['kkn_location_id']);
-        }
+            ->whereNull('kkn_posto_id')
+            ->whereNotIn('student_id', $assignedStudentIds);
 
         $students = $query->get()->map(function ($reg) {
             return [

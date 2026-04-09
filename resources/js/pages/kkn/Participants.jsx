@@ -735,7 +735,7 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                             <p className="text-gray-900 font-semibold">{profile.npm || '-'}</p>
                                         </div>
                                         <div>
-                                            <label className="text-sm font-medium text-gray-600">IPS</label>
+                                            <label className="text-sm font-medium text-gray-600">IPK</label>
                                             <p className="text-gray-900 flex items-center">
                                                 <Award size={14} className="mr-1 text-yellow-500" />
                                                 {profile.ips || '-'}
