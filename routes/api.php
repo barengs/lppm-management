@@ -107,6 +107,7 @@ Route::middleware(['auth:api'])->group(function () {
     // KKN Posko Management (Admin)
     Route::prefix('kkn/postos')->group(function () {
         Route::get('/', [App\Http\Controllers\KknPostoController::class, 'index']);
+        Route::get('/available-students', [App\Http\Controllers\KknPostoController::class, 'availableStudents']);
         Route::post('/', [App\Http\Controllers\KknPostoController::class, 'store']);
         Route::get('/{id}', [App\Http\Controllers\KknPostoController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\KknPostoController::class, 'update']);

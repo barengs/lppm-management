@@ -782,7 +782,7 @@ export default function KknStudentRegistration() {
                                 <input type="text" name="phone" value={profileData.phone} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Indeks Prestasi Sementara (IPS)</label>
+                                <label className="block text-sm font-medium text-gray-700">Indeks Prestasi Kumulatif (IPK)</label>
                                 <input type="number" step="0.01" min="0" max="4.00" name="ips" value={profileData.ips} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required placeholder="0.00 - 4.00" />
                             </div>
                             <div className="md:col-span-2">
