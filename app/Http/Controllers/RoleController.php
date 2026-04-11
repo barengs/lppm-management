@@ -14,7 +14,13 @@ class RoleController extends Controller
     public function index()
     {
         // Show all roles but unique by name to avoid duplicates in UI
-        return response()->json(Role::with('permissions')->orderBy('name')->get()->unique('name')->values());
+        // Prefer 'web' guard to ensure consistency for update/delete operations (which use ID)
+        $roles = Role::with('permissions')
+            ->orderByRaw("CASE WHEN guard_name = 'web' THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($roles->unique('name')->values());
     }
 
     public function permissions()
@@ -78,8 +84,16 @@ class RoleController extends Controller
         $originalName = $targetRole->name;
 
         $validated = $request->validate([
-            // Check uniqueness on web guard, ignoring current role id
-            'name' => 'required|string|regex:/^[a-z0-9_]+$/|unique:roles,name,' . $id . ',id,guard_name,web',
+            // Check uniqueness on web guard, ignoring the current role ID if it belongs to 'web'
+            // or ignoring the name if it's the current role's name
+            'name' => [
+                'required',
+                'string',
+                'regex:/^[a-z0-9_]+$/',
+                \Illuminate\Validation\Rule::unique('roles', 'name')
+                    ->where('guard_name', 'web')
+                    ->ignore($id, 'id')
+            ],
             'permissions' => 'array'
         ], [
              'name.regex' => 'Nama Role hanya boleh berisi huruf kecil, angka, dan underscore (tanpa spasi).'

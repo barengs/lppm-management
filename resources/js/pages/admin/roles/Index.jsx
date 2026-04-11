@@ -4,6 +4,49 @@ import { useAuth } from '../../../hooks/useAuth';
 import { Shield, Plus, Edit, Trash2, CheckSquare, Square } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
+const MODULE_LABELS = {
+    users: 'Pengguna',
+    roles: 'Peran & Izin',
+    permissions: 'ID Izin',
+    menus: 'Menu Navigator',
+    faculties: 'Data Fakultas',
+    study_programs: 'Program Studi',
+    fiscal_years: 'Tahun Ajaran',
+    schemes: 'Skema KKN/Penelitian',
+    posts: 'Berita & Artikel',
+    documents: 'Arsip Dokumen',
+    galleries: 'Galeri Foto',
+    proposals: 'Proposal Hibah',
+    reports: 'Laporan Hibah',
+    kkn_locations: 'Lokasi KKN',
+    kkn_registrations: 'Pendaftaran KKN',
+    kkn_reports: 'Laporan KKN',
+    kkn_guidance: 'Bimbingan KKN',
+    kkn_grades: 'Nilai & Sertifikat',
+    kkn_postos: 'Manajemen Posko',
+    organization: 'Struktur Organisasi',
+    kkn_participants: 'Peserta KKN',
+    dashboard: 'Dashboard Stats',
+};
+
+const ACTION_LABELS = {
+    view: 'Lihat',
+    create: 'Tambah',
+    edit: 'Ubah',
+    delete: 'Hapus',
+    publish: 'Terbitkan',
+    review: 'Review',
+    approve: 'Setujui',
+    reject: 'Tolak',
+    verify: 'Verifikasi',
+    revise: 'Revisi',
+    reply: 'Balas',
+    close: 'Tutup',
+    manage: 'Kelola',
+    download_certificate: 'Sertifikat',
+    manage_members: 'Kelola Anggota',
+};
+
 export default function RolesIndex() {
     const { token } = useAuth();
     const [roles, setRoles] = useState([]);
@@ -237,12 +280,12 @@ export default function RolesIndex() {
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Module</th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">View</th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Create</th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Edit</th>
-                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Delete</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lainnya</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Modul / Fitur</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Lihat</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Tambah</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Ubah</th>
+                                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Hapus</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi Tambahan</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -277,8 +320,8 @@ export default function RolesIndex() {
 
                                                 return (
                                                     <tr key={resource} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">
-                                                            {resource.replace(/_/g, ' ')}
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            {MODULE_LABELS[resource] || resource.replace(/_/g, ' ')}
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                                             {renderCheckbox(viewPerm)}
@@ -306,7 +349,7 @@ export default function RolesIndex() {
                                                                                     : 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
                                                                             }`}
                                                                         >
-                                                                            {p.action}
+                                                                            {ACTION_LABELS[p.action] || p.action}
                                                                         </span>
                                                                     )
                                                                 })}

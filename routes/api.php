@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JournalConsultationController;
 use App\Http\Controllers\KknRegistrationController;
+use App\Http\Controllers\ProposalController;
+use App\Http\Controllers\MemberConsentController;
+use App\Http\Controllers\MasterDataController;
 
 Route::group([
     'middleware' => 'api',
@@ -73,7 +76,40 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
     Route::apiResource('roles', App\Http\Controllers\RoleController::class);
     
-    Route::apiResource('proposals', App\Http\Controllers\ProposalController::class);
+    // Proposal Workflow (BIMA Mirror)
+    Route::get('proposals/tkt-questions', [ProposalController::class, 'tktQuestions']);
+    Route::post('proposals/{id}/steps', [ProposalController::class, 'saveStep']);
+    Route::post('proposals/{id}/submit', [ProposalController::class, 'submit']);
+    Route::get('proposals/{id}/endorsement', [ProposalController::class, 'downloadEndorsement']);
+
+    // Admin Proposal Management
+    Route::group(['prefix' => 'admin_proposals', 'middleware' => ['role:admin']], function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\Admin\AdminProposalController::class, 'stats']);
+        Route::get('/reviewers', [\App\Http\Controllers\Admin\AdminProposalController::class, 'reviewers']);
+        Route::post('/{id}/assign', [\App\Http\Controllers\Admin\AdminProposalController::class, 'assignReviewer']);
+        Route::post('/{id}/finalize', [\App\Http\Controllers\Admin\AdminProposalController::class, 'finalize']);
+    });
+
+    // Reviewer Portal
+    Route::group(['prefix' => 'reviewer_proposals', 'middleware' => ['role:reviewer']], function () {
+        Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'show']);
+        Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'submitReview']);
+    });
+    
+    // Member Consent
+    Route::get('member-consents', [MemberConsentController::class, 'index']);
+    Route::put('member-consents/{id}', [MemberConsentController::class, 'update']);
+    
+    // Master Data
+    Route::prefix('master')->group(function () {
+        Route::get('science-clusters', [MasterDataController::class, 'scienceClusters']);
+        Route::get('research-priorities', [MasterDataController::class, 'researchPriorities']);
+        Route::get('selections/{type}', [MasterDataController::class, 'selections']);
+    });
+    
+    Route::apiResource('proposals', ProposalController::class);
     Route::get('reviews/proposals', [App\Http\Controllers\ReviewController::class, 'index']); // Special route list proposals for review
     Route::post('reviews', [App\Http\Controllers\ReviewController::class, 'store']);
 

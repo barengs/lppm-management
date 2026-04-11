@@ -139,7 +139,11 @@ class AuthController extends Controller
      */
     public function me()
     {
-        return response()->json(auth('api')->user()->load(['mahasiswaProfile', 'dosenProfile'])); 
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        return response()->json($user->load(['mahasiswaProfile', 'dosenProfile'])); 
     }
 
     /**

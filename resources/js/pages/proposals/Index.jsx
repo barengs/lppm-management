@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import { PlusCircle, FileText } from 'lucide-react';
+import { PlusCircle, FileText, MessageSquare, History } from 'lucide-react';
+import RevisionHistory from './components/RevisionHistory';
 
 export default function ProposalsIndex() {
     const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedProposal, setSelectedProposal] = useState(null);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     useEffect(() => {
         const fetchProposals = async () => {
@@ -25,6 +28,11 @@ export default function ProposalsIndex() {
 
         if (token) fetchProposals();
     }, [token]);
+
+    const openHistory = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsHistoryOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -92,6 +100,23 @@ export default function ProposalsIndex() {
                                               proposal.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                             {proposal.status}
                                         </span>
+                                        {proposal.notes && proposal.notes.length > 0 && (
+                                            <button 
+                                                onClick={() => openHistory(proposal)}
+                                                className="ml-3 p-1.5 bg-yellow-50 text-yellow-600 rounded-full hover:bg-yellow-100 transition-colors border border-yellow-200"
+                                                title="Lihat Catatan Revisi"
+                                            >
+                                                <History size={16} />
+                                            </button>
+                                        )}
+                                        {proposal.status === 'draft' && (
+                                            <Link 
+                                                to={`/proposals/create/${proposal.id}`}
+                                                className="ml-4 text-xs font-bold text-green-600 hover:text-green-800 flex items-center"
+                                            >
+                                                Lanjutkan &rarr;
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </li>
@@ -99,6 +124,12 @@ export default function ProposalsIndex() {
                     </ul>
                 )}
             </div>
+
+            <RevisionHistory 
+                isOpen={isHistoryOpen} 
+                onClose={() => setIsHistoryOpen(false)} 
+                notes={selectedProposal?.notes || []} 
+            />
         </div>
     );
 }

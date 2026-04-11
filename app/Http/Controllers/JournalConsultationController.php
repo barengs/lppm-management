@@ -117,6 +117,22 @@ class JournalConsultationController extends Controller
         // Touch the updated_at timestamp of the consultation
         $consultation->touch();
 
+        // Send Notifications
+        if ($user->hasRole(['admin', 'lppm'])) {
+            // If Admin/LPPM replied, notify the User/Dosen
+            $consultation->user->notify(new \App\Notifications\JournalNotification(
+                $consultation,
+                "Admin telah membalas konsultasi jurnal Anda: '" . $consultation->title . "'"
+            ));
+        } else {
+            // If User/Dosen sent message, notify Admin/LPPM group
+            $admins = \App\Models\User::role(['admin', 'lppm'])->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\JournalNotification(
+                $consultation,
+                "Ada pesan baru pada konsultasi jurnal dari " . $user->name
+            ));
+        }
+
         return response()->json($message->load('user'), 201);
     }
 

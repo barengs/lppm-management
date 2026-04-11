@@ -35,6 +35,28 @@ class UserController extends Controller
     }
 
     /**
+     * Search users by name or NIDN
+     */
+    public function search(Request $request)
+    {
+        $search = $request->query('q');
+        
+        $users = User::with('dosenProfile')
+            ->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('dosenProfile', function($sq) use ($search) {
+                      $sq->where('nidn', 'like', "%{$search}%")
+                        ->orWhere('sinta_id', 'like', "%{$search}%");
+                  });
+            })
+            ->limit(10)
+            ->get();
+
+        return response()->json($users);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     /**
