@@ -17,10 +17,18 @@ class KknPostoController extends Controller
     public function index(Request $request)
     {
         $user = auth('api')->user();
+
+        if (!$user || !$user->can('kkn_postos.view')) {
+            \Illuminate\Support\Facades\Log::warning('Unauthorized Posto Access:', [
+                'user_id' => $user ? $user->id : 'GUEST',
+                'has_role_admin' => $user ? $user->hasRole('admin') : false,
+            ]);
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $query = KknPosto::with(['location', 'kknPeriod', 'fiscalYear', 'dpl', 'members']);
 
-        // RESTRICT: Dosen only sees their supervised Postos
-        if ($user && $user->role === 'dosen') {
+        // RESTRICT: Non-admins (e.g. Dosen) only see their supervised Postos
+        if (!$user->hasRole('admin') && $user->hasRole('dosen')) {
             $query->where('dpl_id', $user->id);
         }
 
@@ -119,6 +127,10 @@ class KknPostoController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth('api')->user()->can('kkn_postos.create')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'kkn_location_id' => 'required|exists:kkn_locations,id',
@@ -163,6 +175,11 @@ class KknPostoController extends Controller
      */
     public function show($id)
     {
+        $user = auth('api')->user();
+        if (!$user->can('kkn_postos.view')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $posto = KknPosto::with([
             'location',
             'kknPeriod',
@@ -171,6 +188,11 @@ class KknPostoController extends Controller
             'members.student.mahasiswaProfile.faculty',
             'members.student.mahasiswaProfile.studyProgram',
         ])->findOrFail($id);
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
 
         return response()->json([
             'id' => $posto->id,
@@ -216,7 +238,17 @@ class KknPostoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
+
+        if (!$user->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -245,7 +277,17 @@ class KknPostoController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
+        $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
+
+        if (!$user->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
 
         $validated = $request->validate([
             'status' => 'required|in:draft,active,completed',
@@ -268,6 +310,10 @@ class KknPostoController extends Controller
      */
     public function destroy($id)
     {
+        if (!auth('api')->user()->can('kkn_postos.delete')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $posto = KknPosto::findOrFail($id);
         $posto->delete();
 
@@ -306,7 +352,17 @@ class KknPostoController extends Controller
      */
     public function addMember(Request $request, $id)
     {
+        $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
+
+        if (!$user->can('kkn_postos.manage_members')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
 
         $validated = $request->validate([
             'student_id' => 'required|exists:users,id',
@@ -386,6 +442,18 @@ class KknPostoController extends Controller
      */
     public function updateMember(Request $request, $postoId, $memberId)
     {
+        $user = auth('api')->user();
+        $posto = KknPosto::findOrFail($postoId);
+
+        if (!$user->can('kkn_postos.manage_members')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
+
         $member = KknPostoMember::where('kkn_posto_id', $postoId)
             ->findOrFail($memberId);
 
@@ -422,6 +490,18 @@ class KknPostoController extends Controller
      */
     public function removeMember($postoId, $memberId)
     {
+        $user = auth('api')->user();
+        $posto = KknPosto::findOrFail($postoId);
+
+        if (!$user->can('kkn_postos.manage_members')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
+
         $member = KknPostoMember::where('kkn_posto_id', $postoId)
             ->findOrFail($memberId);
 
@@ -441,6 +521,11 @@ class KknPostoController extends Controller
      */
     public function availableStudents(Request $request)
     {
+        $user = auth('api')->user();
+        if (!$user->can('kkn_postos.manage_members')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         \Illuminate\Support\Facades\Log::info('availableStudents REQUEST:', $request->all());
         $validated = $request->validate([
             'kkn_location_id' => 'nullable|exists:kkn_locations,id',
@@ -472,7 +557,17 @@ class KknPostoController extends Controller
      */
     public function bulkAssignStudents(Request $request, $id)
     {
+        $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
+
+        if (!$user->can('kkn_postos.manage_members')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Authorization for non-admins
+        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        }
 
         $validated = $request->validate([
             'students' => 'required|array',

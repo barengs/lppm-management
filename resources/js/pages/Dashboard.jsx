@@ -26,14 +26,11 @@ export default function Dashboard() {
             return;
         }
 
-        console.log("Dashboard mounted. Token exists:", !!token);
         const fetchStats = async () => {
-            console.log("Fetching dashboard stats...");
             try {
                 const response = await axios.get('/api/dashboard/stats', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                console.log("Stats received:", response.data);
                 setStats(response.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -43,7 +40,6 @@ export default function Dashboard() {
         };
 
         if (token && user?.role !== 'mahasiswa') fetchStats();
-        else if (!token) console.log("No token available, skipping stats fetch");
     }, [token, user, navigate]);
 
     const StatCard = ({ title, value, icon, color }) => (
@@ -107,7 +103,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Peserta KKN per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
                             <BarChart data={stats.participants_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -124,7 +120,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Lokasi KKN per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
                             <BarChart data={stats.locations_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -141,7 +137,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Pengabdian Masyarakat (Abmas) per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={4} minHeight={288}>
                             <LineChart data={stats.abmas_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />

@@ -47,6 +47,8 @@ export default function Sidebar() {
             items: [
                 { name: 'Daftar Proposal', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
                 { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
+                { name: 'Monitoring Usulan', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
+                { name: 'Tugas Review (BIMA)', icon: <ClipboardList size={20} />, path: '/reviewer/dashboard', permission: 'reviewer' },
                 { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
             ]
         },

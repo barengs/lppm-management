@@ -43,8 +43,12 @@ import PermissionsIndex from './pages/admin/permissions/Index';
 import MenuIndex from './pages/admin/menus/Index';
 import MenuBuilder from './pages/admin/menus/Builder';
 import SystemSettingIndex from './pages/admin/SystemSetting';
-import PageIndex from './pages/admin/pages/Index';
-import PageForm from './pages/admin/pages/Form';
+import PagePageIndex from './pages/admin/pages/Index';
+import PagePageForm from './pages/admin/pages/Form';
+
+import AdminProposalDashboard from './pages/admin/proposals/Index';
+import ReviewerDashboard from './pages/reviewer/Index';
+import ReviewerProposalShow from './pages/reviewer/Show';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -192,7 +196,14 @@ function App() {
                     <Route path="/" element={<AdminLayout />}>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
-                        <Route path="proposals/create" element={<CreateProposal />} />
+                        <Route path="proposals/create/:id?" element={<CreateProposal />} />
+
+                        {/* Admin Proposal Management */}
+                        <Route path="admin/proposals" element={<AdminProposalDashboard />} />
+
+                        {/* Reviewer Portal */}
+                        <Route path="reviewer/dashboard" element={<ReviewerDashboard />} />
+                        <Route path="reviewer/proposals/:id" element={<ReviewerProposalShow />} />
 
                         {/* Program Activity */}
                         <Route path="reports" element={<ReportsIndex />} />
@@ -257,9 +268,9 @@ function App() {
                         <Route path="admin/settings" element={<SystemSettingIndex />} />
 
                         {/* Static Pages */}
-                        <Route path="admin/pages" element={<PageIndex />} />
-                        <Route path="admin/pages/create" element={<PageForm />} />
-                        <Route path="admin/pages/:id/edit" element={<PageForm />} />
+                        <Route path="admin/pages" element={<PagePageIndex />} />
+                        <Route path="admin/pages/create" element={<PagePageForm />} />
+                        <Route path="admin/pages/:id/edit" element={<PagePageForm />} />
 
                         {/* Profile */}
                         <Route path="profile" element={<ProfileIndex />} />

@@ -9,6 +9,7 @@ class SystemSetting extends Model
     protected $fillable = [
         'system_name',
         'university_name',
+        'university_cluster',
         'description',
         'address',
         'email',

@@ -34,6 +34,7 @@ class RolePermissionSeeder extends Seeder
             'kkn_reports',
             'kkn_guidance',
             'kkn_grades', // New: for Assessment
+            'kkn_postos',
             'organization',
         ];
 
@@ -47,6 +48,7 @@ class RolePermissionSeeder extends Seeder
             'kkn_guidance' => ['reply', 'close'],
             'kkn_participants' => ['view', 'manage'],
             'kkn_grades' => ['download_certificate'], 
+            'kkn_postos' => ['view', 'manage_members'],
         ];
 
         // 3. Generate Permissions
@@ -102,6 +104,7 @@ class RolePermissionSeeder extends Seeder
                 'kkn_reports.view', 'kkn_reports.create', 'kkn_reports.edit', // Dosen as Reporter (Abmas/Weekly)
                 'kkn_reports.review', 'kkn_reports.approve', 'kkn_reports.reject', 'kkn_reports.revise', // Dosen as Reviewer (Student Reports)
                 'kkn_guidance.view', 'kkn_guidance.create', 'kkn_guidance.reply', // Dosen in Guidance
+                'kkn_postos.view', 'kkn_postos.manage_members', // Dosen as DPL
                 'documents.view',
                 'posts.view',
             ]);
@@ -142,6 +145,8 @@ class RolePermissionSeeder extends Seeder
                 'posts.view',
                 // KKN Reports Verification
                 'kkn_reports.view', 'kkn_reports.review', 'kkn_reports.approve', 'kkn_reports.reject',
+                // KKN Poskos
+                'kkn_postos.view', 'kkn_postos.create', 'kkn_postos.edit', 'kkn_postos.delete', 'kkn_postos.manage_members',
                 // KKN Guidance
                 'kkn_guidance.view'
             ]);
