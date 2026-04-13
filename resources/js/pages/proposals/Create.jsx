@@ -134,7 +134,7 @@ export default function Create() {
                                     <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Skema Kegiatan</label>
                                     <select 
                                         required
-                                        className="w-full border-gray-300 rounded-sm p-3 bg-gray-50 focus:ring-green-500 transition-all"
+                                        className="w-full border border-gray-300 rounded-sm p-3 bg-gray-50 focus:ring-green-500 transition-all"
                                         value={initialForm.scheme_id}
                                         onChange={e => setInitialForm({...initialForm, scheme_id: e.target.value})}
                                     >
@@ -148,7 +148,7 @@ export default function Create() {
                                     <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Tahun Akademik</label>
                                     <select 
                                         required
-                                        className="w-full border-gray-300 rounded-sm p-3 bg-white"
+                                        className="w-full border border-gray-300 rounded-sm p-3 bg-white"
                                         value={initialForm.fiscal_year_id}
                                         onChange={e => setInitialForm({...initialForm, fiscal_year_id: e.target.value})}
                                     >
@@ -165,7 +165,7 @@ export default function Create() {
                                     required
                                     rows={3}
                                     placeholder="Masukkan judul lengkap usulan penelitian/pengabdian..."
-                                    className="w-full border-gray-300 rounded-sm p-3 focus:ring-green-500"
+                                    className="w-full border border-gray-300 rounded-sm p-3 focus:ring-green-500"
                                     value={initialForm.title}
                                     onChange={e => setInitialForm({...initialForm, title: e.target.value})}
                                 />

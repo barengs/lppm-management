@@ -133,7 +133,7 @@ export default function StepPersonnel({ proposalId, token, onNext, onBack, initi
                     <input
                         type="text"
                         placeholder="Ketik nama atau NIDN..."
-                        className="w-full border-gray-300 rounded-sm p-2.5 pl-10 focus:ring-green-500"
+                        className="w-full border border-gray-300 rounded-sm p-2.5 pl-10 focus:ring-green-500"
                         value={searchQuery}
                         onChange={handleSearch}
                     />
@@ -190,7 +190,7 @@ export default function StepPersonnel({ proposalId, token, onNext, onBack, initi
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Peran dalam Tim</label>
                                 <select 
-                                    className="w-full text-sm border-gray-200 p-1.5 bg-gray-50 rounded-sm"
+                                    className="w-full text-sm border border-gray-200 p-1.5 bg-gray-50 rounded-sm"
                                     value={member.role}
                                     onChange={e => updateMember(member.user_id, 'role', e.target.value)}
                                 >
@@ -215,7 +215,7 @@ export default function StepPersonnel({ proposalId, token, onNext, onBack, initi
                             <textarea 
                                 required
                                 placeholder="Jelaskan peran spesifik dalam penelitian ini..."
-                                className="w-full text-sm border-gray-200 p-2 focus:ring-green-500 rounded-sm"
+                                className="w-full text-sm border border-gray-200 p-2 focus:ring-green-500 rounded-sm"
                                 rows={2}
                                 value={member.task_description}
                                 onChange={e => updateMember(member.user_id, 'task_description', e.target.value)}

@@ -71,6 +71,7 @@ Route::middleware(['auth:api'])->group(function () {
     
     Route::get('users/template', [App\Http\Controllers\UserController::class, 'downloadTemplate']);
     Route::post('users/import', [App\Http\Controllers\UserController::class, 'import']);
+    Route::get('users/search', [App\Http\Controllers\UserController::class, 'search']);
     Route::apiResource('users', App\Http\Controllers\UserController::class); // Staff & Dosen
     Route::apiResource('students', App\Http\Controllers\StudentController::class); // Mahasiswa Only
     Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
@@ -92,7 +93,7 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     // Reviewer Portal
-    Route::group(['prefix' => 'reviewer_proposals', 'middleware' => ['role:reviewer']], function () {
+    Route::group(['prefix' => 'reviewer_proposals', 'middleware' => ['role:reviewer|admin']], function () {
         Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'index']);
         Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'show']);
         Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'submitReview']);

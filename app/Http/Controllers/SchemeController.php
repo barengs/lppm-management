@@ -24,7 +24,12 @@ class SchemeController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:research,abmas,kkn',
             'max_budget' => 'required|numeric',
-            'guideline_file' => 'nullable|string'
+            'guideline_file' => 'nullable|string',
+            'abstract_limit' => 'nullable|integer',
+            'background_limit' => 'nullable|integer',
+            'methodology_limit' => 'nullable|integer',
+            'objective_limit' => 'nullable|integer',
+            'reference_limit' => 'nullable|integer'
         ]);
 
         $scheme = Scheme::create($validated);
@@ -40,7 +45,12 @@ class SchemeController extends Controller
             'name' => 'string|max:255',
             'type' => 'in:research,abmas,kkn',
             'max_budget' => 'numeric',
-            'guideline_file' => 'nullable|string'
+            'guideline_file' => 'nullable|string',
+            'abstract_limit' => 'nullable|integer',
+            'background_limit' => 'nullable|integer',
+            'methodology_limit' => 'nullable|integer',
+            'objective_limit' => 'nullable|integer',
+            'reference_limit' => 'nullable|integer'
         ]);
 
         $scheme->update($validated);

@@ -8,7 +8,17 @@ export default function SchemesIndex() {
     const { token } = useAuth();
     const [schemes, setSchemes] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({ name: '', type: 'research', max_budget: '' });
+    const defaultForm = { 
+        name: '', 
+        type: 'research', 
+        max_budget: '',
+        abstract_limit: 250,
+        background_limit: 500,
+        methodology_limit: 1000,
+        objective_limit: 300,
+        reference_limit: 50
+    };
+    const [formData, setFormData] = useState(defaultForm);
     const [editId, setEditId] = useState(null);
 
     const fetchSchemes = async () => {
@@ -40,7 +50,7 @@ export default function SchemesIndex() {
             }
             setShowModal(false);
             fetchSchemes();
-            setFormData({ name: '', type: 'research', max_budget: '' });
+            setFormData(defaultForm);
             setEditId(null);
         } catch (error) {
             console.error("Failed to save scheme", error);
@@ -60,7 +70,16 @@ export default function SchemesIndex() {
     };
 
     const handleEdit = (scheme) => {
-        setFormData({ name: scheme.name, type: scheme.type, max_budget: scheme.max_budget });
+        setFormData({ 
+            name: scheme.name, 
+            type: scheme.type, 
+            max_budget: scheme.max_budget,
+            abstract_limit: scheme.abstract_limit || 250,
+            background_limit: scheme.background_limit || 500,
+            methodology_limit: scheme.methodology_limit || 1000,
+            objective_limit: scheme.objective_limit || 300,
+            reference_limit: scheme.reference_limit || 50
+        });
         setEditId(scheme.id);
         setShowModal(true);
     };
@@ -105,7 +124,7 @@ export default function SchemesIndex() {
                 <button
                     onClick={() => {
                         setEditId(null);
-                        setFormData({ name: '', type: 'research', max_budget: '' });
+                        setFormData(defaultForm);
                         setShowModal(true);
                     }}
                     className="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800"
@@ -131,8 +150,8 @@ export default function SchemesIndex() {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl my-8">
                         <h2 className="text-xl font-bold mb-4">{editId ? 'Edit Scheme' : 'New Scheme'}</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
@@ -166,6 +185,62 @@ export default function SchemesIndex() {
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
                                     required
                                 />
+                            </div>
+
+                            <hr className="my-6 border-gray-200" />
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">Pengaturan Batas Kata (Substansi)</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Abstrak (Maks. Kata)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.abstract_limit}
+                                        onChange={(e) => setFormData({ ...formData, abstract_limit: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Latar Belakang (Maks. Kata)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.background_limit}
+                                        onChange={(e) => setFormData({ ...formData, background_limit: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Metode / Pembahasan (Maks. Kata)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.methodology_limit}
+                                        onChange={(e) => setFormData({ ...formData, methodology_limit: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Tujuan & Kesimpulan (Maks. Kata)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.objective_limit}
+                                        onChange={(e) => setFormData({ ...formData, objective_limit: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Daftar Pustaka (Maks. Baris/Kata)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.reference_limit}
+                                        onChange={(e) => setFormData({ ...formData, reference_limit: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2"
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="flex justify-end space-x-3">
                                 <button
