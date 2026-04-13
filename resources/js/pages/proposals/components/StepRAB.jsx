@@ -128,7 +128,7 @@ export default function StepRAB({ proposalId, token, onNext, onBack, initialData
                                 <tr key={originalIdx} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-3 py-2">
                                         <select 
-                                            className="w-full text-xs border-gray-200 p-1 bg-white rounded-sm"
+                                            className="w-full text-xs border border-gray-200 p-1 bg-white rounded-sm"
                                             value={item.cost_group}
                                             onChange={e => updateItem(originalIdx, 'cost_group', e.target.value)}
                                         >
@@ -140,7 +140,7 @@ export default function StepRAB({ proposalId, token, onNext, onBack, initialData
                                     <td className="px-3 py-2">
                                         <input 
                                             type="text"
-                                            className="w-full text-xs border-gray-200 p-1 rounded-sm"
+                                            className="w-full text-xs border border-gray-200 p-1 rounded-sm"
                                             placeholder="Nama item..."
                                             value={item.item_name}
                                             onChange={e => updateItem(originalIdx, 'item_name', e.target.value)}
@@ -149,14 +149,14 @@ export default function StepRAB({ proposalId, token, onNext, onBack, initialData
                                     <td className="px-3 py-2">
                                         <input 
                                             type="number"
-                                            className="w-full text-xs border-gray-200 p-1 text-right rounded-sm"
+                                            className="w-full text-xs border border-gray-200 p-1 text-right rounded-sm"
                                             value={item.quantity}
                                             onChange={e => updateItem(originalIdx, 'quantity', e.target.value)}
                                         />
                                     </td>
                                     <td className="px-3 py-2">
                                         <select 
-                                            className="w-full text-xs border-gray-200 p-1 bg-white rounded-sm"
+                                            className="w-full text-xs border border-gray-200 p-1 bg-white rounded-sm"
                                             value={item.unit}
                                             onChange={e => updateItem(originalIdx, 'unit', e.target.value)}
                                         >
@@ -169,7 +169,7 @@ export default function StepRAB({ proposalId, token, onNext, onBack, initialData
                                     <td className="px-3 py-2">
                                         <input 
                                             type="number"
-                                            className="w-full text-xs border-gray-200 p-1 text-right rounded-sm"
+                                            className="w-full text-xs border border-gray-200 p-1 text-right rounded-sm"
                                             value={item.unit_cost}
                                             onChange={e => updateItem(originalIdx, 'unit_cost', e.target.value)}
                                         />

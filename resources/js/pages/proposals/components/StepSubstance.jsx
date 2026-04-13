@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FileText, Save, Info, AlertCircle, CheckCircle } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function StepSubstance({ proposalId, token, onBack, onNext, initialData }) {
     const limits = initialData?.scheme || {
@@ -39,7 +41,8 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
 
     const countWords = (text) => {
         if (!text) return 0;
-        return text.trim().split(/\s+/).filter(Boolean).length;
+        const plainText = text.replace(/<[^>]*>?/gm, '');
+        return plainText.trim().split(/\s+/).filter(Boolean).length;
     };
 
     const renderTextArea = (label, field, limit, placeholder) => {
@@ -48,20 +51,30 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
 
         return (
             <div className="space-y-2">
-                <div className="flex justify-between items-end">
+                <div className="flex justify-between items-end mb-1">
                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">{label}</label>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOverLimit ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
                         {words} / {limit} Kata
                     </span>
                 </div>
-                <textarea
-                    className={`w-full text-sm p-3 border rounded-sm focus:ring-2 focus:ring-green-500 outline-none transition-all min-h-[150px] ${isOverLimit ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
-                    placeholder={placeholder}
-                    value={formData[field]}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                />
+                <div className={`${isOverLimit ? 'ring-2 ring-red-400' : ''}`}>
+                    <ReactQuill
+                        theme="snow"
+                        className="bg-white [&_.ql-editor]:min-h-[150px]"
+                        placeholder={placeholder}
+                        value={formData[field]}
+                        onChange={(content) => setFormData({ ...formData, [field]: content })}
+                        modules={{
+                            toolbar: [
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{'list': 'ordered'}, {'list': 'bullet'}],
+                                ['link', 'clean']
+                            ]
+                        }}
+                    />
+                </div>
                 {isOverLimit && (
-                    <p className="text-[10px] text-red-500 flex items-center">
+                    <p className="text-[10px] text-red-500 flex items-center mt-1">
                         <AlertCircle size={12} className="mr-1" /> Melebihi batas kata yang ditentukan.
                     </p>
                 )}
@@ -92,7 +105,12 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
             setIsSaving(false);
             if (autoNext) onNext();
         } catch (err) {
-            setError(err.response?.data?.message || "Gagal menyimpan substansi.");
+            if (err.response?.data?.errors) {
+                const firstError = Object.values(err.response.data.errors)[0][0];
+                setError(firstError);
+            } else {
+                setError(err.response?.data?.message || "Gagal menyimpan substansi.");
+            }
             setIsSaving(false);
         }
     };
@@ -127,12 +145,22 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
                 
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Daftar Pustaka</label>
-                    <textarea
-                        className="w-full text-sm p-3 border border-gray-200 rounded-sm outline-none focus:ring-2 focus:ring-green-500 min-h-[100px]"
-                        placeholder="Gunakan format APA atau IEEE (Satu baris per referensi)"
-                        value={formData.references}
-                        onChange={(e) => setFormData({...formData, references: e.target.value})}
-                    />
+                    <div className="bg-white">
+                        <ReactQuill
+                            theme="snow"
+                            className="bg-white [&_.ql-editor]:min-h-[100px]"
+                            placeholder="Gunakan format APA atau IEEE (Satu baris per referensi)"
+                            value={formData.references}
+                            onChange={(content) => setFormData({...formData, references: content})}
+                            modules={{
+                                toolbar: [
+                                    ['bold', 'italic'],
+                                    [{'list': 'ordered'}, {'list': 'bullet'}],
+                                    ['clean']
+                                ]
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
 

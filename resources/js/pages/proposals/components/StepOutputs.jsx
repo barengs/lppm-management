@@ -82,7 +82,7 @@ export default function StepOutputs({ proposalId, token, onNext, onBack, initial
                                 <div>
                                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Jenis Luaran</label>
                                     <select 
-                                        className="w-full text-sm border-gray-200 p-2 rounded-sm bg-white"
+                                        className="w-full text-sm border border-gray-200 p-2 rounded-sm bg-white"
                                         value={output.type}
                                         onChange={e => updateOutput(originalIdx, 'type', e.target.value)}
                                     >
@@ -97,7 +97,7 @@ export default function StepOutputs({ proposalId, token, onNext, onBack, initial
                                     <input 
                                         type="text"
                                         placeholder="Misal: Q1/Q2, Sinta 1, dsb..."
-                                        className="w-full text-sm border-gray-200 p-2 rounded-sm"
+                                        className="w-full text-sm border border-gray-200 p-2 rounded-sm"
                                         value={output.target_description}
                                         onChange={e => updateOutput(originalIdx, 'target_description', e.target.value)}
                                     />
@@ -145,7 +145,7 @@ export default function StepOutputs({ proposalId, token, onNext, onBack, initial
                                 <div>
                                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Jenis Luaran</label>
                                     <select 
-                                        className="w-full text-sm border-gray-200 p-2 rounded-sm bg-white"
+                                        className="w-full text-sm border border-gray-200 p-2 rounded-sm bg-white"
                                         value={output.type}
                                         onChange={e => updateOutput(originalIdx, 'type', e.target.value)}
                                     >
@@ -160,7 +160,7 @@ export default function StepOutputs({ proposalId, token, onNext, onBack, initial
                                     <input 
                                         type="text"
                                         placeholder="Misal: YouTube, Penerbit Nasional..."
-                                        className="w-full text-sm border-gray-200 p-2 rounded-sm"
+                                        className="w-full text-sm border border-gray-200 p-2 rounded-sm"
                                         value={output.target_description}
                                         onChange={e => updateOutput(originalIdx, 'target_description', e.target.value)}
                                     />

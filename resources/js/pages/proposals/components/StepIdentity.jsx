@@ -118,7 +118,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <select 
                             required
-                            className="text-sm border-gray-300 rounded-sm p-2 bg-white"
+                            className="text-sm border border-gray-300 rounded-sm p-2 bg-white"
                             value={formData.science_cluster_level_1}
                             onChange={e => setFormData({...formData, science_cluster_level_1: e.target.value, science_cluster_level_2: '', science_cluster_level_3: ''})}
                         >
@@ -128,7 +128,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                         <select 
                             required
                             disabled={!formData.science_cluster_level_1}
-                            className="text-sm border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
+                            className="text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
                             value={formData.science_cluster_level_2}
                             onChange={e => setFormData({...formData, science_cluster_level_2: e.target.value, science_cluster_level_3: ''})}
                         >
@@ -138,7 +138,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                         <select 
                             required
                             disabled={!formData.science_cluster_level_2}
-                            className="text-sm border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
+                            className="text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
                             value={formData.science_cluster_level_3}
                             onChange={e => setFormData({...formData, science_cluster_level_3: e.target.value})}
                         >
@@ -152,7 +152,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Bidang Fokus</label>
                     <select 
                         required
-                        className="w-full text-sm border-gray-300 rounded-sm p-2 bg-white"
+                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white"
                         value={formData.focus_area}
                         onChange={e => setFormData({...formData, focus_area: e.target.value, research_theme: '', research_topic: ''})}
                     >
@@ -163,7 +163,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                 <div>
                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Lama Kegiatan (Tahun)</label>
                     <select 
-                        className="w-full text-sm border-gray-300 rounded-sm p-2 bg-white"
+                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white"
                         value={formData.duration_years}
                         onChange={e => setFormData({...formData, duration_years: e.target.value})}
                     >
@@ -179,7 +179,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Target SDGs</label>
                     <select 
                         required
-                        className="w-full text-sm border-gray-300 rounded-sm p-2 bg-white"
+                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white"
                         value={formData.sdg_goal}
                         onChange={e => setFormData({...formData, sdg_goal: e.target.value})}
                     >
@@ -192,7 +192,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <select 
                         required
                         disabled={!formData.focus_area}
-                        className="w-full text-sm border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
+                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
                         value={formData.research_theme}
                         onChange={e => setFormData({...formData, research_theme: e.target.value, research_topic: ''})}
                     >
@@ -208,7 +208,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <select 
                         required
                         disabled={!formData.research_theme}
-                        className="w-full text-sm border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
+                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
                         value={formData.research_topic}
                         onChange={e => setFormData({...formData, research_topic: e.target.value})}
                     >
@@ -224,7 +224,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                     <input 
                         type="number"
                         readOnly
-                        className="w-full border-gray-200 rounded-sm p-2 bg-gray-100"
+                        className="w-full border border-gray-200 rounded-sm p-2 bg-gray-100"
                         value={formData.tkt_initial}
                     />
                     <p className="text-[10px] text-gray-400 mt-1">*Nilai otomatis dari Kuesioner TKT</p>
@@ -236,7 +236,7 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                         min={initialData?.tkt_level || 1}
                         max={9}
                         required
-                        className="w-full border-gray-300 rounded-sm p-2"
+                        className="w-full border border-gray-300 rounded-sm p-2"
                         value={formData.tkt_target}
                         onChange={e => setFormData({...formData, tkt_target: e.target.value})}
                     />

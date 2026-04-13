@@ -19,7 +19,10 @@ export default function ReviewerProposalDashboard() {
         setIsLoading(true);
         try {
             const res = await axios.get('/api/reviewer_proposals', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
             });
             setProposals(res.data);
         } catch (err) {

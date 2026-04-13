@@ -197,6 +197,9 @@ class ProposalController extends Controller
             DB::commit();
             return response()->json($proposal->load(['identity', 'personnel.user', 'outputs', 'budgetItems', 'content']));
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Gagal menyimpan tahap usulan: ' . $e->getMessage()], 500);
