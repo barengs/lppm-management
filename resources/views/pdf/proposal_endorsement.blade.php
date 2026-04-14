@@ -78,9 +78,21 @@
             @foreach($proposal->personnel as $idx => $person)
             <tr>
                 <td style="text-align: center;">{{ $idx + 1 }}</td>
-                <td>{{ $person->user->name }}<br><small>NIDN: {{ $person->user->dosenProfile->nidn ?? '-' }}</small></td>
+                <td>
+                    @if($person->type === 'mahasiswa')
+                        {{ $person->student_name }}<br><small>NIM: {{ $person->student_nim ?? '-' }}</small>
+                    @else
+                        {{ $person->user->name ?? '-' }}<br><small>NIDN: {{ $person->user->dosenProfile->nidn ?? '-' }}</small>
+                    @endif
+                </td>
                 <td>{{ ucfirst($person->role) }}</td>
-                <td>{{ $person->user->dosenProfile->faculty ?? '-' }} / {{ $person->user->dosenProfile->study_program ?? '-' }}</td>
+                <td>
+                    @if($person->type === 'mahasiswa')
+                        Mahasiswa
+                    @else
+                        {{ $person->user->dosenProfile->faculty ?? '-' }} / {{ $person->user->dosenProfile->study_program ?? '-' }}
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>

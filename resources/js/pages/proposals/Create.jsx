@@ -8,19 +8,21 @@ import { FileText, CheckCircle, Circle } from 'lucide-react';
 import StepTkt from './components/StepTkt';
 import StepIdentity from './components/StepIdentity';
 import StepPersonnel from './components/StepPersonnel';
-import StepOutputs from './components/StepOutputs';
-import StepRAB from './components/StepRAB';
 import StepSubstance from './components/StepSubstance';
-import StepFinal from './components/StepFinal';
+import StepSchedule from './components/StepSchedule';
+import StepRAB from './components/StepRAB';
+import StepOutputs from './components/StepOutputs';
+import StepPreview from './components/StepPreview';
 
 const STEPS = [
     { id: 0, name: 'Kuesioner TKT', label: 'TKT' },
     { id: 1, name: 'Identitas Usulan', label: 'Identitas' },
-    { id: 2, name: 'Manajemen Personil', label: 'Personil' },
-    { id: 3, name: 'Luaran Dijanjikan', label: 'Luaran' },
-    { id: 4, name: 'Rincian Anggaran', label: 'RAB' },
-    { id: 5, name: 'Substansi Usulan', label: 'Substansi' },
-    { id: 6, name: 'Konfirmasi Akhir', label: 'Submit' }
+    { id: 2, name: 'Manajemen Anggota', label: 'Anggota' },
+    { id: 3, name: 'Substansi Usulan', label: 'Substansi' },
+    { id: 4, name: 'Jadwal Penelitian', label: 'Jadwal' },
+    { id: 5, name: 'Rincian Anggaran (RAB)', label: 'RAB' },
+    { id: 6, name: 'Luaran Dijanjikan', label: 'Luaran' },
+    { id: 7, name: 'Pratinjau & Selesai', label: 'Preview' }
 ];
 
 export default function Create() {
@@ -101,7 +103,7 @@ export default function Create() {
 
     const onStepNext = () => {
         fetchProposalDetail();
-        if (currentStep < 6) setCurrentStep(currentStep + 1);
+        if (currentStep < 7) setCurrentStep(currentStep + 1);
     };
 
     const onStepBack = () => {
@@ -215,7 +217,7 @@ export default function Create() {
                                             {step.label}
                                         </span>
                                     </div>
-                                    {idx < 6 && <div className={`w-6 md:w-12 h-0.5 mx-1 transition-colors ${currentStep > idx ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                                    {idx < 7 && <div className={`w-4 md:w-8 h-0.5 mx-0.5 transition-colors ${currentStep > idx ? 'bg-green-400' : 'bg-gray-200'}`} />}
                                 </React.Fragment>
                             ))}
                         </div>
@@ -226,7 +228,7 @@ export default function Create() {
                 <div className="w-full h-1 bg-gray-100 overflow-hidden">
                     <div 
                         className="h-full bg-green-700 transition-all duration-500" 
-                        style={{ width: `${((currentStep + 1) / 7) * 100}%` }} 
+                        style={{ width: `${((currentStep + 1) / 8) * 100}%` }} 
                     />
                 </div>
 
@@ -239,10 +241,11 @@ export default function Create() {
                     {currentStep === 0 && <StepTkt proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} />}
                     {currentStep === 1 && <StepIdentity proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
                     {currentStep === 2 && <StepPersonnel proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 3 && <StepOutputs proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 4 && <StepRAB proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 5 && <StepSubstance proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 6 && <StepFinal proposalId={proposalId} token={token} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 3 && <StepSubstance proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 4 && <StepSchedule proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 5 && <StepRAB proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 6 && <StepOutputs proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 7 && <StepPreview proposalId={proposalId} token={token} onBack={onStepBack} initialData={proposalData} />}
                 </div>
             </div>
         </div>

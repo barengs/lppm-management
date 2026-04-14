@@ -8,6 +8,7 @@ use App\Models\ProposalPersonnel;
 use App\Models\ProposalOutput;
 use App\Models\ProposalBudgetItem;
 use App\Models\SystemSetting;
+use App\Notifications\ProposalInvitationNotification;
 use App\Services\TktService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -24,7 +25,13 @@ class ProposalController extends Controller
         $user = auth('api')->user();
 
         $proposals = Proposal::with(['scheme', 'fiscalYear', 'user'])
-            ->where('user_id', $user->id)
+            ->where(function($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('personnel', function($sq) use ($user) {
+                      $sq->where('user_id', $user->id)
+                         ->where('is_confirmed', true);
+                  });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -93,7 +100,7 @@ class ProposalController extends Controller
             switch ($step) {
                 case 0: // TKT
                     $validated = $request->validate([
-                        'answers' => 'required|array', // { indicator_id: boolean }
+                        'answers' => 'required|array',
                     ]);
                     
                     $tktResult = TktService::calculateLevel($validated['answers']);
@@ -117,37 +124,98 @@ class ProposalController extends Controller
                     $proposal->identity()->updateOrCreate(['proposal_id' => $id], $validated);
                     break;
 
-                case 2: // Personnel
-                    $validated = $request->validate([
-                        'members' => 'required|array',
+                case 2: // Anggota
+                    $data = $request->validate([
+                        'members' => 'nullable|array',
                         'members.*.user_id' => 'required|exists:users,id',
                         'members.*.role' => 'required|in:anggota,mahasiswa,teknisi',
                         'members.*.task_description' => 'required|string',
+                        'students' => 'required|array|min:2',
+                        'students.*.student_nim' => 'required|string',
+                        'students.*.student_name' => 'required|string',
+                        'students.*.task_description' => 'required|string',
+                    ], [
+                        'students.min' => 'Wajib melibatkan minimal 2 mahasiswa sebagai anggota tim.',
                     ]);
 
-                    // Remove existing except chairman
+                    // Identify existing system member IDs (to avoid duplicate notifications)
+                    $oldMemberIds = ProposalPersonnel::where('proposal_id', $id)
+                        ->whereNotNull('user_id')
+                        ->pluck('user_id')
+                        ->toArray();
+
+                    // Delete existing non-chairman personnel
                     ProposalPersonnel::where('proposal_id', $id)->where('role', '!=', 'ketua')->delete();
-                    
-                    foreach ($validated['members'] as $member) {
-                        ProposalPersonnel::create(array_merge($member, ['proposal_id' => $id]));
+
+                    // 1. Process System Members (Doses/Staff)
+                    if (isset($data['members'])) {
+                        foreach ($data['members'] as $member) {
+                            $newPersonnel = ProposalPersonnel::create(array_merge($member, [
+                                'proposal_id' => $id,
+                                'type' => 'dosen',
+                                'is_confirmed' => false
+                            ]));
+
+                            // Send notification to newly added members
+                            if (!in_array($member['user_id'], $oldMemberIds)) {
+                                $memberUser = \App\Models\User::find($member['user_id']);
+                                if ($memberUser) {
+                                    $memberUser->notify(new ProposalInvitationNotification(
+                                        $proposal, 
+                                        auth()->user(), 
+                                        $member['role'],
+                                        $newPersonnel->id
+                                    ));
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Process Manual Students
+                    foreach ($data['students'] as $student) {
+                        ProposalPersonnel::create(array_merge($student, [
+                            'proposal_id' => $id,
+                            'role' => 'mahasiswa',
+                            'type' => 'mahasiswa',
+                            'is_confirmed' => true // Manual students don't need approval
+                        ]));
                     }
                     break;
 
-                case 3: // Outputs
+                case 3: // Substance (Moved from 5)
+                    $scheme = $proposal->scheme;
                     $validated = $request->validate([
-                        'outputs' => 'required|array',
-                        'outputs.*.category' => 'required|in:mandatory,optional',
-                        'outputs.*.type' => 'required|string',
-                        'outputs.*.target_description' => 'required|string',
+                        'abstract' => 'required|string',
+                        'keywords' => 'required|string|max:255',
+                        'background' => 'required|string',
+                        'methodology' => 'required|string',
+                        'objectives' => 'required|string',
+                        'references' => 'required|string',
                     ]);
 
-                    $proposal->outputs()->delete();
-                    foreach ($validated['outputs'] as $output) {
-                        $proposal->outputs()->create($output);
+                    $this->validateWordCount($validated['abstract'], $scheme->abstract_limit, 'Abstrak');
+                    $this->validateWordCount($validated['background'], $scheme->background_limit, 'Latar Belakang');
+                    $this->validateWordCount($validated['methodology'], $scheme->methodology_limit, 'Metode/Pembahasan');
+                    $this->validateWordCount($validated['objectives'], $scheme->objective_limit, 'Tujuan/Kesimpulan');
+
+                    $proposal->content()->updateOrCreate(['proposal_id' => $id], $validated);
+                    break;
+
+                case 4: // Schedule (NEW)
+                    $validated = $request->validate([
+                        'schedules' => 'required|array',
+                        'schedules.*.execution_year' => 'required|integer',
+                        'schedules.*.activity' => 'required|string',
+                        'schedules.*.months' => 'required|array',
+                    ]);
+
+                    $proposal->schedules()->delete();
+                    foreach ($validated['schedules'] as $schedule) {
+                        $proposal->schedules()->create($schedule);
                     }
                     break;
 
-                case 4: // Budget
+                case 5: // Budget (Moved from 4)
                     $validated = $request->validate([
                         'budget_items' => 'required|array',
                         'budget_items.*.execution_year' => 'required|integer',
@@ -168,24 +236,18 @@ class ProposalController extends Controller
                     $proposal->update(['budget' => $totalBudget]);
                     break;
 
-                case 5: // Substance (Text)
-                    $scheme = $proposal->scheme;
+                case 6: // Outputs (Moved from 3)
                     $validated = $request->validate([
-                        'abstract' => 'required|string',
-                        'keywords' => 'required|string|max:255',
-                        'background' => 'required|string',
-                        'methodology' => 'required|string',
-                        'objectives' => 'required|string',
-                        'references' => 'required|string',
+                        'outputs' => 'required|array',
+                        'outputs.*.category' => 'required|in:mandatory,optional',
+                        'outputs.*.type' => 'required|string',
+                        'outputs.*.target_description' => 'required|string',
                     ]);
 
-                    // Word Count Validation logic (server-side)
-                    $this->validateWordCount($validated['abstract'], $scheme->abstract_limit, 'Abstrak');
-                    $this->validateWordCount($validated['background'], $scheme->background_limit, 'Latar Belakang');
-                    $this->validateWordCount($validated['methodology'], $scheme->methodology_limit, 'Metode/Pembahasan');
-                    $this->validateWordCount($validated['objectives'], $scheme->objective_limit, 'Tujuan/Kesimpulan');
-
-                    $proposal->content()->updateOrCreate(['proposal_id' => $id], $validated);
+                    $proposal->outputs()->delete();
+                    foreach ($validated['outputs'] as $output) {
+                        $proposal->outputs()->create($output);
+                    }
                     break;
             }
 
@@ -195,7 +257,7 @@ class ProposalController extends Controller
             }
 
             DB::commit();
-            return response()->json($proposal->load(['identity', 'personnel.user', 'outputs', 'budgetItems', 'content']));
+            return response()->json($proposal->load(['identity', 'personnel.user', 'outputs', 'budgetItems', 'content', 'schedules']));
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
@@ -213,9 +275,9 @@ class ProposalController extends Controller
     {
         $proposal = Proposal::with(['personnel', 'identity'])->findOrFail($id);
 
-        // Validasi Akhir
-        if ($proposal->current_step < 6) {
-            return response()->json(['message' => 'Harap selesaikan seluruh tahapan usulan (termasuk Substansi) sebelum mengirim.'], 422);
+        // Validasi Akhir (Step 7 is Preview/Submit)
+        if ($proposal->current_step < 7) {
+            return response()->json(['message' => 'Harap selesaikan seluruh tahapan usulan sebelum mengirim.'], 422);
         }
 
         // Check Member Consents
@@ -250,7 +312,7 @@ class ProposalController extends Controller
      */
     public function show(Proposal $proposal)
     {
-        return response()->json($proposal->load(['scheme', 'fiscalYear', 'reviews', 'identity', 'personnel.user', 'outputs', 'budgetItems', 'content', 'notes.user']));
+        return response()->json($proposal->load(['scheme', 'fiscalYear', 'reviews', 'identity', 'personnel.user.dosenProfile', 'outputs', 'budgetItems', 'content', 'schedules', 'notes.user']));
     }
 
     /**

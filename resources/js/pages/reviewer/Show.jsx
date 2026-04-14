@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { FileText, Star, Save, ArrowLeft, Info, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
+import { FileText, Star, Save, ArrowLeft, Info, AlertCircle, CheckCircle, ExternalLink, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function ProposalReviewForm() {
@@ -124,7 +124,28 @@ export default function ProposalReviewForm() {
                                 <p className="text-xs font-medium text-gray-700">{data.proposal.scheme.name}</p>
                             </div>
                         </div>
-                        <div className="mt-8 pt-6 border-t border-gray-100">
+                    <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-6">
+                        <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center uppercase tracking-tighter">
+                            <Users size={20} className="mr-2 text-green-700" /> Tim Pengusul
+                        </h2>
+                        <div className="space-y-3">
+                            {data.proposal.personnel.map((p, idx) => (
+                                <div key={idx} className="pb-3 border-b border-gray-50 last:border-0">
+                                    <p className="text-xs font-bold text-gray-800 uppercase tracking-tight">
+                                        {p.type === 'mahasiswa' ? p.student_name : p.user?.name}
+                                    </p>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{p.role}</span>
+                                        <span className="text-[9px] font-medium text-gray-500">
+                                            {p.type === 'mahasiswa' ? (p.student_nim || '-') : (p.user?.dosen_profile?.nidn || '-')}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-gray-100">
                              <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-3 text-center">Tautan Substansi</h3>
                              <div className="grid grid-cols-1 gap-2">
                                 <button className="w-full py-2 bg-gray-50 text-gray-600 rounded-sm text-[10px] font-bold flex items-center justify-center hover:bg-gray-100">

@@ -44,7 +44,7 @@ export default function StepOutputs({ proposalId, token, onNext, onBack, initial
         setError(null);
         try {
             await axios.post(`/api/proposals/${proposalId}/steps`, {
-                step: 3,
+                step: 6,
                 outputs: outputs
             }, {
                 headers: { Authorization: `Bearer ${token}` }

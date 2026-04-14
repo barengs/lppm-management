@@ -40,12 +40,21 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
     }, [initialData]);
 
     const countWords = (text) => {
-        if (!text) return 0;
-        const plainText = text.replace(/<[^>]*>?/gm, '');
-        return plainText.trim().split(/\s+/).filter(Boolean).length;
+        if (!text || typeof text !== 'string') return 0;
+
+        // 1. Replace HTML tags with spaces to prevent joining words between tags
+        // 2. Replace &nbsp; entity with a standard space
+        // 3. Replace all whitespace characters (tab, newline, non-breaking space) with a single space
+        const plainText = text
+            .replace(/<[^>]*>?/gm, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        return plainText === '' ? 0 : plainText.split(' ').length;
     };
 
-    const renderTextArea = (label, field, limit, placeholder) => {
+    const renderTextArea = (label, field, limit, placeholder, advanced = false) => {
         const words = countWords(formData[field]);
         const isOverLimit = words > limit;
 
@@ -68,8 +77,9 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
                             toolbar: [
                                 ['bold', 'italic', 'underline', 'strike'],
                                 [{'list': 'ordered'}, {'list': 'bullet'}],
-                                ['link', 'clean']
-                            ]
+                                ['link', ...(advanced ? ['image', 'table'] : []), 'clean']
+                            ],
+                            table: advanced
                         }}
                     />
                 </div>
@@ -84,9 +94,9 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
 
     const handleSave = async (autoNext = false) => {
         // Simple Validation
-        for (const field of ['abstract', 'background', 'methodology', 'objectives']) {
-            if (countWords(formData[field]) > limits[`${field}_limit`]) {
-                setError(`Bagian ${field} melebihi batas kata.`);
+        for (const field of ['abstract', 'background', 'methodology', 'objectives', 'references']) {
+            if (countWords(formData[field]) > (limits[`${field}_limit`] || limits.reference_limit)) {
+                setError(`Bagian ${field === 'references' ? 'Daftar Pustaka' : field} melebihi batas kata.`);
                 return;
             }
         }
@@ -95,7 +105,7 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
         setError(null);
         try {
             await axios.post(`/api/proposals/${proposalId}/steps`, {
-                step: 5,
+                step: 3,
                 ...formData
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -140,12 +150,17 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
                 </div>
 
                 {renderTextArea("Latar Belakang", "background", limits.background_limit, "Uraikan latar belakang dan urgensi penelitian...")}
-                {renderTextArea("Metode / Pembahasan", "methodology", limits.methodology_limit, "Tahapan penelitian, alat, dan bahan...")}
+                {renderTextArea("Metode / Pembahasan", "methodology", limits.methodology_limit, "Tahapan penelitian, alat, dan bahan...", true)}
                 {renderTextArea("Tujuan & Kesimpulan", "objectives", limits.objective_limit, "Tujuan yang ingin dicapai dan ringkasan hasil...")}
                 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Daftar Pustaka</label>
-                    <div className="bg-white">
+                    <div className="flex justify-between items-end mb-1">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Daftar Pustaka</label>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${countWords(formData.references) > (limits.reference_limit || 50) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                            {countWords(formData.references)} / {limits.reference_limit || 50} Kata
+                        </span>
+                    </div>
+                    <div className={`bg-white ${countWords(formData.references) > (limits.reference_limit || 50) ? 'ring-2 ring-red-400' : ''}`}>
                         <ReactQuill
                             theme="snow"
                             className="bg-white [&_.ql-editor]:min-h-[100px]"
@@ -161,6 +176,11 @@ export default function StepSubstance({ proposalId, token, onBack, onNext, initi
                             }}
                         />
                     </div>
+                    {countWords(formData.references) > (limits.reference_limit || 50) && (
+                        <p className="text-[10px] text-red-500 flex items-center mt-1">
+                            <AlertCircle size={12} className="mr-1" /> Melebihi batas kata yang ditentukan.
+                        </p>
+                    )}
                 </div>
             </div>
 

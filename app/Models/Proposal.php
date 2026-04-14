@@ -50,6 +50,11 @@ class Proposal extends Model
         return $this->hasOne(ProposalContent::class);
     }
 
+    public function schedules()
+    {
+        return $this->hasMany(ProposalSchedule::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -84,6 +84,9 @@ export default function Sidebar() {
                 { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
                 { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
                 { name: 'Daftar Mahasiswa', icon: <Users size={20} />, path: '/master/students', permission: 'users.view' },
+                { name: 'Rumpun Ilmu', icon: <Shield size={20} />, path: '/master/science-clusters', permission: 'master_science_clusters.view' },
+                { name: 'Prioritas Riset', icon: <Star size={20} />, path: '/master/research-priorities', permission: 'master_research_priorities.view' },
+                { name: 'Target SDGs', icon: <Award size={20} />, path: '/master/sdgs', permission: 'master_selections.view' },
             ]
         },
         {

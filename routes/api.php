@@ -8,6 +8,9 @@ use App\Http\Controllers\KknRegistrationController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\MemberConsentController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\MasterScienceClusterController;
+use App\Http\Controllers\MasterResearchPriorityController;
+use App\Http\Controllers\MasterSelectionController;
 
 Route::group([
     'middleware' => 'api',
@@ -108,6 +111,11 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('science-clusters', [MasterDataController::class, 'scienceClusters']);
         Route::get('research-priorities', [MasterDataController::class, 'researchPriorities']);
         Route::get('selections/{type}', [MasterDataController::class, 'selections']);
+        
+        // Admin CRUD for Master Data
+        Route::apiResource('master-science-clusters', MasterScienceClusterController::class);
+        Route::apiResource('master-research-priorities', MasterResearchPriorityController::class);
+        Route::apiResource('master-selections', MasterSelectionController::class);
     });
     
     Route::apiResource('proposals', ProposalController::class);

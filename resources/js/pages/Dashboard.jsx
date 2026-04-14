@@ -7,6 +7,7 @@ import {
     LineChart, Line
 } from 'recharts';
 import { Users, MapPin, BookOpen, UserCheck } from 'lucide-react';
+import MemberConsentList from '../components/MemberConsentList';
 
 export default function Dashboard() {
     const { user, token } = useAuth();
@@ -15,9 +16,23 @@ export default function Dashboard() {
         participants_per_period: [],
         lecturer_count: 0,
         locations_per_period: [],
-        abmas_per_period: []
+        abmas_per_period: [],
+        pending_consents_count: 0
     });
     const [loading, setLoading] = useState(true);
+
+    const fetchStats = async () => {
+        try {
+            const response = await axios.get('/api/dashboard/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStats(response.data);
+        } catch (error) {
+            console.error("Failed to fetch dashboard stats", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // Redirect student if they somehow access this page
@@ -25,19 +40,6 @@ export default function Dashboard() {
             navigate('/dashboard/kkn', { replace: true });
             return;
         }
-
-        const fetchStats = async () => {
-            try {
-                const response = await axios.get('/api/dashboard/stats', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setStats(response.data);
-            } catch (error) {
-                console.error("Failed to fetch dashboard stats", error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
         if (token && user?.role !== 'mahasiswa') fetchStats();
     }, [token, user, navigate]);
@@ -67,6 +69,9 @@ export default function Dashboard() {
                     Selamat datang, <span className="font-semibold text-green-700">{user?.name}</span>
                 </p>
             </div>
+
+            {/* Member Consent Invitations */}
+            <MemberConsentList onUpdate={fetchStats} />
 
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
