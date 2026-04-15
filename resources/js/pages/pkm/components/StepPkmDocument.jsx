@@ -77,12 +77,12 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
     return (
         <div className="space-y-6">
             {error && (
-                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" /><span>{error}</span>
                 </div>
             )}
 
-            <div className="text-sm text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="text-sm text-gray-500 bg-yellow-50 border border-yellow-200 rounded-sm p-4">
                 <strong className="text-yellow-700">📎 Dokumen Pendukung:</strong> Unggah dokumen yang diperlukan sebelum menyelesaikan pengisian. Format yang diterima: PDF, DOC, DOCX (maks. 10 MB).
             </div>
 
@@ -91,7 +91,7 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
                     const uploaded = docs[dt.key];
                     const isUploading = uploading[dt.key];
                     return (
-                        <div key={dt.key} className={`border rounded-xl p-5 flex items-center gap-4 ${uploaded ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'}`}>
+                        <div key={dt.key} className={`border rounded-sm p-5 flex items-center gap-4 ${uploaded ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'}`}>
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${uploaded ? 'bg-green-100' : 'bg-gray-100'}`}>
                                 {uploaded ? <CheckCircle size={20} className="text-green-600" /> : <FileText size={20} className="text-gray-400" />}
                             </div>
@@ -110,8 +110,8 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
                                     </div>
                                 )}
                             </div>
-                            <label className={`cursor-pointer shrink-0 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                                isUploading ? 'bg-gray-100 text-gray-400' : uploaded ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-emerald-700 text-white hover:bg-emerald-800'
+                            <label className={`cursor-pointer shrink-0 px-4 py-2 rounded-sm text-xs font-bold transition-all ${
+                                isUploading ? 'bg-gray-100 text-gray-400' : uploaded ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-green-700 text-white hover:bg-green-800'
                             }`}>
                                 <input type="file" accept=".pdf,.doc,.docx" className="hidden"
                                     onChange={e => handleUpload(dt.key, e.target.files[0])}
@@ -124,7 +124,7 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
             </div>
 
             {/* Summary Data */}
-            <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+            <div className="border border-gray-200 rounded-sm p-5 bg-gray-50">
                 <h4 className="font-bold text-gray-700 text-sm mb-3">📋 Ringkasan Proposal PKM</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
@@ -137,7 +137,7 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
                     </div>
                     <div>
                         <span className="text-gray-500 text-xs">Total Anggaran</span>
-                        <p className="font-bold text-emerald-700 mt-0.5">
+                        <p className="font-bold text-green-700 mt-0.5">
                             Rp {(initialData?.budget || 0).toLocaleString('id-ID')}
                         </p>
                     </div>
@@ -164,11 +164,11 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
 
             <div className="flex justify-between pt-2">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
                     ← Kembali
                 </button>
                 <button type="button" onClick={handleSubmit} disabled={submitting}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-lg font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {submitting ? 'Memproses...' : 'Selesai & Lihat Preview →'}
                 </button>
             </div>

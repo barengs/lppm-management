@@ -116,7 +116,7 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
             {/* Dosen Anggota */}
             <div>
                 <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
-                    <Users size={16} className="text-emerald-600" /> Anggota Dosen
+                    <Users size={16} className="text-green-600" /> Anggota Dosen
                 </h4>
 
                 {/* Search */}
@@ -126,14 +126,14 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                         value={userSearch}
                         onChange={e => { setUserSearch(e.target.value); searchUsers(e.target.value); }}
                         placeholder="Cari dosen berdasarkan nama atau email..."
-                        className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium"
+                        className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium"
                     />
                     {searchResults.length > 0 && (
                         <div className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded-sm shadow-lg max-h-48 overflow-y-auto">
                             {searchResults.map(u => (
                                 <button key={u.id} type="button" onClick={() => addMember(u)}
-                                    className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 text-sm border-b border-gray-100 last:border-0 font-medium">
-                                    <div className="font-bold text-emerald-800">{u.name}</div>
+                                    className="w-full text-left px-4 py-2.5 hover:bg-green-50 text-sm border-b border-gray-100 last:border-0 font-medium">
+                                    <div className="font-bold text-green-800">{u.name}</div>
                                     <div className="text-gray-500 text-xs">{u.email}</div>
                                 </button>
                             ))}
@@ -149,7 +149,7 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                     {members.map((m, idx) => (
                         <div key={idx} className="p-4 border border-gray-200 rounded-sm bg-gray-50 space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-emerald-800 uppercase tracking-wide">{m._display || `Dosen #${idx + 1}`}</span>
+                                <span className="text-sm font-bold text-green-800 uppercase tracking-wide">{m._display || `Dosen #${idx + 1}`}</span>
                                 <button type="button" onClick={() => removeMember(idx)}
                                     className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
                             </div>
@@ -158,28 +158,28 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Perguruan Tinggi/Institusi</label>
                                     <input type="text" value={m.institution}
                                         onChange={e => updateMemberField(idx, 'institution', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500"
                                         placeholder="Contoh: Universitas Islam Madura" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Program Studi/Bagian</label>
                                     <input type="text" value={m.study_program}
                                         onChange={e => updateMemberField(idx, 'study_program', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500"
                                         placeholder="Contoh: Agroteknologi" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">ID SINTA</label>
                                     <input type="text" value={m.sinta_id}
                                         onChange={e => updateMemberField(idx, 'sinta_id', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500"
                                         placeholder="Contoh: 5972907" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Rumpun Ilmu</label>
                                     <input type="text" value={m.science_cluster}
                                         onChange={e => updateMemberField(idx, 'science_cluster', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500"
                                         placeholder="Contoh: TEKNOLOGI DALAM ILMU TANAMAN" />
                                 </div>
                             </div>
@@ -187,7 +187,7 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                                 <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Bidang Tugas / Uraian Peran <span className="text-red-500">*</span></label>
                                 <textarea required rows={3} value={m.task_description}
                                     onChange={e => updateMemberField(idx, 'task_description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500"
                                     placeholder="Uraikan secara lengkap peran dan tugas dosen ini dalam kegiatan PKM..." />
                             </div>
                         </div>
@@ -199,19 +199,19 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
             <div>
                 <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wide">
-                        <Users size={16} className="text-emerald-600" />
+                        <Users size={16} className="text-green-600" />
                         Mahasiswa <span className="ml-1 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-sm font-bold">MIN. 2 ORANG</span>
                     </h4>
                     <button type="button" onClick={addStudent}
-                        className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold uppercase hover:underline">
+                        className="flex items-center gap-1 text-[11px] text-green-700 font-bold uppercase hover:underline">
                         <UserPlus size={14} /> Tambah Mahasiswa
                     </button>
                 </div>
                 <div className="space-y-3">
                     {students.map((s, idx) => (
-                        <div key={idx} className="p-4 border border-emerald-200 rounded-sm bg-emerald-50/30 space-y-4">
+                        <div key={idx} className="p-4 border border-green-200 rounded-sm bg-green-50/30 space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-emerald-800 uppercase tracking-wide">Mahasiswa #{idx + 1}</span>
+                                <span className="text-sm font-bold text-green-800 uppercase tracking-wide">Mahasiswa #{idx + 1}</span>
                                 {students.length > 2 && (
                                     <button type="button" onClick={() => removeStudent(idx)}
                                         className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
@@ -222,28 +222,28 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">NIM <span className="text-red-500">*</span></label>
                                     <input type="text" required value={s.student_nim}
                                         onChange={e => updateStudentField(idx, 'student_nim', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                         placeholder="NIM Mahasiswa" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Nama Lengkap <span className="text-red-500">*</span></label>
                                     <input type="text" required value={s.student_name}
                                         onChange={e => updateStudentField(idx, 'student_name', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                         placeholder="Nama Lengkap Mahasiswa" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Program Studi</label>
                                     <input type="text" value={s.student_prodi}
                                         onChange={e => updateStudentField(idx, 'student_prodi', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                         placeholder="Contoh: Teknik Informatika" />
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Perguruan Tinggi</label>
                                     <input type="text" value={s.student_university}
                                         onChange={e => updateStudentField(idx, 'student_university', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                         placeholder="Nama PT" />
                                 </div>
                             </div>
@@ -251,7 +251,7 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                                 <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">Uraian Tugas <span className="text-red-500">*</span></label>
                                 <input type="text" required value={s.task_description}
                                     onChange={e => updateStudentField(idx, 'task_description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                     placeholder="Tugas mahasiswa ini dalam PKM..." />
                             </div>
                         </div>
@@ -265,7 +265,7 @@ export default function StepPkmPersonnel({ proposalId, token, onNext, onBack, in
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-sm font-bold shadow-md hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow-md hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

@@ -120,12 +120,12 @@ export default function PkmCreate() {
         return (
             <div className="max-w-3xl mx-auto py-8">
                 <div className="bg-white shadow-xl rounded-sm overflow-hidden border border-gray-100">
-                    <div className="bg-gradient-to-br from-emerald-700 to-teal-600 px-8 py-8 text-white">
+                    <div className="bg-green-700 px-8 py-8 text-white">
                         <div className="flex items-center gap-3 mb-2">
                             <FileHeart size={32} className="opacity-90" />
                             <h1 className="text-2xl font-bold">Pengajuan Proposal PKM</h1>
                         </div>
-                        <p className="text-emerald-100 text-sm">
+                        <p className="text-green-100 text-sm">
                             Program Kemitraan Masyarakat — Daftarkan judul dan tahun untuk memulai pengisian.
                         </p>
                     </div>
@@ -142,7 +142,7 @@ export default function PkmCreate() {
                                 </label>
                                 <select required value={initForm.fiscal_year_id}
                                     onChange={e => setInitForm(f => ({ ...f, fiscal_year_id: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-emerald-500">
+                                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-green-500">
                                     <option value="">-- Pilih Tahun Anggaran --</option>
                                     {fiscalYears.map(fy => (
                                         <option key={fy.id} value={fy.id}>{fy.year}</option>
@@ -155,14 +155,14 @@ export default function PkmCreate() {
                                 </label>
                                 <textarea required rows={3}
                                     placeholder="Masukkan judul lengkap proposal PKM..."
-                                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-green-500"
                                     value={initForm.title}
                                     onChange={e => setInitForm(f => ({ ...f, title: e.target.value }))}
                                 />
                             </div>
                             <div className="flex justify-end">
                                 <button type="submit" disabled={initLoading}
-                                    className="px-8 py-3 bg-emerald-700 text-white rounded-sm font-bold shadow-lg hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                                    className="px-8 py-3 bg-green-700 text-white rounded-sm font-bold shadow-lg hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                                     {initLoading ? 'Memproses...' : 'Mulai Pengisian →'}
                                 </button>
                             </div>
@@ -184,7 +184,7 @@ export default function PkmCreate() {
                 <p className="text-gray-500 mb-6">Proposal PKM Anda telah dikirim ke LPPM dan sedang dalam proses review.</p>
                 <div className="flex gap-3 justify-center">
                     <button onClick={() => navigate('/pkm')}
-                        className="px-6 py-2.5 bg-emerald-700 text-white rounded-sm font-bold hover:bg-emerald-800 transition-all text-sm">
+                        className="px-6 py-2.5 bg-green-700 text-white rounded-sm font-bold hover:bg-green-800 transition-all text-sm">
                         Kembali ke Daftar PKM
                     </button>
                     <button onClick={() => navigate(`/pkm/${proposalId}`)}
@@ -203,12 +203,12 @@ export default function PkmCreate() {
         <div className="max-w-5xl mx-auto py-6">
             <div className="bg-white shadow-2xl rounded-sm border border-gray-100 overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-br from-emerald-700 to-teal-600 px-8 py-6 text-white">
+                <div className="bg-green-700 px-8 py-6 text-white">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <FileHeart size={20} className="opacity-80" />
-                                <span className="text-xs text-emerald-200 font-semibold uppercase tracking-wider">PKM #{proposalId}</span>
+                                <span className="text-xs text-green-200 font-semibold uppercase tracking-wider">PKM #{proposalId}</span>
                                 {proposalData?.status && (
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${STATUS_COLORS[proposalData.status] || ''}`}>
                                         {proposalData.status}
@@ -216,7 +216,7 @@ export default function PkmCreate() {
                                 )}
                             </div>
                             <h2 className="text-lg font-bold leading-tight">{proposalData?.title || 'Memuat...'}</h2>
-                            <p className="text-emerald-200 text-xs mt-1">Tahun Anggaran: {proposalData?.fiscal_year?.year || '-'}</p>
+                            <p className="text-green-200 text-xs mt-1">Tahun Anggaran: {proposalData?.fiscal_year?.year || '-'}</p>
                         </div>
                     </div>
                 </div>
@@ -229,19 +229,19 @@ export default function PkmCreate() {
                                 <div className="flex flex-col items-center shrink-0">
                                     <div className={`w-9 h-9 rounded-sm flex items-center justify-center text-xs font-bold transition-all ${
                                         currentStep === idx
-                                            ? 'bg-emerald-700 text-white shadow-md ring-2 ring-emerald-300'
+                                            ? 'bg-green-700 text-white shadow-md ring-2 ring-green-300'
                                             : currentStep > idx
-                                                ? 'bg-emerald-100 text-emerald-700'
+                                                ? 'bg-green-100 text-green-700'
                                                 : 'bg-gray-200 text-gray-400'
                                     }`}>
                                         {currentStep > idx ? <CheckCircle size={16} /> : idx + 1}
                                     </div>
                                     <span className={`text-[9px] mt-1 hidden sm:block text-center w-14 ${
-                                        currentStep === idx ? 'font-bold text-emerald-800' : 'text-gray-400'
+                                        currentStep === idx ? 'font-bold text-green-800' : 'text-gray-400'
                                     }`}>{step.label}</span>
                                 </div>
                                 {idx < STEPS.length - 1 && (
-                                    <div className={`flex-1 h-0.5 mx-1 transition-colors ${currentStep > idx ? 'bg-emerald-400' : 'bg-gray-200'}`} />
+                                    <div className={`flex-1 h-0.5 mx-1 transition-colors ${currentStep > idx ? 'bg-green-400' : 'bg-gray-200'}`} />
                                 )}
                             </React.Fragment>
                         ))}
@@ -250,13 +250,13 @@ export default function PkmCreate() {
 
                 {/* Progress bar */}
                 <div className="h-1 bg-gray-100">
-                    <div className="h-full bg-emerald-600 transition-all duration-500"
+                    <div className="h-full bg-green-600 transition-all duration-500"
                         style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
                 </div>
 
                 {/* Step Content */}
                 <div className="p-8 min-h-[480px]">
-                    <h3 className="text-base font-bold text-gray-700 mb-6 border-l-4 border-emerald-600 pl-4">
+                    <h3 className="text-base font-bold text-gray-700 mb-6 border-l-4 border-green-600 pl-4">
                         TAHAP {currentStep + 1} dari {STEPS.length}: {STEPS[currentStep].name}
                     </h3>
 
@@ -281,7 +281,7 @@ export default function PkmCreate() {
                 {isPastAllSteps && (
                     <div className="px-8 pb-8 flex justify-end">
                         <button onClick={handleFinalSubmit}
-                            className="px-10 py-3 bg-emerald-700 text-white rounded-sm font-bold shadow-lg hover:bg-emerald-800 transition-all text-sm">
+                            className="px-10 py-3 bg-green-700 text-white rounded-sm font-bold shadow-lg hover:bg-green-800 transition-all text-sm">
                             🚀 Kirim ke LPPM
                         </button>
                     </div>

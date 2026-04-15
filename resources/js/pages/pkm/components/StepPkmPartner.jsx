@@ -88,19 +88,19 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
     return (
         <form onSubmit={handleSave} className="space-y-6">
             {error && (
-                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" /><span>{error}</span>
                 </div>
             )}
 
-            <div className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-sm text-gray-500 bg-blue-50 border border-blue-200 rounded-sm p-4">
                 <strong className="text-blue-700">Informasi:</strong> Isi data mitra kerjasama PKM. Minimal 1 mitra sasaran wajib diisi. Anda dapat menambahkan beberapa mitra dengan kategori yang berbeda.
             </div>
 
             {partners.map((pt, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-emerald-50 px-5 py-3 flex items-center justify-between border-b border-gray-200">
-                        <span className="font-bold text-emerald-800 text-sm">Mitra #{idx + 1}</span>
+                <div key={idx} className="border border-gray-200 rounded-sm overflow-hidden shadow-sm">
+                    <div className="bg-green-50 px-5 py-3 flex items-center justify-between border-b border-gray-200">
+                        <span className="font-bold text-green-800 text-sm">Mitra #{idx + 1}</span>
                         {partners.length > 1 && (
                             <button type="button" onClick={() => removePartner(idx)}
                                 className="text-red-500 hover:text-red-700 flex items-center gap-1 text-xs font-semibold">
@@ -114,7 +114,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Jenis Mitra <span className="text-red-500">*</span></label>
                                 <select required value={pt.partner_category} onChange={e => update(idx, 'partner_category', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                                     {PARTNER_CATEGORIES.map(c => (
                                         <option key={c.value} value={c.value}>{c.label}</option>
                                     ))}
@@ -124,35 +124,35 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Nama Mitra Sasaran <span className="text-red-500">*</span></label>
                                 <input type="text" required value={pt.partner_name}
                                     onChange={e => update(idx, 'partner_name', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                     placeholder="Contoh: Asman Toga Gandaria" />
                             </div>
                             <div className="md:col-span-2">
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Kelompok Mitra Sasaran</label>
                                 <input type="text" value={pt.partner_description}
                                     onChange={e => update(idx, 'partner_description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Contoh: Kelompok masyarakat yang tidak produktif secara ekonomi" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Pimpinan Mitra</label>
                                 <input type="text" value={pt.leader_name}
                                     onChange={e => update(idx, 'leader_name', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Nama pimpinan/ketua kelompok" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Jenis Kelompok Mitra</label>
                                 <input type="text" value={pt.group_type}
                                     onChange={e => update(idx, 'group_type', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Contoh: kelompok ibu-ibu rumah tangga" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Jumlah Anggota Kelompok</label>
                                 <input type="number" min="0" value={pt.member_count}
                                     onChange={e => update(idx, 'member_count', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Contoh: 10" />
                             </div>
                         </div>
@@ -163,14 +163,14 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Lingkup Permasalahan ke-1 <span className="text-red-500">*</span></label>
                                 <textarea required rows={3} value={pt.problem_scope_1}
                                     onChange={e => update(idx, 'problem_scope_1', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                     placeholder="Contoh: Aspek Produksi" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Lingkup Permasalahan ke-2</label>
                                 <textarea rows={3} value={pt.problem_scope_2}
                                     onChange={e => update(idx, 'problem_scope_2', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Contoh: Aspek Sosial Kemasyarakatan" />
                             </div>
                         </div>
@@ -178,7 +178,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                         {/* Lokasi */}
                         <div className="border-t border-gray-100 pt-4">
                             <div className="flex items-center gap-1 text-xs font-bold text-gray-600 mb-3 uppercase tracking-tight">
-                                <MapPin size={13} className="text-emerald-600" /> Lokasi Mitra
+                                <MapPin size={13} className="text-green-600" /> Lokasi Mitra
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {['province','city','district','village'].map(field => (
@@ -188,7 +188,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                         }</label>
                                         <input type="text" value={pt[field]}
                                             onChange={e => update(idx, field, e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                                            className="w-full border border-gray-300 rounded-sm p-2 text-sm"
                                             placeholder={{ province: 'JAWA TIMUR', city: 'Kab. Pamekasan', district: 'PAMEKASAN', village: 'GLADAK ANYAR' }[field]} />
                                     </div>
                                 ))}
@@ -197,7 +197,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                 <label className="text-xs text-gray-500 mb-1 block">Alamat Lengkap Mitra Sasaran</label>
                                 <input type="text" value={pt.address}
                                     onChange={e => update(idx, 'address', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Contoh: Jl. Amin Jakfar Gang 1/52 Pamekasan" />
                             </div>
                         </div>
@@ -206,17 +206,17 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
             ))}
 
             <button type="button" onClick={addPartner}
-                className="w-full border-2 border-dashed border-emerald-300 rounded-xl py-3 text-emerald-700 font-semibold text-sm hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors">
+                className="w-full border-2 border-dashed border-green-300 rounded-sm py-3 text-green-700 font-semibold text-sm hover:bg-green-50 flex items-center justify-center gap-2 transition-colors">
                 <Plus size={16} /> Tambah Mitra
             </button>
 
             <div className="flex justify-between pt-2">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-lg font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

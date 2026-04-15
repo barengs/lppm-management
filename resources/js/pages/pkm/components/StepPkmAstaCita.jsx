@@ -70,7 +70,7 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
             )}
 
             {/* SDGs */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div className="border border-gray-200 rounded-sm overflow-hidden">
                 <div className="bg-blue-50 px-5 py-3 border-b border-blue-200 flex items-center justify-between">
                     <div>
                         <h4 className="font-bold text-blue-800 text-sm">🌐 Tujuan Pembangunan Berkelanjutan (SDGs)</h4>
@@ -98,7 +98,7 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
                                         SDGs Terkait <span className="text-red-500">*</span>
                                     </label>
                                     <select required value={g.goal} onChange={e => updateSdg(idx, 'goal', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400">
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400">
                                         <option value="">-- Pilih Tujuan SDG --</option>
                                         {SDG_GOALS.map((s, i) => <option key={i} value={s}>{s}</option>)}
                                     </select>
@@ -109,7 +109,7 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
                                     </label>
                                     <input type="text" required value={g.indicator}
                                         onChange={e => updateSdg(idx, 'indicator', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400"
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400"
                                         placeholder="Contoh: 29" />
                                     <p className="text-xs text-gray-400 mt-1">Nomor/kode indikator keberhasilan.</p>
                                 </div>
@@ -121,7 +121,7 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
                                 </label>
                                 <textarea required rows={5} value={g.description}
                                     onChange={e => updateSdg(idx, 'description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400"
+                                    className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400"
                                     placeholder="Jelaskan secara rinci bagaimana kegiatan PKM ini berkontribusi pada SDG yang dipilih..." />
                             </div>
                         </div>
@@ -131,11 +131,11 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
 
             <div className="flex justify-between pt-2">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-lg font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

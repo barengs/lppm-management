@@ -59,13 +59,13 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
                 </div>
             )}
 
-            <div className="text-sm text-gray-500 bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="text-sm text-gray-500 bg-purple-50 border border-purple-200 rounded-sm p-4">
                 <strong className="text-purple-700">8 Bidang Strategis:</strong> Pilih bidang strategis nasional yang relevan dengan kegiatan PKM Anda dan uraikan kontribusinya.
             </div>
 
             <div className="space-y-5">
                 {fields.map((fld, idx) => (
-                    <div key={idx} className="border border-purple-200 rounded-xl overflow-hidden">
+                    <div key={idx} className="border border-purple-200 rounded-sm overflow-hidden">
                         <div className="bg-purple-50 px-5 py-3 border-b border-purple-200 flex items-center justify-between">
                             <span className="font-bold text-purple-800 text-sm">Bidang Strategis #{idx + 1}</span>
                             {fields.length > 1 && (
@@ -81,7 +81,7 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
                                     Bidang Strategis <span className="text-red-500">*</span>
                                 </label>
                                 <select required value={fld.field} onChange={e => update(idx, 'field', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-purple-500">
                                     <option value="">-- Pilih Bidang Strategis --</option>
                                     {STRATEGIC_FIELDS.map((sf, i) => (
                                         <option key={i} value={sf}>{sf}</option>
@@ -94,7 +94,7 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
                                 </label>
                                 <textarea required rows={3} value={fld.problem_statement}
                                     onChange={e => update(idx, 'problem_statement', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-purple-500"
                                     placeholder="Uraikan permasalahan yang melatarbelakangi bidang strategis ini dalam konteks PKM Anda..." />
                             </div>
                             <div>
@@ -103,7 +103,7 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
                                 </label>
                                 <textarea required rows={3} value={fld.description}
                                     onChange={e => update(idx, 'description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="Jelaskan bagaimana kegiatan PKM berkontribusi pada bidang strategis ini..." />
                             </div>
                         </div>
@@ -112,17 +112,17 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
             </div>
 
             <button type="button" onClick={addField}
-                className="w-full border-2 border-dashed border-purple-300 rounded-xl py-3 text-purple-700 font-semibold text-sm hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors">
+                className="w-full border-2 border-dashed border-purple-300 rounded-sm py-3 text-purple-700 font-semibold text-sm hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors">
                 <Plus size={16} /> Tambah Bidang Strategis
             </button>
 
             <div className="flex justify-between pt-2">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-lg font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

@@ -102,7 +102,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                     Judul Pengabdian <span className="text-red-500">*</span>
                 </label>
                 <textarea required rows={3}
-                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium"
+                    className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-green-500 transition-all font-medium"
                     placeholder="Masukkan judul lengkap proposal PKM..."
                     value={form.title}
                     onChange={e => set('title', e.target.value)} />
@@ -110,8 +110,8 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
 
             {/* Metadata Skema */}
             <div className="border border-gray-200 rounded-sm overflow-hidden">
-                <div className="bg-emerald-50 px-5 py-3 border-b border-emerald-200">
-                    <h4 className="font-bold text-emerald-800 text-sm">📋 Informasi Skema</h4>
+                <div className="bg-green-50 px-5 py-3 border-b border-green-200">
+                    <h4 className="font-bold text-green-800 text-sm">📋 Informasi Skema</h4>
                 </div>
                 <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -120,7 +120,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                         </label>
                         <select required value={form.scheme_group}
                             onChange={e => set('scheme_group', e.target.value)}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Kelompok Skema --</option>
                             {SCHEME_GROUPS.map((s, i) => <option key={i} value={s}>{s}</option>)}
                         </select>
@@ -131,7 +131,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                         </label>
                         <select required value={form.scope}
                             onChange={e => set('scope', e.target.value)}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Ruang Lingkup --</option>
                             {SCOPES.map((s, i) => <option key={i} value={s}>{s}</option>)}
                         </select>
@@ -142,7 +142,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                         </label>
                         <select required value={form.focus_area}
                             onChange={e => set('focus_area', e.target.value)}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Bidang Fokus --</option>
                             {FOCUS_AREAS.map((f, i) => <option key={i} value={f}>{f}</option>)}
                         </select>
@@ -153,7 +153,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                         </label>
                         <select required value={form.duration_years}
                             onChange={e => set('duration_years', parseInt(e.target.value))}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value={1}>1 Tahun</option>
                             <option value={2}>2 Tahun</option>
                             <option value={3}>3 Tahun</option>
@@ -166,7 +166,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                         <input type="number" required min={2020} max={2040}
                             value={form.first_year}
                             onChange={e => set('first_year', parseInt(e.target.value))}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-emerald-500" />
+                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500" />
                     </div>
                 </div>
             </div>
@@ -205,7 +205,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
 
             <div className="flex justify-end pt-2">
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-sm font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

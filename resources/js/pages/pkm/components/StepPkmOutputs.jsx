@@ -72,18 +72,18 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
     return (
         <form onSubmit={handleSave} className="space-y-5">
             {error && (
-                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" /><span>{error}</span>
                 </div>
             )}
 
-            <div className="text-sm text-gray-500 bg-teal-50 border border-teal-200 rounded-lg p-4">
+            <div className="text-sm text-gray-500 bg-teal-50 border border-teal-200 rounded-sm p-4">
                 <strong className="text-teal-700">Luaran Dijanjikan:</strong> Daftarkan semua luaran yang akan dihasilkan dari kegiatan PKM ini beserta target capaiannya.
             </div>
 
             <div className="space-y-4">
                 {outputs.map((out, idx) => (
-                    <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div key={idx} className="border border-gray-200 rounded-sm overflow-hidden shadow-sm">
                         <div className="bg-teal-50 px-5 py-3 border-b border-teal-200 flex items-center justify-between">
                             <span className="font-bold text-teal-800 text-sm">Luaran #{idx + 1}</span>
                             {outputs.length > 1 && (
@@ -99,7 +99,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                     Tahun Pelaksanaan
                                 </label>
                                 <select value={out.year} onChange={e => update(idx, 'year', parseInt(e.target.value))}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm">
                                     <option value={1}>Tahun 1</option>
                                     <option value={2}>Tahun 2</option>
                                     <option value={3}>Tahun 3</option>
@@ -111,7 +111,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                 </label>
                                 <select required value={out.output_group}
                                     onChange={e => update(idx, 'output_group', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500">
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-teal-500">
                                     <option value="">-- Pilih Kelompok --</option>
                                     {OUTPUT_GROUPS.map((g, i) => <option key={i} value={g}>{g}</option>)}
                                 </select>
@@ -122,7 +122,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                 </label>
                                 <input type="text" required value={out.output_type}
                                     onChange={e => update(idx, 'output_type', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-teal-500"
                                     placeholder="Contoh: Video kegiatan, Peningkatan Kualitas Produk" />
                             </div>
                             <div>
@@ -131,7 +131,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                 </label>
                                 <input type="text" required value={out.target_status}
                                     onChange={e => update(idx, 'target_status', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-teal-500"
                                     placeholder="Contoh: Unggah di Laman Youtube Lembaga / Tercapai" />
                             </div>
                             <div className="md:col-span-2">
@@ -140,7 +140,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                 </label>
                                 <textarea rows={3} value={out.notes}
                                     onChange={e => update(idx, 'notes', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
                                     placeholder="URL referensi atau keterangan detail capaian (contoh: https://www.youtube.com/@UIMmedia)" />
                             </div>
                         </div>
@@ -149,17 +149,17 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
             </div>
 
             <button type="button" onClick={addOutput}
-                className="w-full border-2 border-dashed border-teal-300 rounded-xl py-3 text-teal-700 font-semibold text-sm hover:bg-teal-50 flex items-center justify-center gap-2 transition-colors">
+                className="w-full border-2 border-dashed border-teal-300 rounded-sm py-3 text-teal-700 font-semibold text-sm hover:bg-teal-50 flex items-center justify-center gap-2 transition-colors">
                 <Plus size={16} /> Tambah Luaran
             </button>
 
             <div className="flex justify-between pt-2">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-emerald-700 text-white rounded-lg font-bold shadow hover:bg-emerald-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>
