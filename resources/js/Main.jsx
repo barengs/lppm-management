@@ -54,6 +54,10 @@ import AdminProposalDashboard from './pages/admin/proposals/Index';
 import ReviewerDashboard from './pages/reviewer/Index';
 import ReviewerProposalShow from './pages/reviewer/Show';
 
+// PKM Proposals
+import PkmIndex  from './pages/pkm/Index';
+import PkmCreate from './pages/pkm/Create';
+
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
 import KknStudentRegistration from './pages/kkn/Registration';
@@ -202,6 +206,10 @@ function App() {
                         <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
                         <Route path="proposals/create/:id?" element={<CreateProposal />} />
                         <Route path="proposals/:id" element={<ProposalShow />} />
+
+                        {/* PKM Module */}
+                        <Route path="pkm" element={<PkmIndex />} />
+                        <Route path="pkm/create/:id?" element={<PkmCreate />} />
 
                         {/* Admin Proposal Management */}
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />

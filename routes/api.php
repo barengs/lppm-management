@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JournalConsultationController;
 use App\Http\Controllers\KknRegistrationController;
 use App\Http\Controllers\ProposalController;
+use App\Http\Controllers\PkmProposalController;
 use App\Http\Controllers\MemberConsentController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\MasterScienceClusterController;
@@ -85,6 +86,17 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('proposals/{id}/steps', [ProposalController::class, 'saveStep']);
     Route::post('proposals/{id}/submit', [ProposalController::class, 'submit']);
     Route::get('proposals/{id}/endorsement', [ProposalController::class, 'downloadEndorsement']);
+
+    // PKM Proposal Workflow
+    Route::prefix('pkm-proposals')->group(function () {
+        Route::get('/', [PkmProposalController::class, 'index']);
+        Route::post('/', [PkmProposalController::class, 'store']);
+        Route::get('/{id}', [PkmProposalController::class, 'show']);
+        Route::post('/{id}/save-step', [PkmProposalController::class, 'saveStep']);
+        Route::post('/{id}/upload-document', [PkmProposalController::class, 'uploadDocument']);
+        Route::post('/{id}/submit', [PkmProposalController::class, 'submit']);
+        Route::delete('/{id}', [PkmProposalController::class, 'destroy']);
+    });
 
     // Admin Proposal Management
     Route::group(['prefix' => 'admin_proposals', 'middleware' => ['role:admin']], function () {

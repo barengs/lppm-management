@@ -45,7 +45,8 @@ export default function Sidebar() {
         {
             title: 'Penelitian & Pengabdian',
             items: [
-                { name: 'Daftar Proposal', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Daftar Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
                 { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
                 { name: 'Monitoring Usulan', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
                 { name: 'Tugas Review (BIMA)', icon: <ClipboardList size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
