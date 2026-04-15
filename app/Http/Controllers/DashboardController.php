@@ -72,11 +72,17 @@ class DashboardController extends Controller
                 ];
             });
 
+        // 5. Pending Consents Count (For current user)
+        $pendingConsentsCount = \App\Models\ProposalPersonnel::where('user_id', auth()->id())
+            ->where('is_confirmed', false)
+            ->count();
+
         return response()->json([
             'participants_per_period' => $participantsPerPeriod,
             'lecturer_count' => $lecturerCount,
             'locations_per_period' => $locationsPerPeriod,
-            'abmas_per_period' => $abmasPerPeriod
+            'abmas_per_period' => $abmasPerPeriod,
+            'pending_consents_count' => $pendingConsentsCount
         ]);
     }
 }

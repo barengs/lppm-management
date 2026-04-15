@@ -19,6 +19,9 @@ class ProposalPersonnel extends Model
         'is_confirmed',
         'sinta_score_3_years',
         'task_description',
+        'type',
+        'student_name',
+        'student_nim',
     ];
 
     public function proposal()

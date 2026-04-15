@@ -45,7 +45,8 @@ export default function Sidebar() {
         {
             title: 'Penelitian & Pengabdian',
             items: [
-                { name: 'Daftar Proposal', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Daftar Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
                 { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
                 { name: 'Monitoring Usulan', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
                 { name: 'Tugas Review (BIMA)', icon: <ClipboardList size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
@@ -84,6 +85,9 @@ export default function Sidebar() {
                 { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
                 { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
                 { name: 'Daftar Mahasiswa', icon: <Users size={20} />, path: '/master/students', permission: 'users.view' },
+                { name: 'Rumpun Ilmu', icon: <Shield size={20} />, path: '/master/science-clusters', permission: 'master_science_clusters.view' },
+                { name: 'Prioritas Riset', icon: <Star size={20} />, path: '/master/research-priorities', permission: 'master_research_priorities.view' },
+                { name: 'Target SDGs', icon: <Award size={20} />, path: '/master/sdgs', permission: 'master_selections.view' },
             ]
         },
         {

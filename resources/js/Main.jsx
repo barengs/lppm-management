@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateProposal from './pages/proposals/Create';
+import ProposalShow from './pages/proposals/Show';
 import ReviewIndex from './pages/reviews/Index';
 import ProposalsIndex from './pages/proposals/Index';
 import PostDetail from './pages/PostDetail';
@@ -36,6 +37,9 @@ import UsersIndex from './pages/admin/users/Index';
 import FacultiesIndex from './pages/admin/master/Faculties';
 import StudyProgramsIndex from './pages/admin/master/StudyPrograms';
 import StudentsIndex from './pages/admin/master/Students';
+import ScienceClustersIndex from './pages/admin/master-data/ScienceClustersIndex';
+import ResearchPrioritiesIndex from './pages/admin/master-data/ResearchPrioritiesIndex';
+import SdgIndex from './pages/admin/master-data/SdgIndex';
 
 import OrganizationAdminIndex from './pages/admin/organization/Index';
 import RolesIndex from './pages/admin/roles/Index';
@@ -49,6 +53,10 @@ import PagePageForm from './pages/admin/pages/Form';
 import AdminProposalDashboard from './pages/admin/proposals/Index';
 import ReviewerDashboard from './pages/reviewer/Index';
 import ReviewerProposalShow from './pages/reviewer/Show';
+
+// PKM Proposals
+import PkmIndex  from './pages/pkm/Index';
+import PkmCreate from './pages/pkm/Create';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -197,6 +205,11 @@ function App() {
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
                         <Route path="proposals/create/:id?" element={<CreateProposal />} />
+                        <Route path="proposals/:id" element={<ProposalShow />} />
+
+                        {/* PKM Module */}
+                        <Route path="pkm" element={<PkmIndex />} />
+                        <Route path="pkm/create/:id?" element={<PkmCreate />} />
 
                         {/* Admin Proposal Management */}
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />
@@ -257,6 +270,9 @@ function App() {
                         <Route path="master/schemes" element={<SchemesIndex />} />
                         <Route path="master/users" element={<UsersIndex />} />
                         <Route path="master/students" element={<StudentsIndex />} />
+                        <Route path="master/science-clusters" element={<ScienceClustersIndex />} />
+                        <Route path="master/research-priorities" element={<ResearchPrioritiesIndex />} />
+                        <Route path="master/sdgs" element={<SdgIndex />} />
 
                         {/* User Management */}
                         <Route path="admin/organization" element={<OrganizationAdminIndex />} />

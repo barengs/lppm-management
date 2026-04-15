@@ -6,8 +6,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JournalConsultationController;
 use App\Http\Controllers\KknRegistrationController;
 use App\Http\Controllers\ProposalController;
+use App\Http\Controllers\PkmProposalController;
 use App\Http\Controllers\MemberConsentController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\MasterScienceClusterController;
+use App\Http\Controllers\MasterResearchPriorityController;
+use App\Http\Controllers\MasterSelectionController;
 
 Route::group([
     'middleware' => 'api',
@@ -83,6 +87,17 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('proposals/{id}/submit', [ProposalController::class, 'submit']);
     Route::get('proposals/{id}/endorsement', [ProposalController::class, 'downloadEndorsement']);
 
+    // PKM Proposal Workflow
+    Route::prefix('pkm-proposals')->group(function () {
+        Route::get('/', [PkmProposalController::class, 'index']);
+        Route::post('/', [PkmProposalController::class, 'store']);
+        Route::get('/{id}', [PkmProposalController::class, 'show']);
+        Route::post('/{id}/save-step', [PkmProposalController::class, 'saveStep']);
+        Route::post('/{id}/upload-document', [PkmProposalController::class, 'uploadDocument']);
+        Route::post('/{id}/submit', [PkmProposalController::class, 'submit']);
+        Route::delete('/{id}', [PkmProposalController::class, 'destroy']);
+    });
+
     // Admin Proposal Management
     Route::group(['prefix' => 'admin_proposals', 'middleware' => ['role:admin']], function () {
         Route::get('/', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index']);
@@ -108,6 +123,11 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('science-clusters', [MasterDataController::class, 'scienceClusters']);
         Route::get('research-priorities', [MasterDataController::class, 'researchPriorities']);
         Route::get('selections/{type}', [MasterDataController::class, 'selections']);
+        
+        // Admin CRUD for Master Data
+        Route::apiResource('master-science-clusters', MasterScienceClusterController::class);
+        Route::apiResource('master-research-priorities', MasterResearchPriorityController::class);
+        Route::apiResource('master-selections', MasterSelectionController::class);
     });
     
     Route::apiResource('proposals', ProposalController::class);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import { PlusCircle, FileText, MessageSquare, History } from 'lucide-react';
+import { PlusCircle, FileText, MessageSquare, History, Eye } from 'lucide-react';
 import RevisionHistory from './components/RevisionHistory';
 
 export default function ProposalsIndex() {
@@ -94,6 +94,13 @@ export default function ProposalsIndex() {
                                         </div>
                                     </div>
                                     <div className="flex items-center">
+                                        <Link
+                                            to={`/proposals/${proposal.id}`}
+                                            className="mr-3 p-1.5 bg-gray-50 text-gray-500 rounded-full hover:bg-green-50 hover:text-green-700 transition-colors border border-gray-200"
+                                            title="Lihat Detail"
+                                        >
+                                            <Eye size={16} />
+                                        </Link>
                                         <span className={`px-2.5 py-0.5 inline-flex text-xs leading-4 font-bold rounded-full uppercase tracking-wide 
                                             ${proposal.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                                               proposal.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' : 

@@ -66,7 +66,7 @@ export default function StepRAB({ proposalId, token, onNext, onBack, initialData
         setError(null);
         try {
             await axios.post(`/api/proposals/${proposalId}/steps`, {
-                step: 4,
+                step: 5,
                 budget_items: budgetItems
             }, {
                 headers: { Authorization: `Bearer ${token}` }
