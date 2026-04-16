@@ -2,39 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const SCHEME_GROUPS = [
-    'Penelitian Dasar',
-    'Penelitian Terapan',
-    'Penelitian Pengembangan',
-    'Pengabdian Berbasis Riset',
-    'Pemberdayaan Berbasis Masyarakat',
-    'Pemberdayaan Kemitraan',
-    'Penugasan',
-];
-
-const SCOPES = [
-    'Pemberdayaan Kemitraan Masyarakat',
-    'Pemberdayaan Berbasis Masyarakat',
-    'Pengembangan Wilayah Terpadu',
-    'Hilirisasi Hasil Riset Perguruan Tinggi',
-    'Pengembangan Desa Mitra',
-];
-
-const FOCUS_AREAS = [
-    'Kesehatan',
-    'Pangan',
-    'Energi',
-    'Teknologi Informasi',
-    'Lingkungan',
-    'Sosial Humaniora',
-    'Pendidikan',
-    'Ekonomi',
-    'Pertanian',
-    'Kelautan dan Perikanan',
-    'Industri Kreatif',
-    'Lainnya',
-];
-
 export default function StepPkmIdentity({ proposalId, token, onNext, initialData }) {
     const [form, setForm] = useState({
         title:             '',
@@ -48,6 +15,30 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
     });
     const [loading, setLoading] = useState(false);
     const [error,   setError]   = useState(null);
+
+    // Dynamic master data
+    const [schemeGroups, setSchemeGroups] = useState([]);
+    const [scopes,       setScopes]       = useState([]);
+    const [focusAreas,   setFocusAreas]   = useState([]);
+
+    // Fetch all master data types in parallel
+    useEffect(() => {
+        const fetchMaster = async () => {
+            try {
+                const [sg, sc, fa] = await Promise.all([
+                    axios.get('/api/pkm-master-data?type=scheme_group', { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get('/api/pkm-master-data?type=scope',        { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get('/api/pkm-master-data?type=focus_area',   { headers: { Authorization: `Bearer ${token}` } }),
+                ]);
+                setSchemeGroups(sg.data);
+                setScopes(sc.data);
+                setFocusAreas(fa.data);
+            } catch {
+                // fallback: keep empty, form still works
+            }
+        };
+        fetchMaster();
+    }, [token]);
 
     useEffect(() => {
         if (initialData) {
@@ -122,7 +113,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                             onChange={e => set('scheme_group', e.target.value)}
                             className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Kelompok Skema --</option>
-                            {SCHEME_GROUPS.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                            {schemeGroups.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                         </select>
                     </div>
                     <div>
@@ -133,7 +124,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                             onChange={e => set('scope', e.target.value)}
                             className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Ruang Lingkup --</option>
-                            {SCOPES.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                            {scopes.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                         </select>
                     </div>
                     <div>
@@ -144,7 +135,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                             onChange={e => set('focus_area', e.target.value)}
                             className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
                             <option value="">-- Pilih Bidang Fokus --</option>
-                            {FOCUS_AREAS.map((f, i) => <option key={i} value={f}>{f}</option>)}
+                            {focusAreas.map((f) => <option key={f.id} value={f.name}>{f.name}</option>)}
                         </select>
                     </div>
                     <div>

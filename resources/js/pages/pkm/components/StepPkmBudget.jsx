@@ -2,17 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, AlertCircle, DollarSign } from 'lucide-react';
 import axios from 'axios';
 
-const COST_GROUPS = [
-    'Teknologi dan Inovasi',
-    'Biaya Upah dan Jasa',
-    'Biaya Pelatihan',
-    'Biaya Perjalanan',
-    'Bahan Habis Pakai',
-    'Sewa',
-    'Diseminasi Hasil',
-    'Lainnya',
-];
-
 const emptyItem = {
     year:       1,
     cost_group: '',
@@ -30,9 +19,23 @@ const formatRp = (val) => {
 };
 
 export default function StepPkmBudget({ proposalId, token, onNext, onBack, initialData }) {
-    const [items,   setItems]   = useState([{ ...emptyItem }]);
-    const [loading, setLoading] = useState(false);
-    const [error,   setError]   = useState(null);
+    const [items,      setItems]      = useState([{ ...emptyItem }]);
+    const [costGroups, setCostGroups] = useState([]);
+    const [loading,    setLoading]    = useState(false);
+    const [error,      setError]      = useState(null);
+
+    // Fetch dynamic master data
+    useEffect(() => {
+        const fetchMaster = async () => {
+            try {
+                const res = await axios.get('/api/pkm-master-data?type=cost_group', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setCostGroups(res.data);
+            } catch { /* fallback */ }
+        };
+        fetchMaster();
+    }, [token]);
 
     useEffect(() => {
         if (initialData?.budget_items?.length > 0) {
@@ -126,11 +129,14 @@ export default function StepPkmBudget({ proposalId, token, onNext, onBack, initi
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">
                                     Kelompok Biaya <span className="text-red-500">*</span>
                                 </label>
-                                <select required value={item.cost_group}
-                                    onChange={e => update(idx, 'cost_group', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
+                                <select required
+                                    className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-green-500"
+                                    value={item.cost_group}
+                                    onChange={e => update(idx, 'cost_group', e.target.value)}>
                                     <option value="">-- Pilih Kelompok --</option>
-                                    {COST_GROUPS.map((g, i) => <option key={i} value={g}>{g}</option>)}
+                                    {costGroups.map((g) => (
+                                        <option key={g.id} value={g.name}>{g.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 import { FileText, ClipboardList, Search, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-export default function ReviewerProposalDashboard() {
+export default function ReviewerPkmIndex() {
     const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function ReviewerProposalDashboard() {
     const fetchProposals = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get('/api/reviewer_proposals', {
+            const res = await axios.get('/api/reviewer_pkm', {
                 headers: { 
                     Authorization: `Bearer ${token}`,
                     'Accept': 'application/json'
@@ -26,7 +26,7 @@ export default function ReviewerProposalDashboard() {
             });
             setProposals(res.data);
         } catch (err) {
-            toast.error("Gagal memuat daftar usulan.");
+            toast.error("Gagal memuat daftar usulan PKM.");
         } finally {
             setIsLoading(false);
         }
@@ -55,10 +55,10 @@ export default function ReviewerProposalDashboard() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <ClipboardList className="text-green-700" size={28} />
-                        Daftar Usulan Penelitian
+                        Daftar Usulan PKM
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        Daftar usulan penelitian yang tersedia untuk Anda nilai.
+                        Daftar usulan PKM yang tersedia untuk Anda nilai.
                     </p>
                 </div>
                 <div className="relative w-full md:w-72">
@@ -70,18 +70,6 @@ export default function ReviewerProposalDashboard() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                </div>
-            </div>
-
-            {/* Info Banner */}
-            <div className="bg-green-50 border border-green-200 rounded-sm p-4 flex items-start gap-3">
-                <ClipboardList size={20} className="text-green-700 mt-0.5 shrink-0" />
-                <div className="text-sm text-green-800 leading-relaxed">
-                    <p className="font-bold mb-0.5">Sistem Penilaian Berbasis Peran:</p>
-                    <p>
-                        Sebagai Reviewer, Anda dapat mengakses semua usulan yang telah masuk ke tahap <span className="font-semibold text-green-700">Penilaian (Review)</span>. 
-                        Silakan pilih usulan dari daftar di bawah untuk mulai memberikan penilaian.
-                    </p>
                 </div>
             </div>
 
@@ -101,9 +89,9 @@ export default function ReviewerProposalDashboard() {
                     ) : filteredProposals.length === 0 ? (
                         <div className="p-12 text-center space-y-3">
                             <ClipboardList size={40} className="mx-auto text-gray-300" />
-                            <p className="font-semibold text-gray-500">Belum ada usulan yang tersedia</p>
+                            <p className="font-semibold text-gray-500">Belum ada usulan PKM yang tersedia</p>
                             <p className="text-sm text-gray-400 max-w-sm mx-auto">
-                                Saat ini tidak ada usulan baru yang menunggu penilaian dalam pool.
+                                Saat ini tidak ada usulan PKM baru yang menunggu penilaian.
                             </p>
                         </div>
                     ) : filteredProposals.map((p) => (
@@ -125,7 +113,7 @@ export default function ReviewerProposalDashboard() {
                             </div>
                             <div className="shrink-0">
                                 <Link 
-                                    to={`/reviewer/proposals/${p.id}`}
+                                    to={`/reviewer/pkm/${p.id}`}
                                     className="px-5 py-2 bg-green-700 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-green-800 transition-all"
                                 >
                                     Berikan Penilaian <ArrowRight size={14} />

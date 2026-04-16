@@ -28,6 +28,7 @@ class PkmProposalController extends Controller
                 $q->where('user_id', $user->id)
                   ->orWhereHas('personnel', function ($sq) use ($user) {
                       $sq->where('user_id', $user->id)
+                         ->where('type', 'dosen') // Lecturers only see where they are members
                          ->where('is_confirmed', true);
                   });
             })

@@ -2,34 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-// Sesuai referensi BIMA - Kelompok Luaran
-const OUTPUT_GROUPS = [
-    // Luaran Wajib
-    'Artikel di Jurnal Internasional',
-    'Artikel di Jurnal Nasional Terakreditasi',
-    'Artikel di Prosiding Internasional',
-    'Artikel di Prosiding Nasional',
-    // Luaran Tambahan PKM
-    'Karya audio visual',
-    'Mitra Non Produktif Menjadi Produktif',
-    'Peningkatan level keberdayaan mitra: Aspek Produksi',
-    'Peningkatan level keberdayaan mitra: Aspek Manajemen',
-    'Peningkatan level keberdayaan mitra: Aspek Sosial Kemasyarakatan',
-    'Buku / Buku Ajar',
-    'Hak Kekayaan Intelektual (HKI)',
-    'Teknologi Tepat Guna',
-    'Model / Prototype / Desain / Rekayasa Sosial',
-    'Produk Tersertifikasi',
-    'Publikasi Media Massa',
-    'Lainnya',
-];
-
 const emptyOutput = { year: 1, output_group: '', output_type: '', target_status: '', notes: '' };
 
 export default function StepPkmOutputs({ proposalId, token, onNext, onBack, initialData }) {
-    const [outputs, setOutputs] = useState([{ ...emptyOutput }]);
-    const [loading, setLoading] = useState(false);
-    const [error,   setError]   = useState(null);
+    const [outputs,       setOutputs]      = useState([{ ...emptyOutput }]);
+    const [outputGroups,  setOutputGroups] = useState([]);
+    const [loading,       setLoading]      = useState(false);
+    const [error,         setError]        = useState(null);
+
+    // Fetch dynamic master data
+    useEffect(() => {
+        const fetchMaster = async () => {
+            try {
+                const res = await axios.get('/api/pkm-master-data?type=output_group', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setOutputGroups(res.data);
+            } catch {
+                // fallback if API fails
+            }
+        };
+        fetchMaster();
+    }, [token]);
 
     useEffect(() => {
         if (initialData?.outputs?.length > 0) {
@@ -113,7 +107,9 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
                                     onChange={e => update(idx, 'output_group', e.target.value)}
                                     className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-teal-500">
                                     <option value="">-- Pilih Kelompok --</option>
-                                    {OUTPUT_GROUPS.map((g, i) => <option key={i} value={g}>{g}</option>)}
+                                    {outputGroups.map((g) => (
+                                        <option key={g.id} value={g.name}>{g.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>

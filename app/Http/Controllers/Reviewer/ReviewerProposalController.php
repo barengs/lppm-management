@@ -19,11 +19,19 @@ class ReviewerProposalController extends Controller
     {
         $user = auth('api')->user();
         
-        $proposals = Proposal::with(['scheme', 'user'])
-            ->whereHas('reviews', function($q) use ($user) {
-                $q->where('reviewer_id', $user->id);
-            })
-            ->get();
+        // If user is a research reviewer, they see all proposals in 'review' status (Pool)
+        if ($user->hasRole(['admin', 'reviewer_penelitian'])) {
+            $proposals = Proposal::with(['scheme', 'user'])
+                ->where('status', 'review')
+                ->get();
+        } else {
+            // Traditional Plotting fallback
+            $proposals = Proposal::with(['scheme', 'user'])
+                ->whereHas('reviews', function($q) use ($user) {
+                    $q->where('reviewer_id', $user->id);
+                })
+                ->get();
+        }
 
         return response()->json($proposals);
     }
@@ -36,10 +44,14 @@ class ReviewerProposalController extends Controller
         $user = auth('api')->user();
         $proposal = Proposal::with(['scheme', 'user', 'identity', 'content', 'outputs', 'budgetItems'])->findOrFail($id);
         
-        $review = Review::where('proposal_id', $id)
-            ->where('reviewer_id', $user->id)
-            ->with('details.criteria')
-            ->firstOrFail();
+        // Find or create a review record for this user and proposal
+        $review = Review::firstOrCreate(
+            ['proposal_id' => $id, 'reviewer_id' => $user->id],
+            ['status' => 'pending', 'score' => 0]
+        );
+        
+        // Load details with criteria
+        $review->load('details.criteria');
 
         $criteria = MasterReviewCriteria::orderBy('sort_order')->get();
 

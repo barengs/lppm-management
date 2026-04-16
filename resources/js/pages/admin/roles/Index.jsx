@@ -16,7 +16,8 @@ const MODULE_LABELS = {
     posts: 'Berita & Artikel',
     documents: 'Arsip Dokumen',
     galleries: 'Galeri Foto',
-    proposals: 'Proposal Hibah',
+    proposals: 'Proposal Penelitian',
+    pkm_proposals: 'Proposal PKM',
     reports: 'Laporan Hibah',
     kkn_locations: 'Lokasi KKN',
     kkn_registrations: 'Pendaftaran KKN',
@@ -26,6 +27,9 @@ const MODULE_LABELS = {
     kkn_postos: 'Manajemen Posko',
     organization: 'Struktur Organisasi',
     kkn_participants: 'Peserta KKN',
+    master_science_clusters: 'Rumpun Ilmu',
+    master_research_priorities: 'Prioritas Riset',
+    master_selections: 'Master SDGs',
     dashboard: 'Dashboard Stats',
 };
 

@@ -7,6 +7,10 @@ use App\Http\Controllers\JournalConsultationController;
 use App\Http\Controllers\KknRegistrationController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\PkmProposalController;
+use App\Http\Controllers\Admin\AdminProposalController;
+use App\Http\Controllers\Admin\AdminPkmController;
+use App\Http\Controllers\Reviewer\ReviewerProposalController;
+use App\Http\Controllers\Reviewer\ReviewerPkmController;
 use App\Http\Controllers\MemberConsentController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\MasterScienceClusterController;
@@ -87,7 +91,28 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('proposals/{id}/submit', [ProposalController::class, 'submit']);
     Route::get('proposals/{id}/endorsement', [ProposalController::class, 'downloadEndorsement']);
 
-    // PKM Proposal Workflow
+    // Monitoring Admin (Terpisah)
+    Route::group(['middleware' => ['role:admin']], function () {
+        // Monitoring Penelitian
+        Route::prefix('admin_proposals')->group(function () {
+            Route::get('/', [AdminProposalController::class, 'index']);
+            Route::get('/stats', [AdminProposalController::class, 'stats']);
+            Route::get('/reviewers', [AdminProposalController::class, 'reviewers']);
+            Route::post('/{id}/assign', [AdminProposalController::class, 'assignReviewer']);
+            Route::post('/{id}/finalize', [AdminProposalController::class, 'finalize']);
+        });
+
+        // Monitoring PKM
+        Route::prefix('admin_pkm')->group(function () {
+            Route::get('/', [AdminPkmController::class, 'index']);
+            Route::get('/stats', [AdminPkmController::class, 'stats']);
+            Route::get('/reviewers', [AdminPkmController::class, 'reviewers']);
+            Route::post('/{id}/assign', [AdminPkmController::class, 'assignReviewer']);
+            Route::post('/{id}/finalize', [AdminPkmController::class, 'finalize']);
+        });
+    });
+
+    // Workflow Pengusul (Dosen)
     Route::prefix('pkm-proposals')->group(function () {
         Route::get('/', [PkmProposalController::class, 'index']);
         Route::post('/', [PkmProposalController::class, 'store']);
@@ -98,20 +123,29 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/{id}', [PkmProposalController::class, 'destroy']);
     });
 
-    // Admin Proposal Management
-    Route::group(['prefix' => 'admin_proposals', 'middleware' => ['role:admin']], function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index']);
-        Route::get('/stats', [\App\Http\Controllers\Admin\AdminProposalController::class, 'stats']);
-        Route::get('/reviewers', [\App\Http\Controllers\Admin\AdminProposalController::class, 'reviewers']);
-        Route::post('/{id}/assign', [\App\Http\Controllers\Admin\AdminProposalController::class, 'assignReviewer']);
-        Route::post('/{id}/finalize', [\App\Http\Controllers\Admin\AdminProposalController::class, 'finalize']);
-    });
+    // PKM Master Data (Dynamic Dropdowns)
+    Route::get('pkm-master-data/types', [\App\Http\Controllers\PkmMasterDataController::class, 'types']);
+    Route::get('pkm-master-data/all',   [\App\Http\Controllers\PkmMasterDataController::class, 'all']);
+    Route::get('pkm-master-data',       [\App\Http\Controllers\PkmMasterDataController::class, 'index']); // public-ish
+    Route::post('pkm-master-data',      [\App\Http\Controllers\PkmMasterDataController::class, 'store']);
+    Route::put('pkm-master-data/{id}',  [\App\Http\Controllers\PkmMasterDataController::class, 'update']);
+    Route::delete('pkm-master-data/{id}', [\App\Http\Controllers\PkmMasterDataController::class, 'destroy']);
 
     // Reviewer Portal
-    Route::group(['prefix' => 'reviewer_proposals', 'middleware' => ['role:reviewer|admin']], function () {
-        Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'index']);
-        Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'show']);
-        Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'submitReview']);
+    Route::group(['middleware' => ['role:reviewer|admin']], function () {
+        // Review Penelitian
+        Route::prefix('reviewer_proposals')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'index']);
+            Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'show']);
+            Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'submitReview']);
+        });
+
+        // Review PKM
+        Route::prefix('reviewer_pkm')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerPkmController::class, 'index']);
+            Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerPkmController::class, 'show']);
+            Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerPkmController::class, 'submitReview']);
+        });
     });
     
     // Member Consent

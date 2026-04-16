@@ -57,6 +57,10 @@ import ReviewerProposalShow from './pages/reviewer/Show';
 // PKM Proposals
 import PkmIndex  from './pages/pkm/Index';
 import PkmCreate from './pages/pkm/Create';
+import PkmMasterDataIndex from './pages/admin/pkm-master/Index';
+import AdminPkmDashboard from './pages/admin/pkm/Index';
+import ReviewerPkmIndex from './pages/reviewer/pkm/Index';
+import ReviewerPkmShow from './pages/reviewer/pkm/Show';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -217,6 +221,8 @@ function App() {
                         {/* Reviewer Portal */}
                         <Route path="reviewer/dashboard" element={<ReviewerDashboard />} />
                         <Route path="reviewer/proposals/:id" element={<ReviewerProposalShow />} />
+                        <Route path="reviewer/pkm" element={<ReviewerPkmIndex />} />
+                        <Route path="reviewer/pkm/:id" element={<ReviewerPkmShow />} />
 
                         {/* Program Activity */}
                         <Route path="reports" element={<ReportsIndex />} />
@@ -273,11 +279,13 @@ function App() {
                         <Route path="master/science-clusters" element={<ScienceClustersIndex />} />
                         <Route path="master/research-priorities" element={<ResearchPrioritiesIndex />} />
                         <Route path="master/sdgs" element={<SdgIndex />} />
+                        <Route path="master/pkm" element={<PkmMasterDataIndex />} />
 
                         {/* User Management */}
                         <Route path="admin/organization" element={<OrganizationAdminIndex />} />
                         <Route path="admin/roles" element={<RolesIndex />} />
-                        <Route path="admin/permissions" element={<PermissionsIndex />} />
+                        <Route path="admin/proposals" element={<AdminProposalDashboard />} />
+                        <Route path="admin/pkm" element={<AdminPkmDashboard />} />
                         <Route path="admin/menus" element={<MenuIndex />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />

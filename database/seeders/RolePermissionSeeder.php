@@ -28,6 +28,7 @@ class RolePermissionSeeder extends Seeder
             'documents', 
             'galleries',
             'proposals',
+            'pkm_proposals',
             'reports',
             'kkn_locations', // Prev: kkn.manage-locations
             'kkn_registrations', // Prev: kkn.manage-registrations
@@ -46,6 +47,7 @@ class RolePermissionSeeder extends Seeder
             'posts' => ['publish'],
             'documents' => ['publish'],
             'proposals' => ['review', 'approve', 'reject'],
+            'pkm_proposals' => ['submit', 'review', 'approve', 'reject'],
             'kkn_registrations' => ['verify', 'approve', 'reject'], 
             'kkn_reports' => ['review', 'approve', 'reject', 'revise'],
             'kkn_guidance' => ['reply', 'close'],
@@ -104,6 +106,7 @@ class RolePermissionSeeder extends Seeder
             $roleDosen->syncPermissions([
                 'dashboard.view',
                 'proposals.view', 'proposals.create', 'proposals.edit', 'proposals.delete',
+                'pkm_proposals.view', 'pkm_proposals.create', 'pkm_proposals.edit', 'pkm_proposals.delete', 'pkm_proposals.submit',
                 'reports.view', 'reports.create',
                 'documents.view',
                 'posts.view',
@@ -126,6 +129,27 @@ class RolePermissionSeeder extends Seeder
             $roleReviewer->syncPermissions([
                 'dashboard.view',
                 'proposals.view', 'proposals.review', 'proposals.approve', 'proposals.reject',
+                'pkm_proposals.view', 'pkm_proposals.review',
+                'reports.view',
+                'documents.view',
+                'posts.view',
+            ]);
+
+            // REVIEWER PENELITIAN (Research)
+            $roleReviewerPenelitian = Role::firstOrCreate(['name' => 'reviewer_penelitian', 'guard_name' => $guard]);
+            $roleReviewerPenelitian->syncPermissions([
+                'dashboard.view',
+                'proposals.view', 'proposals.review', 'proposals.approve', 'proposals.reject',
+                'reports.view',
+                'documents.view',
+                'posts.view',
+            ]);
+
+            // REVIEWER PKM (Community Service)
+            $roleReviewerPkm = Role::firstOrCreate(['name' => 'reviewer_pkm', 'guard_name' => $guard]);
+            $roleReviewerPkm->syncPermissions([
+                'dashboard.view',
+                'pkm_proposals.view', 'pkm_proposals.review', 'pkm_proposals.approve', 'pkm_proposals.reject',
                 'reports.view',
                 'documents.view',
                 'posts.view',

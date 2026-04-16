@@ -19,7 +19,7 @@ class AdminProposalController extends Controller
         $query = Proposal::with(['scheme', 'user', 'reviews.reviewer'])
             ->where('status', '!=', 'draft');
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -48,7 +48,7 @@ class AdminProposalController extends Controller
     public function assignReviewer(Request $request, $id)
     {
         $validated = $request->validate([
-            'reviewer_id' => 'required|exists:users,id',
+            'reviewer_id' => 'nullable|exists:users,id',
         ]);
 
         $proposal = Proposal::findOrFail($id);
@@ -56,14 +56,16 @@ class AdminProposalController extends Controller
         // Update proposal status to review
         $proposal->update(['status' => 'review']);
 
-        // Create or update review entry
-        $review = Review::updateOrCreate(
-            ['proposal_id' => $id, 'reviewer_id' => $validated['reviewer_id']],
-            ['decision' => 'pending']
-        );
+        if (!empty($validated['reviewer_id'])) {
+            // Traditional explicit mapping if provided
+            $review = Review::updateOrCreate(
+                ['proposal_id' => $id, 'reviewer_id' => $validated['reviewer_id']],
+                ['status' => 'pending']
+            );
+        }
 
         return response()->json([
-            'message' => 'Reviewer berhasil ditugaskan.',
+            'message' => 'Proposal berhasil dibuka untuk penelaahan.',
             'proposal' => $proposal->load('reviews.reviewer')
         ]);
     }
@@ -73,7 +75,14 @@ class AdminProposalController extends Controller
      */
     public function reviewers()
     {
-        $reviewers = User::role('reviewer')->get(['id', 'name', 'email']);
+        // Fetch users specifically with reviewer_penelitian role
+        $reviewers = User::role('reviewer_penelitian')->get(['id', 'name', 'email']);
+        
+        // Fallback to legacy 'reviewer' role if no specialty reviewers found yet
+        if ($reviewers->isEmpty()) {
+            $reviewers = User::role('reviewer')->get(['id', 'name', 'email']);
+        }
+
         return response()->json($reviewers);
     }
 

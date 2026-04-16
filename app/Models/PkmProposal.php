@@ -65,4 +65,9 @@ class PkmProposal extends Model
     {
         return $this->hasMany(PkmDocument::class);
     }
+
+    public function pkmReviews()
+    {
+        return $this->hasMany(PkmReview::class);
+    }
 }

@@ -47,9 +47,10 @@ export default function Sidebar() {
             items: [
                 { name: 'Daftar Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
                 { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
-                { name: 'Review Proposal', icon: <Star size={20} />, path: '/reviews', permission: 'proposals.review' },
-                { name: 'Monitoring Usulan', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
-                { name: 'Tugas Review (BIMA)', icon: <ClipboardList size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
+                { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
+                { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
+                { name: 'Penilaian Penelitian', icon: <Star size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
+                { name: 'Penilaian PKM', icon: <Star size={20} />, path: '/reviewer/pkm', permission: 'pkm_proposals.review' },
                 { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
             ]
         },
@@ -88,6 +89,7 @@ export default function Sidebar() {
                 { name: 'Rumpun Ilmu', icon: <Shield size={20} />, path: '/master/science-clusters', permission: 'master_science_clusters.view' },
                 { name: 'Prioritas Riset', icon: <Star size={20} />, path: '/master/research-priorities', permission: 'master_research_priorities.view' },
                 { name: 'Target SDGs', icon: <Award size={20} />, path: '/master/sdgs', permission: 'master_selections.view' },
+                { name: 'Master Data PKM', icon: <Settings size={20} />, path: '/master/pkm', permission: 'admin' },
             ]
         },
         {
