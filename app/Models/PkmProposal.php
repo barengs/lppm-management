@@ -70,4 +70,9 @@ class PkmProposal extends Model
     {
         return $this->hasMany(PkmReview::class);
     }
+
+    public function focusArea()
+    {
+        return $this->belongsTo(MasterResearchPriority::class, 'focus_area');
+    }
 }

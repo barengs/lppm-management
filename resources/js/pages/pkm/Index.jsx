@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, FileHeart, ChevronRight, Calendar, Users, DollarSign, Clock } from 'lucide-react';
+import { Plus, FileHeart, ChevronRight, Calendar, DollarSign, Clock, Eye, ClipboardCheck } from 'lucide-react';
+import ReportModal from '../proposals/components/ReportModal';
 
 const STATUS_MAP = {
     draft:     { label: 'Draft',       bg: 'bg-gray-100',   text: 'text-gray-700' },
@@ -21,6 +22,8 @@ export default function PkmIndex() {
     const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading,   setLoading]   = useState(true);
+    const [selectedProposal, setSelectedProposal] = useState(null);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     useEffect(() => {
         axios.get('/api/pkm-proposals', { headers: { Authorization: `Bearer ${token}` } })
@@ -69,7 +72,6 @@ export default function PkmIndex() {
                                 <div className="p-5">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
-                                            {/* Title row */}
                                             <div className="flex items-center gap-2 flex-wrap mb-1">
                                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}>
                                                     {status.label}
@@ -78,11 +80,25 @@ export default function PkmIndex() {
                                             </div>
                                             <h3 className="font-bold text-gray-800 text-base leading-snug line-clamp-2">{p.title}</h3>
                                         </div>
-                                        <Link to={p.status === 'draft' ? `/pkm/create/${p.id}` : `/pkm/${p.id}`}
-                                            className="shrink-0 flex items-center gap-1 text-xs text-green-700 font-semibold hover:underline">
-                                            {p.status === 'draft' ? 'Lanjutkan' : 'Lihat Detail'}
-                                            <ChevronRight size={14} />
-                                        </Link>
+                                        <div className="flex items-center gap-1">
+                                            <Link to={p.status === 'draft' ? `/pkm/create/${p.id}` : `/pkm/${p.id}`}
+                                                className="p-1.5 text-gray-400 hover:text-green-700 hover:bg-green-50 rounded-sm"
+                                                title="Lihat Detail">
+                                                <Eye size={18} />
+                                            </Link>
+                                            {p.status === 'accepted' && (
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedProposal(p);
+                                                        setIsReportOpen(true);
+                                                    }}
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
+                                                    title="Laporan Kemajuan/Akhir"
+                                                >
+                                                    <ClipboardCheck size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Meta */}
@@ -127,6 +143,14 @@ export default function PkmIndex() {
                     })}
                 </div>
             )}
+
+            <ReportModal
+                isOpen={isReportOpen}
+                onClose={() => setIsReportOpen(false)}
+                proposalId={selectedProposal?.id}
+                title={selectedProposal?.title}
+                type="pkm"
+            />
         </div>
     );
 }

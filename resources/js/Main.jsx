@@ -61,6 +61,8 @@ import PkmMasterDataIndex from './pages/admin/pkm-master/Index';
 import AdminPkmDashboard from './pages/admin/pkm/Index';
 import ReviewerPkmIndex from './pages/reviewer/pkm/Index';
 import ReviewerPkmShow from './pages/reviewer/pkm/Show';
+import PkmShow from './pages/pkm/Show';
+import AdminReportDashboard from './pages/admin/reports/Index';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -214,6 +216,7 @@ function App() {
                         {/* PKM Module */}
                         <Route path="pkm" element={<PkmIndex />} />
                         <Route path="pkm/create/:id?" element={<PkmCreate />} />
+                        <Route path="pkm/:id" element={<PkmShow />} />
 
                         {/* Admin Proposal Management */}
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />
@@ -286,6 +289,7 @@ function App() {
                         <Route path="admin/roles" element={<RolesIndex />} />
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />
                         <Route path="admin/pkm" element={<AdminPkmDashboard />} />
+                        <Route path="admin/reports" element={<AdminReportDashboard />} />
                         <Route path="admin/menus" element={<MenuIndex />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />

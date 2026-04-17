@@ -100,6 +100,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('/reviewers', [AdminProposalController::class, 'reviewers']);
             Route::post('/{id}/assign', [AdminProposalController::class, 'assignReviewer']);
             Route::post('/{id}/finalize', [AdminProposalController::class, 'finalize']);
+            Route::post('/batch-assign', [AdminProposalController::class, 'batchAssign']);
         });
 
         // Monitoring PKM
@@ -109,6 +110,13 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('/reviewers', [AdminPkmController::class, 'reviewers']);
             Route::post('/{id}/assign', [AdminPkmController::class, 'assignReviewer']);
             Route::post('/{id}/finalize', [AdminPkmController::class, 'finalize']);
+            Route::post('/batch-assign', [AdminPkmController::class, 'batchAssign']);
+        });
+
+        // Report Monitoring Admin
+        Route::prefix('admin_reports')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ReportController::class, 'adminIndex']);
+            Route::put('/{id}', [\App\Http\Controllers\ReportController::class, 'update']);
         });
     });
 
@@ -289,6 +297,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('galleries', App\Http\Controllers\GalleryController::class);
     Route::apiResource('organization-members', App\Http\Controllers\OrganizationMemberController::class);
     Route::get('surveys', [App\Http\Controllers\SurveyController::class, 'index']);
+
+    // Report Submission (Researcher)
+    Route::get('reports', [\App\Http\Controllers\ReportController::class, 'index']);
+    Route::post('reports', [\App\Http\Controllers\ReportController::class, 'store']);
+    Route::get('reports/{id}/download', [\App\Http\Controllers\ReportController::class, 'download']);
 
     // Menu Management
     Route::post('system-settings', [App\Http\Controllers\SystemSettingController::class, 'update']); // Admin Update (Protected by Role check in FE/Controller)

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import { PlusCircle, FileText, MessageSquare, History, Eye } from 'lucide-react';
+import { PlusCircle, FileText, MessageSquare, History, Eye, ClipboardCheck } from 'lucide-react';
 import RevisionHistory from './components/RevisionHistory';
+import ReportModal from './components/ReportModal';
 
 export default function ProposalsIndex() {
     const { token } = useAuth();
@@ -11,6 +12,7 @@ export default function ProposalsIndex() {
     const [loading, setLoading] = useState(true);
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     useEffect(() => {
         const fetchProposals = async () => {
@@ -32,6 +34,11 @@ export default function ProposalsIndex() {
     const openHistory = (proposal) => {
         setSelectedProposal(proposal);
         setIsHistoryOpen(true);
+    };
+
+    const openReport = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsReportOpen(true);
     };
 
     return (
@@ -116,6 +123,15 @@ export default function ProposalsIndex() {
                                                 <History size={16} />
                                             </button>
                                         )}
+                                        {proposal.status === 'accepted' && (
+                                            <button 
+                                                onClick={() => openReport(proposal)}
+                                                className="ml-3 p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors border border-blue-200"
+                                                title="Laporan Kemajuan/Akhir"
+                                            >
+                                                <ClipboardCheck size={16} />
+                                            </button>
+                                        )}
                                         {proposal.status === 'draft' && (
                                             <Link 
                                                 to={`/proposals/create/${proposal.id}`}
@@ -136,6 +152,17 @@ export default function ProposalsIndex() {
                 isOpen={isHistoryOpen} 
                 onClose={() => setIsHistoryOpen(false)} 
                 notes={selectedProposal?.notes || []} 
+            />
+
+            <ReportModal
+                isOpen={isReportOpen}
+                onClose={() => {
+                    setIsReportOpen(false);
+                    // Optionally refresh list if needed
+                }}
+                proposalId={selectedProposal?.id}
+                title={selectedProposal?.title}
+                type="research"
             />
         </div>
     );

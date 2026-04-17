@@ -114,4 +114,44 @@ class AdminProposalController extends Controller
             'proposal' => $proposal
         ]);
     }
+    /**
+     * Batch Auto-Assign Reviewers to all submitted proposals (Round-Robin)
+     */
+    public function batchAssign()
+    {
+        $submittedProposals = Proposal::where('status', 'submitted')->get();
+        $reviewers = User::role('reviewer_penelitian')->get();
+
+        if ($reviewers->isEmpty()) {
+            $reviewers = User::role('reviewer')->get();
+        }
+
+        if ($reviewers->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada reviewer yang tersedia dengan role reviewer_penelitian.'], 422);
+        }
+
+        if ($submittedProposals->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada usulan baru (Submitted) yang perlu diplot.'], 200);
+        }
+
+        $count = 0;
+        $reviewerCount = $reviewers->count();
+
+        foreach ($submittedProposals as $index => $proposal) {
+            $reviewer = $reviewers[$index % $reviewerCount];
+
+            Review::updateOrCreate(
+                ['proposal_id' => $proposal->id, 'reviewer_id' => $reviewer->id],
+                ['status' => 'pending']
+            );
+
+            $proposal->update(['status' => 'review']);
+            $count++;
+        }
+
+        return response()->json([
+            'message' => "Berhasil memplotting {$count} proposal penelitian secara otomatis.",
+            'processed_count' => $count
+        ]);
+    }
 }

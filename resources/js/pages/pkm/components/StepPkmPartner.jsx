@@ -31,10 +31,16 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
     const [loading,  setLoading]  = useState(false);
     const [error,    setError]    = useState(null);
     const [provinces, setProvinces] = useState([]);
+    const [cities, setCities]       = useState({});
+    const [districts, setDistricts] = useState({});
+    const [villages, setVillages]   = useState({});
+    
+    // Auxiliary state to track selected IDs for cascading logic within the component
+    const [selectedIds, setSelectedIds] = useState({});
 
     useEffect(() => {
         if (initialData?.partners?.length > 0) {
-            setPartners(initialData.partners.map(p => ({
+            const initialPartners = initialData.partners.map(p => ({
                 partner_category:    p.partner_category    || 'sasaran',
                 partner_name:        p.partner_name        || '',
                 partner_description: p.partner_description || '',
@@ -49,15 +55,91 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                 district:            p.district            || '',
                 village:             p.village             || '',
                 address:             p.address             || '',
-            })));
+            }));
+            setPartners(initialPartners);
+            
+            // Re-hydrate IDs for cascading logic if data exists
+            initialPartners.forEach((p, idx) => {
+                if (p.province && provinces.length > 0) {
+                    const prov = provinces.find(pr => pr.name === p.province);
+                    if (prov) {
+                        loadCities(idx, prov.id, p);
+                    }
+                }
+            });
         }
-    }, [initialData]);
+    }, [initialData, provinces.length > 0]);
 
     useEffect(() => {
         axios.get('/api/indonesia/provinces', { headers: { Authorization: `Bearer ${token}` } })
             .then(r => setProvinces(r.data || []))
             .catch(() => {});
     }, [token]);
+
+    const loadCities = async (idx, provinceId, pData = null) => {
+        try {
+            const res = await axios.get(`/api/indonesia/cities?province_id=${provinceId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = res.data || [];
+            setCities(prev => ({ ...prev, [idx]: data }));
+            setSelectedIds(prev => ({ ...prev, [idx]: { ...prev[idx], provinceId } }));
+            
+            // If re-hydrating, find the city ID and load districts
+            if (pData?.city) {
+                const c = data.find(item => item.name === pData.city);
+                if (c) loadDistricts(idx, c.id, pData);
+            }
+        } catch(e) {}
+    };
+
+    const loadDistricts = async (idx, cityId, pData = null) => {
+        try {
+            const res = await axios.get(`/api/indonesia/districts?city_id=${cityId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = res.data || [];
+            setDistricts(prev => ({ ...prev, [idx]: data }));
+            setSelectedIds(prev => ({ ...prev, [idx]: { ...prev[idx], cityId } }));
+            
+            if (pData?.district) {
+                const d = data.find(item => item.name === pData.district);
+                if (d) loadVillages(idx, d.id, pData);
+            }
+        } catch(e) {}
+    };
+
+    const loadVillages = async (idx, districtId, pData = null) => {
+        try {
+            const res = await axios.get(`/api/indonesia/villages?district_id=${districtId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const data = res.data || [];
+            setVillages(prev => ({ ...prev, [idx]: data }));
+            setSelectedIds(prev => ({ ...prev, [idx]: { ...prev[idx], districtId } }));
+        } catch(e) {}
+    };
+
+    const handleProvinceChange = (idx, provinceId, provinceName) => {
+        update(idx, 'province', provinceName);
+        update(idx, 'city', '');
+        update(idx, 'district', '');
+        update(idx, 'village', '');
+        setCities(prev => ({ ...prev, [idx]: [] }));
+        setDistricts(prev => ({ ...prev, [idx]: [] }));
+        setVillages(prev => ({ ...prev, [idx]: [] }));
+        if (provinceId) loadCities(idx, provinceId);
+    };
+
+    const handleCityChange = (idx, cityId, cityName) => {
+        update(idx, 'city', cityName);
+        update(idx, 'district', '');
+        update(idx, 'village', '');
+        setDistricts(prev => ({ ...prev, [idx]: [] }));
+        setVillages(prev => ({ ...prev, [idx]: [] }));
+        if (cityId) loadDistricts(idx, cityId);
+    };
+
+    const handleDistrictChange = (idx, districtId, districtName) => {
+        update(idx, 'district', districtName);
+        update(idx, 'village', '');
+        setVillages(prev => ({ ...prev, [idx]: [] }));
+        if (districtId) loadVillages(idx, districtId);
+    };
 
     const addPartner   = () => setPartners(p => [...p, { ...emptyPartner }]);
     const removePartner = (idx) => { if (partners.length > 1) setPartners(p => p.filter((_, i) => i !== idx)); };
@@ -181,17 +263,69 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                 <MapPin size={13} className="text-green-600" /> Lokasi Mitra
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {['province','city','district','village'].map(field => (
-                                    <div key={field}>
-                                        <label className="text-xs text-gray-500 mb-1 block capitalize">{
-                                            { province: 'Provinsi', city: 'Kabupaten/Kota', district: 'Kecamatan', village: 'Desa/Kelurahan' }[field]
-                                        }</label>
-                                        <input type="text" value={pt[field]}
-                                            onChange={e => update(idx, field, e.target.value)}
-                                            className="w-full border border-gray-300 rounded-sm p-2 text-sm"
-                                            placeholder={{ province: 'JAWA TIMUR', city: 'Kab. Pamekasan', district: 'PAMEKASAN', village: 'GLADAK ANYAR' }[field]} />
-                                    </div>
-                                ))}
+                                {/* Provinsi */}
+                                <div>
+                                    <label className="text-xs text-gray-500 mb-1 block">Provinsi</label>
+                                    <select 
+                                        value={provinces.find(p => p.name === pt.province)?.id || ''}
+                                        onChange={e => {
+                                            const sel = provinces.find(p => String(p.id) === e.target.value);
+                                            handleProvinceChange(idx, e.target.value, sel?.name || '');
+                                        }}
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">-- Pilih --</option>
+                                        {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </select>
+                                </div>
+                                {/* Kabupaten/Kota */}
+                                <div>
+                                    <label className="text-xs text-gray-500 mb-1 block">Kabupaten/Kota</label>
+                                    <select 
+                                        disabled={!pt.province}
+                                        value={cities[idx]?.find(c => c.name === pt.city)?.id || ''}
+                                        onChange={e => {
+                                            const sel = cities[idx]?.find(c => String(c.id) === e.target.value);
+                                            handleCityChange(idx, e.target.value, sel?.name || '');
+                                        }}
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">-- {cities[idx] ? 'Pilih' : 'Pilih Provinsi'} --</option>
+                                        {cities[idx]?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                                {/* Kecamatan */}
+                                <div>
+                                    <label className="text-xs text-gray-500 mb-1 block">Kecamatan</label>
+                                    <select 
+                                        disabled={!pt.city}
+                                        value={districts[idx]?.find(d => d.name === pt.district)?.id || ''}
+                                        onChange={e => {
+                                            const sel = districts[idx]?.find(d => String(d.id) === e.target.value);
+                                            handleDistrictChange(idx, e.target.value, sel?.name || '');
+                                        }}
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">-- {districts[idx] ? 'Pilih' : 'Pilih Kota'} --</option>
+                                        {districts[idx]?.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                    </select>
+                                </div>
+                                {/* Desa/Kelurahan */}
+                                <div>
+                                    <label className="text-xs text-gray-500 mb-1 block">Desa/Kelurahan</label>
+                                    <select 
+                                        disabled={!pt.district}
+                                        value={villages[idx]?.find(v => v.name === pt.village)?.id || ''}
+                                        onChange={e => {
+                                            const sel = villages[idx]?.find(v => String(v.id) === e.target.value);
+                                            update(idx, 'village', sel?.name || '');
+                                        }}
+                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">-- {villages[idx] ? 'Pilih' : 'Pilih Kecamatan'} --</option>
+                                        {villages[idx]?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
                             <div className="mt-3">
                                 <label className="text-xs text-gray-500 mb-1 block">Alamat Lengkap Mitra Sasaran</label>

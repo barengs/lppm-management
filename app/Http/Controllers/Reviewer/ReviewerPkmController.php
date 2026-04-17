@@ -41,14 +41,14 @@ class ReviewerPkmController extends Controller
     {
         $user = auth('api')->user();
         $proposal = PkmProposal::with([
-            'fiscalYear', 'user', 'partners', 
-            'substance', 'outputs', 'budgetItems', 'documents'
+            'fiscalYear', 'user', 'partners', 'focusArea',
+            'substance', 'outputs', 'budgetItems', 'documents', 'personnel.user.dosenProfile'
         ])->findOrFail($id);
         
         // Find or create a PKM review record for this reviewer/proposal
         $review = PkmReview::firstOrCreate(
             ['pkm_proposal_id' => $id, 'reviewer_id' => $user->id],
-            ['status' => 'pending', 'score' => 0]
+            ['decision' => 'pending', 'score' => 0]
         );
 
         // Fetch PKM criteria

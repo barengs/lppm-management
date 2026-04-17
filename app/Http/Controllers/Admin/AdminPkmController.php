@@ -104,4 +104,44 @@ class AdminPkmController extends Controller
             'proposal' => $proposal
         ]);
     }
+    /**
+     * Batch Auto-Assign Reviewers to all submitted PKM proposals (Round-Robin)
+     */
+    public function batchAssign()
+    {
+        $submittedProposals = PkmProposal::where('status', 'submitted')->get();
+        $reviewers = User::role('reviewer_pkm')->get();
+
+        if ($reviewers->isEmpty()) {
+            $reviewers = User::role('reviewer')->get();
+        }
+
+        if ($reviewers->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada reviewer yang tersedia dengan role reviewer_pkm.'], 422);
+        }
+
+        if ($submittedProposals->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada usulan baru (Submitted) yang perlu diplot.'], 200);
+        }
+
+        $count = 0;
+        $reviewerCount = $reviewers->count();
+
+        foreach ($submittedProposals as $index => $proposal) {
+            $reviewer = $reviewers[$index % $reviewerCount];
+
+            PkmReview::updateOrCreate(
+                ['pkm_proposal_id' => $proposal->id, 'reviewer_id' => $reviewer->id],
+                ['status' => 'pending']
+            );
+
+            $proposal->update(['status' => 'review']);
+            $count++;
+        }
+
+        return response()->json([
+            'message' => "Berhasil memplotting {$count} proposal PKM secara otomatis.",
+            'processed_count' => $count
+        ]);
+    }
 }

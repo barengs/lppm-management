@@ -49,6 +49,7 @@ export default function Sidebar() {
                 { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
                 { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
                 { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
+                { name: 'Monitoring Laporan', icon: <ClipboardList size={20} />, path: '/admin/reports', permission: 'admin' },
                 { name: 'Penilaian Penelitian', icon: <Star size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
                 { name: 'Penilaian PKM', icon: <Star size={20} />, path: '/reviewer/pkm', permission: 'pkm_proposals.review' },
                 { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },

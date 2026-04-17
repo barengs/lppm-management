@@ -42,12 +42,23 @@ class ReviewerProposalController extends Controller
     public function show($id)
     {
         $user = auth('api')->user();
-        $proposal = Proposal::with(['scheme', 'user', 'identity', 'content', 'outputs', 'budgetItems'])->findOrFail($id);
+        $proposal = Proposal::with([
+            'scheme', 
+            'user', 
+            'identity.focusArea',
+            'identity.researchTopic',
+            'identity.researchTheme',
+            'identity.scienceCluster',
+            'content', 
+            'outputs', 
+            'budgetItems', 
+            'personnel.user.dosenProfile'
+        ])->findOrFail($id);
         
         // Find or create a review record for this user and proposal
         $review = Review::firstOrCreate(
             ['proposal_id' => $id, 'reviewer_id' => $user->id],
-            ['status' => 'pending', 'score' => 0]
+            ['decision' => null, 'score' => 0]
         );
         
         // Load details with criteria

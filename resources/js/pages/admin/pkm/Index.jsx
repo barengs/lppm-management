@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info } from 'lucide-react';
+import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function AdminPkmDashboard() {
@@ -77,6 +77,23 @@ export default function AdminPkmDashboard() {
         }
     };
 
+    const handleBatchAssign = async () => {
+        if (!confirm('Plot semua usulan PKM baru secara otomatis ke reviewer tersedia?')) return;
+        setIsLoading(true);
+        try {
+            const res = await axios.post('/api/admin_pkm/batch-assign', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(res.data.message);
+            fetchData();
+            fetchStats();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Gagal memplot otomatis.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const getStatusBadge = (status) => {
         const styles = {
             submitted: 'bg-blue-100 text-blue-700',
@@ -95,11 +112,18 @@ export default function AdminPkmDashboard() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <ShieldCheck className="mr-3 text-green-700" size={32} />
-                    Monitoring Proposal PKM
-                </h1>
-            </div>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+                        <ShieldCheck className="mr-3 text-green-700" size={32} />
+                        Monitoring Proposal PKM
+                    </h1>
+                    <button 
+                        onClick={handleBatchAssign}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-green-700 text-white rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-green-800 transition-all shadow-md disabled:opacity-50"
+                    >
+                        ⚡ Plot Otomatis
+                    </button>
+                </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

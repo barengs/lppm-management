@@ -69,7 +69,9 @@ export default function PkmCreate() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProposalData(r.data);
-            setCurrentStep(r.data.current_step || 0);
+            // Clamp currentStep to valid range [0, STEPS.length - 1]
+            const stepFromBackend = r.data.current_step || 0;
+            setCurrentStep(Math.min(stepFromBackend, STEPS.length - 1));
         } catch { }
     };
 
@@ -257,7 +259,10 @@ export default function PkmCreate() {
                 {/* Step Content */}
                 <div className="p-8 min-h-[480px]">
                     <h3 className="text-base font-bold text-gray-700 mb-6 border-l-4 border-green-600 pl-4">
-                        TAHAP {currentStep + 1} dari {STEPS.length}: {STEPS[currentStep].name}
+                        {isPastAllSteps 
+                            ? 'PRATINJAU & PENGIRIMAN AKHIR' 
+                            : `TAHAP ${currentStep + 1} dari ${STEPS.length}: ${STEPS[currentStep]?.name || ''}`
+                        }
                     </h3>
 
                     {isPastAllSteps && (

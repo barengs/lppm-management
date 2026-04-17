@@ -18,10 +18,31 @@ class ProposalIdentity extends Model
         'research_topic',
         'tkt_initial',
         'tkt_target',
+        'sdg_goal',
     ];
 
     public function proposal()
     {
         return $this->belongsTo(Proposal::class);
+    }
+
+    public function focusArea()
+    {
+        return $this->belongsTo(MasterResearchPriority::class, 'focus_area');
+    }
+
+    public function researchTopic()
+    {
+        return $this->belongsTo(MasterResearchPriority::class, 'research_topic');
+    }
+
+    public function researchTheme()
+    {
+        return $this->belongsTo(MasterResearchPriority::class, 'research_theme');
+    }
+
+    public function scienceCluster()
+    {
+        return $this->belongsTo(MasterScienceCluster::class, 'science_cluster_level_3');
     }
 }

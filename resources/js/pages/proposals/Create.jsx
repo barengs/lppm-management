@@ -95,7 +95,9 @@ export default function Create() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProposalData(res.data);
-            setCurrentStep(res.data.current_step || 0);
+            // Clamp currentStep to valid range [0, STEPS.length - 1]
+            const stepFromBackend = res.data.current_step || 0;
+            setCurrentStep(Math.min(stepFromBackend, STEPS.length - 1));
         } catch (err) {
             console.error(err);
         }
@@ -235,7 +237,10 @@ export default function Create() {
                 {/* Step Content */}
                 <div className="p-8 min-h-[500px]">
                     <h3 className="text-lg font-bold text-gray-700 mb-8 border-l-4 border-green-700 pl-4">
-                        TAHAP {currentStep + 1}: {STEPS[currentStep].name}
+                        {currentStep < 7 
+                            ? `TAHAP ${currentStep + 1}: ${STEPS[currentStep]?.name || ''}`
+                            : 'TAHAP 8: PRATINJAU & PENYELESAIAN'
+                        }
                     </h3>
                     
                     {currentStep === 0 && <StepTkt proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} />}
