@@ -29,6 +29,9 @@ class RolePermissionSeeder extends Seeder
             'galleries',
             'proposals',
             'pkm_proposals',
+            'pkm_master_data',
+            'admin_proposals',
+            'admin_pkm',
             'reports',
             'kkn_locations', // Prev: kkn.manage-locations
             'kkn_registrations', // Prev: kkn.manage-registrations

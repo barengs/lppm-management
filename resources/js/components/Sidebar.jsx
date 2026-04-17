@@ -45,7 +45,7 @@ export default function Sidebar() {
         {
             title: 'Penelitian & Pengabdian',
             items: [
-                { name: 'Daftar Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                { name: 'Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
                 { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
                 { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
                 { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
