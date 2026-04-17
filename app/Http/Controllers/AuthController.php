@@ -25,7 +25,8 @@ class AuthController extends Controller
      */
     public function login()
     {
-        $credentials = request(['email', 'password']);
+        $password = request('password');
+        $identity = request('email'); // Frontend might be sending NIDN/NIM under the 'email' field
         $recaptchaToken = request('recaptcha_token');
 
         // Verify ReCaptcha
@@ -49,8 +50,24 @@ class AuthController extends Controller
             return response()->json(['error' => 'Gagal terhubung ke Google ReCaptcha. Mohon coba lagi atau hubungi admin.'], 422);
         }
 
-        if (! $token = auth('api')->attempt($credentials)) {
-            return response()->json(['error' => 'Login gagal. Periksa email dan password.'], 401);
+        // Find user by email, or by identity numbers (NIDN from DosenProfile, NPM from MahasiswaProfile)
+        $user = \App\Models\User::where('email', $identity)
+            ->orWhereHas('dosenProfile', function ($query) use ($identity) {
+                $query->where('nidn', $identity);
+            })
+            ->orWhereHas('mahasiswaProfile', function ($query) use ($identity) {
+                $query->where('npm', $identity);
+            })
+            ->first();
+
+        // If no user found, fast fail
+        if (!$user) {
+            return response()->json(['error' => 'Login gagal. Akun tidak ditemukan.'], 401);
+        }
+
+        // We found the user, now attempt auth using their actual email address for JWT
+        if (! $token = auth('api')->attempt(['email' => $user->email, 'password' => $password])) {
+            return response()->json(['error' => 'Login gagal. Password salah.'], 401);
         }
 
         return $this->respondWithToken($token);
@@ -122,7 +139,11 @@ class AuthController extends Controller
      */
     public function me()
     {
-        return response()->json(auth('api')->user()->load(['mahasiswaProfile', 'dosenProfile'])); 
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        return response()->json($user->load(['mahasiswaProfile', 'dosenProfile'])); 
     }
 
     /**

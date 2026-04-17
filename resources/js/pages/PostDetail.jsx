@@ -17,13 +17,13 @@ export default function PostDetail() {
 
     useEffect(() => {
         const fetchAllData = async () => {
-             try {
+            try {
                 // Fetch Post and Sidebar Data in parallel
                 const [postRes, homeRes] = await Promise.all([
                     axios.get(`/api/posts/${slug}`),
                     axios.get('/api/home-data')
                 ]);
-                
+
                 setPost(postRes.data);
                 setSidebarData({
                     announcements: homeRes.data.announcements,
@@ -54,7 +54,7 @@ export default function PostDetail() {
             {/* Breadcrumb / Top Bar */}
             <div className={`bg-white border-b shadow-sm sticky top-0 z-20`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center text-sm text-gray-500">
-                     <Link to="/" className="hover:text-green-600 flex items-center">
+                    <Link to="/" className="hover:text-green-600 flex items-center">
                         <ArrowLeft size={16} className="mr-1" /> Beranda
                     </Link>
                     <span className="mx-2">/</span>
@@ -66,15 +66,15 @@ export default function PostDetail() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
-                    
+
                     {/* Main Content Column */}
                     <div className="w-full lg:w-2/3">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                            
+
                             {/* Hero Image/Video */}
                             {post.video_url ? (
                                 <div className="aspect-video bg-black">
-                                    <iframe 
+                                    <iframe
                                         className="w-full h-full"
                                         src={`https://www.youtube.com/embed/${getYoutubeId(post.video_url)}`}
                                         title="Video Player"
@@ -86,7 +86,7 @@ export default function PostDetail() {
                             ) : (
                                 post.thumbnail && (
                                     <div className="w-full h-64 md:h-[400px] bg-gray-200">
-                                         <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+                                        <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
                                     </div>
                                 )
                             )}
@@ -116,8 +116,8 @@ export default function PostDetail() {
                                 </div>
 
                                 {/* Article Body */}
-                                <div 
-                                    className="prose prose-lg prose-green max-w-none text-gray-700 leading-relaxed"
+                                <div
+                                    className="prose prose-lg prose-green max-w-none text-gray-700 leading-relaxed overflow-hidden break-words [&_*]:!whitespace-pre-wrap [&_*]:!break-words"
                                     dangerouslySetInnerHTML={{ __html: post.content }}
                                 />
 
@@ -139,13 +139,13 @@ export default function PostDetail() {
 
                     {/* Sidebar Column */}
                     <div className="w-full lg:w-1/3">
-                         <div className="sticky top-24">
-                            <PublicSidebar 
-                                announcements={sidebarData.announcements} 
-                                agendas={sidebarData.agendas} 
+                        <div className="sticky top-24">
+                            <PublicSidebar
+                                announcements={sidebarData.announcements}
+                                agendas={sidebarData.agendas}
                                 video={sidebarData.video}
                             />
-                         </div>
+                        </div>
                     </div>
 
                 </div>

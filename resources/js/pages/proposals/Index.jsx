@@ -2,12 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import { PlusCircle, FileText } from 'lucide-react';
+import { PlusCircle, FileText, MessageSquare, History, Eye, ClipboardCheck } from 'lucide-react';
+import RevisionHistory from './components/RevisionHistory';
+import ReportModal from './components/ReportModal';
 
 export default function ProposalsIndex() {
     const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedProposal, setSelectedProposal] = useState(null);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     useEffect(() => {
         const fetchProposals = async () => {
@@ -25,6 +30,16 @@ export default function ProposalsIndex() {
 
         if (token) fetchProposals();
     }, [token]);
+
+    const openHistory = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsHistoryOpen(true);
+    };
+
+    const openReport = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsReportOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -86,12 +101,45 @@ export default function ProposalsIndex() {
                                         </div>
                                     </div>
                                     <div className="flex items-center">
+                                        <Link
+                                            to={`/proposals/${proposal.id}`}
+                                            className="mr-3 p-1.5 bg-gray-50 text-gray-500 rounded-full hover:bg-green-50 hover:text-green-700 transition-colors border border-gray-200"
+                                            title="Lihat Detail"
+                                        >
+                                            <Eye size={16} />
+                                        </Link>
                                         <span className={`px-2.5 py-0.5 inline-flex text-xs leading-4 font-bold rounded-full uppercase tracking-wide 
                                             ${proposal.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                                               proposal.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' : 
                                               proposal.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                             {proposal.status}
                                         </span>
+                                        {proposal.notes && proposal.notes.length > 0 && (
+                                            <button 
+                                                onClick={() => openHistory(proposal)}
+                                                className="ml-3 p-1.5 bg-yellow-50 text-yellow-600 rounded-full hover:bg-yellow-100 transition-colors border border-yellow-200"
+                                                title="Lihat Catatan Revisi"
+                                            >
+                                                <History size={16} />
+                                            </button>
+                                        )}
+                                        {proposal.status === 'accepted' && (
+                                            <button 
+                                                onClick={() => openReport(proposal)}
+                                                className="ml-3 p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors border border-blue-200"
+                                                title="Laporan Kemajuan/Akhir"
+                                            >
+                                                <ClipboardCheck size={16} />
+                                            </button>
+                                        )}
+                                        {proposal.status === 'draft' && (
+                                            <Link 
+                                                to={`/proposals/create/${proposal.id}`}
+                                                className="ml-4 text-xs font-bold text-green-600 hover:text-green-800 flex items-center"
+                                            >
+                                                Lanjutkan &rarr;
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </li>
@@ -99,6 +147,23 @@ export default function ProposalsIndex() {
                     </ul>
                 )}
             </div>
+
+            <RevisionHistory 
+                isOpen={isHistoryOpen} 
+                onClose={() => setIsHistoryOpen(false)} 
+                notes={selectedProposal?.notes || []} 
+            />
+
+            <ReportModal
+                isOpen={isReportOpen}
+                onClose={() => {
+                    setIsReportOpen(false);
+                    // Optionally refresh list if needed
+                }}
+                proposalId={selectedProposal?.id}
+                title={selectedProposal?.title}
+                type="research"
+            />
         </div>
     );
 }

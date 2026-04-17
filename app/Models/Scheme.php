@@ -9,5 +9,12 @@ class Scheme extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'max_budget', 'guideline_file'];
+    protected $fillable = [
+        'name', 'type', 'max_budget', 'guideline_file', 'eligible_clusters',
+        'abstract_limit', 'background_limit', 'methodology_limit', 'objective_limit', 'reference_limit'
+    ];
+
+    protected $casts = [
+        'eligible_clusters' => 'array',
+    ];
 }

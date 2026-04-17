@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-    Users, Search, Filter, CheckCircle, XCircle, 
-    AlertCircle, Clock, Eye, FileText, Download 
+import {
+    Users, Search, Filter, CheckCircle, XCircle,
+    AlertCircle, Clock, Eye, FileText, Download
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -34,19 +34,32 @@ export default function KknParticipants() {
     const [registrations, setRegistrations] = useState([]);
     const [statistics, setStatistics] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({
-        status: 'all',
-        search: '',
-        per_page: 10
-    });
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [pagination, setPagination] = useState(null);
+    const [studyPrograms, setStudyPrograms] = useState([]);
+
+    const [filters, setFilters] = useState({
+        status: 'all',
+        search: '',
+        prodi_id: '',
+        per_page: 10
+    });
 
     useEffect(() => {
+        fetchStudyPrograms();
         fetchStatistics();
         fetchRegistrations();
     }, [filters]);
+
+    const fetchStudyPrograms = async () => {
+        try {
+            const response = await axios.get('/api/study-programs');
+            setStudyPrograms(response.data);
+        } catch (error) {
+            console.error('Failed to fetch study programs:', error);
+        }
+    };
 
     const fetchStatistics = async () => {
         try {
@@ -88,7 +101,7 @@ export default function KknParticipants() {
 
     const handleApprove = async (id, note) => {
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/approve`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/approve`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -108,7 +121,7 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/reject`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/reject`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -128,7 +141,7 @@ export default function KknParticipants() {
             return;
         }
         try {
-            await axios.post(`/api/admin/kkn-registrations/${id}/revise`, 
+            await axios.post(`/api/admin/kkn-registrations/${id}/revise`,
                 { note },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -139,6 +152,16 @@ export default function KknParticipants() {
         } catch (error) {
             console.error('Failed to request revision:', error);
             alert('Gagal mengirim permintaan revisi');
+        }
+    };
+
+    const handleExportPdf = async () => {
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            window.open(`/api/admin/kkn-registrations/export?${queryParams}&token=${token}`, '_blank');
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            alert('Gagal mengekspor PDF');
         }
     };
 
@@ -167,6 +190,13 @@ export default function KknParticipants() {
                             Kelola pendaftaran dan approval peserta KKN
                         </p>
                     </div>
+                    <button
+                        onClick={handleExportPdf}
+                        className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                    >
+                        <Download size={18} />
+                        <span>Ekspor PDF</span>
+                    </button>
                 </div>
             </div>
 
@@ -198,7 +228,7 @@ export default function KknParticipants() {
 
             {/* Filters */}
             <div className="bg-white rounded-lg shadow p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                         <input
@@ -221,6 +251,18 @@ export default function KknParticipants() {
                             <option value="approved">Disetujui</option>
                             <option value="rejected">Ditolak</option>
                             <option value="needs_revision">Perlu Revisi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                            value={filters.prodi_id}
+                            onChange={(e) => setFilters({ ...filters, prodi_id: e.target.value })}
+                        >
+                            <option value="">Semua Program Studi</option>
+                            {studyPrograms.map(prodi => (
+                                <option key={prodi.id} value={prodi.id}>{prodi.name}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -347,11 +389,10 @@ export default function KknParticipants() {
                                         <button
                                             key={i + 1}
                                             onClick={() => fetchRegistrations(i + 1)}
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                pagination.current_page === i + 1
+                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${pagination.current_page === i + 1
                                                     ? 'z-10 bg-green-50 border-green-500 text-green-600'
                                                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                            }`}
+                                                }`}
                                         >
                                             {i + 1}
                                         </button>
@@ -387,7 +428,7 @@ function RegistrationDetailModal({ registration, onClose, onApprove, onReject, o
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold mb-4">Detail Pendaftaran KKN</h2>
-                    
+
                     {/* Student Info */}
                     <div className="mb-6">
                         <h3 className="font-semibold mb-2">Informasi Mahasiswa</h3>
@@ -408,16 +449,16 @@ function RegistrationDetailModal({ registration, onClose, onApprove, onReject, o
                         <div className="mb-6">
                             <h3 className="font-semibold mb-2">Dokumen</h3>
                             <div className="space-y-2">
-                                {Object.entries(registration.documents).map(([key, url]) => (
+                                {Object.values(registration.documents).map((doc, index) => (
                                     <a
-                                        key={key}
-                                        href={url}
+                                        key={index}
+                                        href={`/storage/${doc.file_path}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center text-blue-600 hover:text-blue-800"
                                     >
                                         <FileText size={16} className="mr-2" />
-                                        {key}
+                                        {doc.name || 'Dokumen'}
                                     </a>
                                 ))}
                             </div>

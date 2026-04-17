@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-    CheckCircle, XCircle, AlertCircle, Clock, Upload, 
+import {
+    CheckCircle, XCircle, AlertCircle, Clock, Upload,
     User, FileText, MapPin, Calendar, Award, Mail, Phone,
-    RefreshCw, Download, Eye
+    RefreshCw, Download, Eye, Briefcase, BookOpen
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
@@ -44,12 +44,7 @@ export default function StudentKknStatus() {
     const [uploading, setUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewTitle, setPreviewTitle] = useState('');
-    const [uploadFiles, setUploadFiles] = useState({
-        krs_file: null,
-        health_file: null,
-        transcript_file: null,
-        photo: null
-    });
+    const [pendingUpdates, setPendingUpdates] = useState({}); // { doc_id: File }
 
     useEffect(() => {
         fetchStatus();
@@ -69,15 +64,22 @@ export default function StudentKknStatus() {
         setLoading(false);
     };
 
-    const handleFileChange = (field, file) => {
-        setUploadFiles(prev => ({ ...prev, [field]: file }));
+    const handleFileChange = (docId, file) => {
+        if (!file) return;
+        setPendingUpdates(prev => ({ ...prev, [`doc_${docId}`]: file }));
+    };
+
+    const cancelUpdate = (docId) => {
+        const newUpdates = { ...pendingUpdates };
+        delete newUpdates[`doc_${docId}`];
+        setPendingUpdates(newUpdates);
     };
 
     const handleReupload = async () => {
         const formData = new FormData();
         let hasFiles = false;
 
-        Object.entries(uploadFiles).forEach(([key, file]) => {
+        Object.entries(pendingUpdates).forEach(([key, file]) => {
             if (file) {
                 formData.append(key, file);
                 hasFiles = true;
@@ -85,24 +87,26 @@ export default function StudentKknStatus() {
         });
 
         if (!hasFiles) {
-            alert('Silakan pilih minimal satu dokumen untuk diupload');
+            alert('Silakan pilih minimal satu dokumen untuk direvisi');
             return;
         }
+
+        if (!confirm('Apakah Anda yakin ingin mengirim revisi dokumen ini?')) return;
 
         setUploading(true);
         try {
             await axios.post('/api/student/kkn/reupload', formData, {
-                headers: { 
+                headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            alert('Dokumen berhasil diupload ulang!');
-            setUploadFiles({ krs_file: null, health_file: null, transcript_file: null, photo: null });
+            alert('Dokumen berhasil dikirim dan status pendaftaran Anda diperbarui!');
+            setPendingUpdates({});
             fetchStatus();
         } catch (error) {
             console.error('Failed to reupload:', error);
-            alert(error.response?.data?.message || 'Gagal mengupload dokumen');
+            alert(error.response?.data?.message || 'Gagal mengirim revisi dokumen');
         }
         setUploading(false);
     };
@@ -212,10 +216,17 @@ export default function StudentKknStatus() {
                             </div>
                         </div>
                         <div className="flex items-start">
-                            <FileText className="mr-2 text-gray-400 mt-1" size={16} />
+                            <Briefcase className="mr-2 text-gray-400 mt-1" size={16} />
+                            <div>
+                                <p className="text-xs text-gray-500">Fakultas</p>
+                                <p className="text-sm font-medium text-gray-900">{profile?.faculty?.name || profile?.fakultas || '-'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start">
+                            <BookOpen className="mr-2 text-gray-400 mt-1" size={16} />
                             <div>
                                 <p className="text-xs text-gray-500">Program Studi</p>
-                                <p className="text-sm font-medium text-gray-900">{profile?.prodi || '-'}</p>
+                                <p className="text-sm font-medium text-gray-900">{profile?.study_program?.name || profile?.studyProgram?.name || profile?.prodi || '-'}</p>
                             </div>
                         </div>
                         <div className="flex items-start">
@@ -269,113 +280,132 @@ export default function StudentKknStatus() {
             </div>
 
             {/* Documents Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <FileText className="mr-2 text-purple-600" size={20} />
-                    Dokumen Pendaftaran
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <DocumentCard
-                        document={registration.documents?.krs}
-                        title="KRS"
-                        onPreview={() => handlePreview(registration.documents?.krs, 'Kartu Rencana Studi (KRS)')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.health}
-                        title="Surat Sehat"
-                        onPreview={() => handlePreview(registration.documents?.health, 'Surat Keterangan Sehat')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.transcript}
-                        title="Transkrip Nilai"
-                        onPreview={() => handlePreview(registration.documents?.transcript, 'Transkrip Nilai')}
-                    />
-                    <DocumentCard
-                        document={registration.documents?.photo}
-                        title="Foto"
-                        onPreview={() => handlePreview(registration.documents?.photo, 'Foto Mahasiswa')}
-                    />
-                </div>
-
-                {/* Re-upload Section */}
-                {canReupload && (
-                    <div className="border-t pt-6">
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                            <div className="flex items-start">
-                                <AlertCircle className="text-orange-600 mr-2 flex-shrink-0 mt-0.5" size={20} />
-                                <div>
-                                    <h4 className="font-semibold text-orange-900 mb-1">Upload Ulang Dokumen</h4>
-                                    <p className="text-sm text-orange-800">
-                                        Silakan upload ulang dokumen yang perlu direvisi. Anda hanya perlu mengupload dokumen yang ingin diperbaiki.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    KRS (PDF/Image)
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => handleFileChange('krs_file', e.target.files[0])}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Surat Sehat (PDF/Image)
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => handleFileChange('health_file', e.target.files[0])}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Transkrip Nilai (PDF/Image)
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    onChange={(e) => handleFileChange('transcript_file', e.target.files[0])}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Foto (Image)
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".jpg,.jpeg,.png"
-                                    onChange={(e) => handleFileChange('photo', e.target.files[0])}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                            </div>
-                        </div>
-
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="p-6 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <FileText className="mr-2 text-purple-600" size={20} />
+                        Dokumen Pendaftaran
+                    </h3>
+                    {canReupload && Object.keys(pendingUpdates).length > 0 && (
                         <button
                             onClick={handleReupload}
                             disabled={uploading}
-                            className="w-full flex items-center justify-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm font-medium"
                         >
                             {uploading ? (
-                                <>
-                                    <RefreshCw className="animate-spin mr-2" size={20} />
-                                    Mengupload...
-                                </>
+                                <RefreshCw className="animate-spin mr-2" size={16} />
                             ) : (
-                                <>
-                                    <Upload className="mr-2" size={20} />
-                                    Upload Ulang Dokumen
-                                </>
+                                <Upload className="mr-2" size={16} />
                             )}
+                            Simpan Kirim Revisi ({Object.keys(pendingUpdates).length})
                         </button>
+                    )}
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Dokumen</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dokumen Saat Ini</th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {registration.documents && Object.values(registration.documents).length > 0 ? (
+                                Object.values(registration.documents).map((doc, index) => {
+                                    const isPending = pendingUpdates[`doc_${doc.id}`];
+                                    return (
+                                        <tr key={doc.id || index} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {index + 1}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{doc.name || 'Dokumen'}</div>
+                                                <div className="text-xs text-gray-500 capitalized">{doc.doc_type?.replace('_', ' ')}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {isPending ? (
+                                                    <div className="flex items-center text-orange-600 text-sm font-medium">
+                                                        <Upload size={14} className="mr-1" />
+                                                        <span className="truncate max-w-[150px]">{isPending.name}</span>
+                                                        <span className="ml-2 text-xs bg-orange-100 px-1.5 py-0.5 rounded">Baru</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center space-x-2">
+                                                        <button 
+                                                            onClick={() => handlePreview(doc, doc.name || 'Dokumen')}
+                                                            className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                                                            title="Preview"
+                                                        >
+                                                            <Eye size={18} />
+                                                        </button>
+                                                        <a 
+                                                            href={`/storage/${doc.file_path}`} 
+                                                            download 
+                                                            className="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-50 transition-colors"
+                                                            title="Download"
+                                                        >
+                                                            <Download size={18} />
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                {canReupload ? (
+                                                    isPending ? (
+                                                        <button 
+                                                            onClick={() => cancelUpdate(doc.id)}
+                                                            className="text-xs text-red-600 font-medium hover:underline"
+                                                        >
+                                                            Batal
+                                                        </button>
+                                                    ) : (
+                                                        <div className="relative inline-block">
+                                                            <input 
+                                                                type="file" 
+                                                                id={`upload-${doc.id}`}
+                                                                className="hidden" 
+                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                onChange={(e) => handleFileChange(doc.id, e.target.files[0])}
+                                                            />
+                                                            <label 
+                                                                htmlFor={`upload-${doc.id}`}
+                                                                className="cursor-pointer text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center"
+                                                            >
+                                                                <RefreshCw size={12} className="mr-1" />
+                                                                Update
+                                                            </label>
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-10 text-center text-gray-500 italic">
+                                        Tidak ada dokumen pendaftaran.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {canReupload && (
+                    <div className="p-6 bg-orange-50 border-t border-orange-100">
+                        <div className="flex items-start">
+                            <AlertCircle className="text-orange-600 mr-3 flex-shrink-0 mt-0.5" size={20} />
+                            <div className="text-sm text-orange-800">
+                                <p className="font-semibold mb-1 uppercase tracking-wider">Instruksi Revisi:</p>
+                                <p>Klik tombol <strong>Update</strong> pada tiap dokumen yang perlu diperbaiki. Setelah memilih semua file yang benar, klik tombol <strong>Simpan Kirim Revisi</strong> di bagian atas tabel.</p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

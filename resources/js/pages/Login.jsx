@@ -41,27 +41,27 @@ export default function Login() {
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
                 <div className="text-center mb-8">
-                     <img 
-                        src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"} 
-                        alt="Logo" 
-                        className="h-20 w-20 mx-auto mb-4 object-contain" 
-                     />
+                    <img
+                        src={settings.logo_path ? `/storage/${settings.logo_path}` : "https://i0.wp.com/www.uim.ac.id/uimv2/wp-content/uploads/2020/10/Ico.png"}
+                        alt="Logo"
+                        className="h-20 w-20 mx-auto mb-4 object-contain"
+                    />
                     <h1 className="text-3xl font-bold text-green-700" style={{ color: 'var(--primary-color)' }}>{settings.system_name}</h1>
                     <p className="text-gray-600 mt-2">{settings.description}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email / NIDN / NIM</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Mail className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
-                                type="email"
+                                type="text"
                                 required
                                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="you@example.com"
+                                placeholder="Masukkan Email, NIDN, atau NIM"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
@@ -95,9 +95,8 @@ export default function Login() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                            isLoading ? 'opacity-75 cursor-not-allowed' : ''
-                        }`}
+                        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''
+                            }`}
                     >
                         {isLoading ? 'Signing in...' : 'Sign in'}
                     </button>

@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateProposal from './pages/proposals/Create';
+import ProposalShow from './pages/proposals/Show';
 import ReviewIndex from './pages/reviews/Index';
 import ProposalsIndex from './pages/proposals/Index';
 import PostDetail from './pages/PostDetail';
@@ -35,6 +36,10 @@ import SchemesIndex from './pages/admin/schemes/Index';
 import UsersIndex from './pages/admin/users/Index';
 import FacultiesIndex from './pages/admin/master/Faculties';
 import StudyProgramsIndex from './pages/admin/master/StudyPrograms';
+import StudentsIndex from './pages/admin/master/Students';
+import ScienceClustersIndex from './pages/admin/master-data/ScienceClustersIndex';
+import ResearchPrioritiesIndex from './pages/admin/master-data/ResearchPrioritiesIndex';
+import SdgIndex from './pages/admin/master-data/SdgIndex';
 
 import OrganizationAdminIndex from './pages/admin/organization/Index';
 import RolesIndex from './pages/admin/roles/Index';
@@ -42,8 +47,22 @@ import PermissionsIndex from './pages/admin/permissions/Index';
 import MenuIndex from './pages/admin/menus/Index';
 import MenuBuilder from './pages/admin/menus/Builder';
 import SystemSettingIndex from './pages/admin/SystemSetting';
-import PageIndex from './pages/admin/pages/Index';
-import PageForm from './pages/admin/pages/Form';
+import PagePageIndex from './pages/admin/pages/Index';
+import PagePageForm from './pages/admin/pages/Form';
+
+import AdminProposalDashboard from './pages/admin/proposals/Index';
+import ReviewerDashboard from './pages/reviewer/Index';
+import ReviewerProposalShow from './pages/reviewer/Show';
+
+// PKM Proposals
+import PkmIndex  from './pages/pkm/Index';
+import PkmCreate from './pages/pkm/Create';
+import PkmMasterDataIndex from './pages/admin/pkm-master/Index';
+import AdminPkmDashboard from './pages/admin/pkm/Index';
+import ReviewerPkmIndex from './pages/reviewer/pkm/Index';
+import ReviewerPkmShow from './pages/reviewer/pkm/Show';
+import PkmShow from './pages/pkm/Show';
+import AdminReportDashboard from './pages/admin/reports/Index';
 
 import OrganizationIndex from './pages/profile/Organization';
 import KknLocationsIndex from './pages/kkn/Locations';
@@ -103,7 +122,7 @@ function App() {
     const fetchSystemSettings = async () => {
         try {
             const { data } = await api.get('/system-settings');
-            
+
             // Save to Redux store
             dispatch(setSettings(data));
 
@@ -146,9 +165,9 @@ function App() {
                     pauseOnHover
                     theme="colored"
                 />
-                <Lockscreen 
-                    user={user} 
-                    onUnlock={handleUnlock} 
+                <Lockscreen
+                    user={user}
+                    onUnlock={handleUnlock}
                     onLogout={logout}
                 />
             </>
@@ -158,117 +177,139 @@ function App() {
     return (
         <BrowserRouter>
             <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="colored"
-        />
-        <Routes>
-            {/* Public Layout Routes */}
-            <Route path="/" element={<PublicLayout />}>
-                <Route index element={<Home />} />
-                <Route path="login" element={<Login />} />
-                <Route path="posts/:slug" element={<PostDetail />} />
-                <Route path="agendas/:id" element={<AgendaDetail />} />
-                <Route path="documents" element={<PublicDocuments />} />
-                <Route path="survey" element={<PublicSurvey />} />
-                <Route path="posts/category/:category" element={<PostCategory />} />
-                <Route path="info/:slug" element={<InfoDetail />} />
-                <Route path="kkn/register" element={<PublicKknRegister />} />
-                <Route path="about/organization" element={<PublicOrganization />} />
-                <Route path="pages/:slug" element={<PageDetail />} />
-                <Route path="register" element={<StudentRegister />} />
-            </Route>
-            
-            {/* Authenticated Admin Routes */}
-            <Route element={<PrivateRoute />}>
-                 <Route path="/" element={<AdminLayout />}>
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
-                    <Route path="proposals/create" element={<CreateProposal />} />
-                    
-                    {/* Program Activity */}
-                    <Route path="reports" element={<ReportsIndex />} />
-                    <Route path="reviews" element={<ReviewIndex />} />
-                    
-                    {/* Journal Consultation */}
-                    <Route path="journals" element={<JournalIndex />} />
-                    <Route path="journals/create" element={<JournalCreate />} />
-                    <Route path="journals/:id" element={<JournalShow />} />
-                    
-                    
-                    {/* Student KKN Dashboard */}
-                    <Route path="dashboard/kkn" element={<StudentKknDashboard />} />
-                    <Route path="dashboard/kkn/register" element={<StudentKknRegistration />} />
-                    <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
-                    <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
-                    <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
-                    <Route path="dashboard/kkn/guidance" element={<StudentKknGuidance />} />
-                    <Route path="dashboard/kkn/reports" element={<StudentKknReports />} />
-                    <Route path="dashboard/kkn/assessment" element={<StudentKknAssessment />} />
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
+            <Routes>
+                {/* Public Layout Routes */}
+                <Route path="/" element={<PublicLayout />}>
+                    <Route index element={<Home />} />
+                    <Route path="login" element={<Login />} />
+                    <Route path="posts/:slug" element={<PostDetail />} />
+                    <Route path="agendas/:id" element={<AgendaDetail />} />
+                    <Route path="documents" element={<PublicDocuments />} />
+                    <Route path="survey" element={<PublicSurvey />} />
+                    <Route path="posts/category/:category" element={<PostCategory />} />
+                    <Route path="info/:slug" element={<InfoDetail />} />
+                    <Route path="kkn/register" element={<PublicKknRegister />} />
+                    <Route path="about/organization" element={<PublicOrganization />} />
+                    <Route path="pages/:slug" element={<PageDetail />} />
+                    <Route path="register" element={<StudentRegister />} />
+                </Route>
 
-                    {/* KKN Module (Admin/Legacy) */}
-                    <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
-                    <Route path="kkn/periods" element={<KknPeriodsIndex />} />
-                    <Route path="kkn/locations" element={<KknLocationsIndex />} />
-                    <Route path="kkn/registration" element={<KknStudentRegistration />} />
-                    <Route path="kkn/status" element={<StudentKknStatus />} />
-                    <Route path="kkn/participants" element={<KknParticipantsIndex />} />
-                    
-                    {/* KKN Posko Management (Admin) */}
-                    <Route path="kkn/postos" element={<PostoIndex />} />
-                    <Route path="kkn/postos/create" element={<PostoForm />} />
-                    <Route path="kkn/postos/:id" element={<PostoDetail />} />
-                    <Route path="kkn/postos/:id/edit" element={<PostoForm />} />
-                    <Route path="kkn/postos/:id/members/add" element={<PostoAddMember />} />
-                    
-                    {/* KKN Assessment (Admin/Staff) */}
-                    <Route path="kkn/assessment" element={<KknAssessment />} />
-                    <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
+                {/* Authenticated Admin Routes */}
+                <Route element={<PrivateRoute />}>
+                    <Route path="/" element={<AdminLayout />}>
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="proposals" element={<ProposalsIndex />} /> {/* Separate Proposal List */}
+                        <Route path="proposals/create/:id?" element={<CreateProposal />} />
+                        <Route path="proposals/:id" element={<ProposalShow />} />
 
-                    {/* CMS */}
-                    <Route path="cms/posts" element={<PostsIndex />} />
-                    <Route path="cms/posts/:id" element={<CmsPostDetail />} />
-                    <Route path="cms/documents" element={<DocumentsIndex />} />
-                    <Route path="cms/galleries" element={<GalleriesIndex />} />
+                        {/* PKM Module */}
+                        <Route path="pkm" element={<PkmIndex />} />
+                        <Route path="pkm/create/:id?" element={<PkmCreate />} />
+                        <Route path="pkm/:id" element={<PkmShow />} />
 
-                    {/* Master Data (Admin Only) */}
-                    <Route path="master/faculties" element={<FacultiesIndex />} />
-                    <Route path="master/study-programs" element={<StudyProgramsIndex />} />
-                    <Route path="master/fiscal-years" element={<FiscalYearsIndex />} />
-                    <Route path="master/schemes" element={<SchemesIndex />} />
-                    <Route path="master/users" element={<UsersIndex />} />
-                    
-                    {/* User Management */}
-                    <Route path="admin/organization" element={<OrganizationAdminIndex />} />
-                    <Route path="admin/roles" element={<RolesIndex />} />
-                    <Route path="admin/permissions" element={<PermissionsIndex />} />
-                    <Route path="admin/menus" element={<MenuIndex />} />
-                    <Route path="admin/menus/:id" element={<MenuBuilder />} />
-                    <Route path="admin/menus/:id" element={<MenuBuilder />} />
-                    <Route path="admin/settings" element={<SystemSettingIndex />} />
+                        {/* Admin Proposal Management */}
+                        <Route path="admin/proposals" element={<AdminProposalDashboard />} />
 
-                    {/* Static Pages */}
-                    <Route path="admin/pages" element={<PageIndex />} />
-                    <Route path="admin/pages/create" element={<PageForm />} />
-                    <Route path="admin/pages/:id/edit" element={<PageForm />} />
+                        {/* Reviewer Portal */}
+                        <Route path="reviewer/dashboard" element={<ReviewerDashboard />} />
+                        <Route path="reviewer/proposals/:id" element={<ReviewerProposalShow />} />
+                        <Route path="reviewer/pkm" element={<ReviewerPkmIndex />} />
+                        <Route path="reviewer/pkm/:id" element={<ReviewerPkmShow />} />
 
-                    {/* Profile */}
-                    <Route path="profile" element={<ProfileIndex />} />
-                    <Route path="profile/stats" element={<StatsIndex />} />
-                    <Route path="organization" element={<OrganizationIndex />} />
-                 </Route>
-            </Route>
+                        {/* Program Activity */}
+                        <Route path="reports" element={<ReportsIndex />} />
+                        <Route path="reviews" element={<ReviewIndex />} />
 
-            {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                        {/* Journal Consultation */}
+                        <Route path="journals" element={<JournalIndex />} />
+                        <Route path="journals/create" element={<JournalCreate />} />
+                        <Route path="journals/:id" element={<JournalShow />} />
+
+
+                        {/* Student KKN Dashboard */}
+                        <Route path="dashboard/kkn" element={<StudentKknDashboard />} />
+                        <Route path="dashboard/kkn/register" element={<StudentKknRegistration />} />
+                        <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
+                        <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
+                        <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
+                        <Route path="dashboard/kkn/guidance" element={<StudentKknGuidance />} />
+                        <Route path="dashboard/kkn/reports" element={<StudentKknReports />} />
+                        <Route path="dashboard/kkn/assessment" element={<StudentKknAssessment />} />
+
+                        {/* KKN Module (Admin/Legacy) */}
+                        <Route path="kkn" element={<KknStudentRegistration />} /> {/* Default to registration/dashboard for student */}
+                        <Route path="kkn/periods" element={<KknPeriodsIndex />} />
+                        <Route path="kkn/locations" element={<KknLocationsIndex />} />
+                        <Route path="kkn/registration" element={<KknStudentRegistration />} />
+                        <Route path="kkn/status" element={<StudentKknStatus />} />
+                        <Route path="kkn/participants" element={<KknParticipantsIndex />} />
+
+                        {/* KKN Posko Management (Admin) */}
+                        <Route path="kkn/postos" element={<PostoIndex />} />
+                        <Route path="kkn/postos/create" element={<PostoForm />} />
+                        <Route path="kkn/postos/:id" element={<PostoDetail />} />
+                        <Route path="kkn/postos/:id/edit" element={<PostoForm />} />
+                        <Route path="kkn/postos/:id/members/add" element={<PostoAddMember />} />
+
+                        {/* KKN Assessment (Admin/Staff) */}
+                        <Route path="kkn/assessment" element={<KknAssessment />} />
+                        <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
+
+                        {/* CMS */}
+                        <Route path="cms/posts" element={<PostsIndex />} />
+                        <Route path="cms/posts/:id" element={<CmsPostDetail />} />
+                        <Route path="cms/documents" element={<DocumentsIndex />} />
+                        <Route path="cms/galleries" element={<GalleriesIndex />} />
+
+                        {/* Master Data (Admin Only) */}
+                        <Route path="master/faculties" element={<FacultiesIndex />} />
+                        <Route path="master/study-programs" element={<StudyProgramsIndex />} />
+                        <Route path="master/fiscal-years" element={<FiscalYearsIndex />} />
+                        <Route path="master/schemes" element={<SchemesIndex />} />
+                        <Route path="master/users" element={<UsersIndex />} />
+                        <Route path="master/students" element={<StudentsIndex />} />
+                        <Route path="master/science-clusters" element={<ScienceClustersIndex />} />
+                        <Route path="master/research-priorities" element={<ResearchPrioritiesIndex />} />
+                        <Route path="master/sdgs" element={<SdgIndex />} />
+                        <Route path="master/pkm" element={<PkmMasterDataIndex />} />
+
+                        {/* User Management */}
+                        <Route path="admin/organization" element={<OrganizationAdminIndex />} />
+                        <Route path="admin/roles" element={<RolesIndex />} />
+                        <Route path="admin/proposals" element={<AdminProposalDashboard />} />
+                        <Route path="admin/pkm" element={<AdminPkmDashboard />} />
+                        <Route path="admin/reports" element={<AdminReportDashboard />} />
+                        <Route path="admin/menus" element={<MenuIndex />} />
+                        <Route path="admin/menus/:id" element={<MenuBuilder />} />
+                        <Route path="admin/menus/:id" element={<MenuBuilder />} />
+                        <Route path="admin/settings" element={<SystemSettingIndex />} />
+
+                        {/* Static Pages */}
+                        <Route path="admin/pages" element={<PagePageIndex />} />
+                        <Route path="admin/pages/create" element={<PagePageForm />} />
+                        <Route path="admin/pages/:id/edit" element={<PagePageForm />} />
+
+                        {/* Profile */}
+                        <Route path="profile" element={<ProfileIndex />} />
+                        <Route path="profile/stats" element={<StatsIndex />} />
+                        <Route path="organization" element={<OrganizationIndex />} />
+                    </Route>
+                </Route>
+
+                {/* Catch-all */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
         </BrowserRouter>
     );
 }

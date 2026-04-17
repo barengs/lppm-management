@@ -1,32 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Upload, DollarSign, FileText } from 'lucide-react';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import { FileText, CheckCircle, Circle } from 'lucide-react';
 
-export default function CreateProposal() {
+// Components
+import StepTkt from './components/StepTkt';
+import StepIdentity from './components/StepIdentity';
+import StepPersonnel from './components/StepPersonnel';
+import StepSubstance from './components/StepSubstance';
+import StepSchedule from './components/StepSchedule';
+import StepRAB from './components/StepRAB';
+import StepOutputs from './components/StepOutputs';
+import StepPreview from './components/StepPreview';
+
+const STEPS = [
+    { id: 0, name: 'Kuesioner TKT', label: 'TKT' },
+    { id: 1, name: 'Identitas Usulan', label: 'Identitas' },
+    { id: 2, name: 'Manajemen Anggota', label: 'Anggota' },
+    { id: 3, name: 'Substansi Usulan', label: 'Substansi' },
+    { id: 4, name: 'Jadwal Penelitian', label: 'Jadwal' },
+    { id: 5, name: 'Rincian Anggaran (RAB)', label: 'RAB' },
+    { id: 6, name: 'Luaran Dijanjikan', label: 'Luaran' },
+    { id: 7, name: 'Pratinjau & Selesai', label: 'Preview' }
+];
+
+export default function Create() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const { token } = useAuth();
     
-    // Form State
-    const [title, setTitle] = useState('');
-    const [abstract, setAbstract] = useState('');
-    const [schemeId, setSchemeId] = useState('');
-    const [fiscalYearId, setFiscalYearId] = useState('');
-    const [budget, setBudget] = useState('');
-    const [file, setFile] = useState(null);
-    const [location, setLocation] = useState('');
+    // Core State
+    const [proposalId, setProposalId] = useState(id || null);
+    const [currentStep, setCurrentStep] = useState(0);
+    const [proposalData, setProposalData] = useState(null);
+    const [isInitialLoading, setIsInitialLoading] = useState(false);
     
-    // Data State
+    // Initial Form State
     const [schemes, setSchemes] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [initialForm, setInitialForm] = useState({
+        title: '',
+        scheme_id: '',
+        fiscal_year_id: ''
+    });
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             try {
                 const [schemesRes, fyRes] = await Promise.all([
                     axios.get('/api/schemes', { headers: { Authorization: `Bearer ${token}` } }),
@@ -34,213 +55,203 @@ export default function CreateProposal() {
                 ]);
                 setSchemes(schemesRes.data);
                 setFiscalYears(fyRes.data);
-                
                 if (fyRes.data.length > 0) {
-                    setFiscalYearId(fyRes.data[0].id);
+                    setInitialForm(prev => ({ ...prev, fiscal_year_id: fyRes.data[0].id }));
                 }
             } catch (err) {
-                console.error("Failed to fetch form data", err);
-                setError("Failed to load necessary data. Please try again.");
+                console.error(err);
             }
         };
-
-        fetchData();
+        fetchInitialData();
     }, [token]);
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+    useEffect(() => {
+        if (proposalId) {
+            fetchProposalDetail();
+        }
+    }, [proposalId, token]);
 
-    const handleSubmit = async (e) => {
+    const handleInitialSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
+        setIsInitialLoading(true);
         setError(null);
-
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('abstract', abstract);
-        formData.append('scheme_id', schemeId);
-        formData.append('fiscal_year_id', fiscalYearId);
-        formData.append('budget', budget);
-        if (location) formData.append('location', location);
-        if (file) formData.append('file_proposal', file);
-
         try {
-            await axios.post('/api/proposals', formData, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
+            const res = await axios.post('/api/proposals', initialForm, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            
-            navigate('/dashboard');
+            setProposalId(res.data.id);
+            setProposalData(res.data);
+            setIsInitialLoading(false);
         } catch (err) {
-            console.error(err);
-            setError(err.response?.data?.message || "Failed to submit proposal. Make sure all fields are valid.");
-            setIsLoading(false);
+            setError(err.response?.data?.message || "Gagal membuat draf proposal. Periksa eligibility skema.");
+            setIsInitialLoading(false);
         }
     };
 
-    return (
-        <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-sm overflow-hidden border border-gray-100">
-            <div className="bg-green-700 px-6 py-4 border-b border-green-800">
-                <h1 className="text-xl font-bold text-white flex items-center">
-                    <FileText className="mr-2" size={24} />
-                    Pengajuan Proposal Baru
-                </h1>
-                <p className="text-green-100 text-sm mt-1">Lengkapi formulir di bawah ini untuk mengajukan proposal penelitian atau pengabdian.</p>
-            </div>
-            
-            <div className="p-8">
-                {error && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-sm border border-red-200 flex items-start">
-                        <div className="mr-2 mt-0.5">⚠️</div>
-                        <div>{error}</div>
-                    </div>
-                )}
+    const fetchProposalDetail = async () => {
+        if (!proposalId) return;
+        try {
+            const res = await axios.get(`/api/proposals/${proposalId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProposalData(res.data);
+            // Clamp currentStep to valid range [0, STEPS.length - 1]
+            const stepFromBackend = res.data.current_step || 0;
+            setCurrentStep(Math.min(stepFromBackend, STEPS.length - 1));
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Anggaran</label>
-                            <select 
-                                required
-                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-gray-50"
-                                value={fiscalYearId}
-                                onChange={(e) => setFiscalYearId(e.target.value)}
-                            >
-                                {fiscalYears.map(fy => (
-                                    <option key={fy.id} value={fy.id}>{fy.year}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Skema Hibah</label>
-                            <select 
-                                required
-                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 bg-white"
-                                value={schemeId}
-                                onChange={(e) => setSchemeId(e.target.value)}
-                            >
-                                <option value="">-- Pilih Skema --</option>
-                                {schemes.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name} ({s.type})</option>
-                                ))}
-                            </select>
-                        </div>
+    const onStepNext = () => {
+        fetchProposalDetail();
+        if (currentStep < 7) setCurrentStep(currentStep + 1);
+    };
+
+    const onStepBack = () => {
+        if (currentStep > 0) setCurrentStep(currentStep - 1);
+    };
+
+    // Render Initial Form (Stage 1)
+    if (!proposalId) {
+        return (
+            <div className="max-w-4xl mx-auto py-8">
+                <div className="bg-white shadow-xl rounded-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-green-700 px-8 py-6">
+                        <h1 className="text-2xl font-bold text-white flex items-center">
+                            <FileText className="mr-3" size={32} />
+                            Pengajuan Usulan Baru
+                        </h1>
+                        <p className="text-green-100 mt-2">Daftarkan judul dan pilih skema hibah untuk memulai pengisian detail usulan (BIMA Mirror).</p>
                     </div>
 
-                    {/* Title */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Judul Proposal</label>
-                        <input 
-                            type="text" 
-                            required
-                            placeholder="Judul lengkap penelitian/pengabdian..."
-                            className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Abstract */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Abstrak / Ringkasan</label>
-                        <div className="bg-white">
-                             <ReactQuill 
-                                theme="snow"
-                                value={abstract}
-                                onChange={setAbstract}
-                                className="h-64 mb-12"
-                                modules={{
-                                    toolbar: [
-                                        [{ 'header': [1, 2, false] }],
-                                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                                        [{'list': 'ordered'}, {'list': 'bullet'}],
-                                        ['link'],
-                                        ['clean']
-                                    ],
-                                }}
-                             />
-                        </div>
-                    </div>
-
-                    {/* Budget & Location */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Rencana Anggaran Biaya (Rp)</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="text-gray-500 sm:text-sm">Rp</span>
-                                </div>
-                                <input 
-                                    type="number" 
-                                    required
-                                    min="0"
-                                    placeholder="0"
-                                    className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5 pl-10"
-                                    value={budget}
-                                    onChange={(e) => setBudget(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Lokasi (Opsional)</label>
-                            <input 
-                                type="text" 
-                                placeholder="Lokasi kegiatan (jika ada)..."
-                                className="w-full border-gray-300 rounded-sm shadow-sm focus:ring-green-500 focus:border-green-500 border p-2.5"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* File Upload */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-sm p-6 bg-gray-50 hover:bg-white transition-colors">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Unggah Dokumen Proposal (PDF)</label>
-                        <div className="flex items-center justify-center w-full">
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-10 h-10 text-gray-400 mb-3" />
-                                    <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Klik untuk unggah</span> atau drag and drop</p>
-                                    <p className="text-xs text-gray-500">PDF (MAX. 10MB)</p>
-                                </div>
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    accept=".pdf"
-                                    required
-                                    onChange={handleFileChange}
-                                />
-                            </label>
-                        </div>
-                        {file && (
-                            <div className="mt-2 text-sm text-green-600 font-medium flex items-center">
-                                <FileText size={16} className="mr-1" />
-                                {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    <div className="p-10">
+                        {error && (
+                            <div className="mb-8 p-4 bg-red-50 text-red-700 border border-red-200 rounded-sm flex items-start text-sm">
+                                <span className="mr-2">⚠️</span> {error}
                             </div>
                         )}
-                    </div>
 
-                    <div className="flex justify-end pt-6 border-t border-gray-100 space-x-3">
-                        <button 
-                            type="button"
-                            onClick={() => navigate('/dashboard')}
-                            className="px-6 py-2.5 border border-gray-300 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Batal
-                        </button>
-                        <button 
-                            type="submit"
-                            disabled={isLoading}
-                            className={`px-6 py-2.5 border border-transparent rounded-sm shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
-                        >
-                            {isLoading ? 'Mengirim...' : 'Kirim Proposal'}
-                        </button>
+                        <form onSubmit={handleInitialSubmit} className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Skema Kegiatan</label>
+                                    <select 
+                                        required
+                                        className="w-full border border-gray-300 rounded-sm p-3 bg-gray-50 focus:ring-green-500 transition-all"
+                                        value={initialForm.scheme_id}
+                                        onChange={e => setInitialForm({...initialForm, scheme_id: e.target.value})}
+                                    >
+                                        <option value="">-- Pilih Skema Hibah --</option>
+                                        {schemes.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name} ({s.type})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Tahun Akademik</label>
+                                    <select 
+                                        required
+                                        className="w-full border border-gray-300 rounded-sm p-3 bg-white"
+                                        value={initialForm.fiscal_year_id}
+                                        onChange={e => setInitialForm({...initialForm, fiscal_year_id: e.target.value})}
+                                    >
+                                        {fiscalYears.map(fy => (
+                                            <option key={fy.id} value={fy.id}>{fy.year}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Judul Usulan</label>
+                                <textarea 
+                                    required
+                                    rows={3}
+                                    placeholder="Masukkan judul lengkap usulan penelitian/pengabdian..."
+                                    className="w-full border border-gray-300 rounded-sm p-3 focus:ring-green-500"
+                                    value={initialForm.title}
+                                    onChange={e => setInitialForm({...initialForm, title: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="flex justify-end pt-4">
+                                <button 
+                                    type="submit"
+                                    disabled={isInitialLoading}
+                                    className="px-10 py-3 bg-green-700 text-white rounded-sm font-bold shadow-lg hover:bg-green-800 transition-all disabled:opacity-50"
+                                >
+                                    {isInitialLoading ? 'Memproses...' : 'Lanjutkan ke Detail Usulan'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
+            </div>
+        );
+    }
+
+    // Render Stepper (Stage 2)
+    return (
+        <div className="max-w-6xl mx-auto py-6">
+            <div className="bg-white shadow-2xl rounded-sm border border-gray-100">
+                {/* Stepper Header */}
+                <div className="px-8 py-6 bg-gray-50 border-b border-gray-100">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">{proposalData?.title}</h2>
+                            <p className="text-xs text-gray-500 mt-1 uppercase font-semibold">
+                                {proposalData?.scheme?.name} • ID Usulan: #{proposalId}
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                            {STEPS.map((step, idx) => (
+                                <React.Fragment key={step.id}>
+                                    <div className="flex flex-col items-center">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                            currentStep === idx 
+                                                ? 'bg-green-700 text-white shadow-md' 
+                                                : currentStep > idx ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                                        }`}>
+                                            {currentStep > idx ? <CheckCircle size={16} /> : idx + 1}
+                                        </div>
+                                        <span className={`text-[10px] mt-1 hidden md:block ${currentStep === idx ? 'font-bold text-green-800' : 'text-gray-400'}`}>
+                                            {step.label}
+                                        </span>
+                                    </div>
+                                    {idx < 7 && <div className={`w-4 md:w-8 h-0.5 mx-0.5 transition-colors ${currentStep > idx ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Progress Visual */}
+                <div className="w-full h-1 bg-gray-100 overflow-hidden">
+                    <div 
+                        className="h-full bg-green-700 transition-all duration-500" 
+                        style={{ width: `${((currentStep + 1) / 8) * 100}%` }} 
+                    />
+                </div>
+
+                {/* Step Content */}
+                <div className="p-8 min-h-[500px]">
+                    <h3 className="text-lg font-bold text-gray-700 mb-8 border-l-4 border-green-700 pl-4">
+                        {currentStep < 7 
+                            ? `TAHAP ${currentStep + 1}: ${STEPS[currentStep]?.name || ''}`
+                            : 'TAHAP 8: PRATINJAU & PENYELESAIAN'
+                        }
+                    </h3>
+                    
+                    {currentStep === 0 && <StepTkt proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} />}
+                    {currentStep === 1 && <StepIdentity proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 2 && <StepPersonnel proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 3 && <StepSubstance proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 4 && <StepSchedule proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 5 && <StepRAB proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 6 && <StepOutputs proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 7 && <StepPreview proposalId={proposalId} token={token} onBack={onStepBack} initialData={proposalData} />}
+                </div>
             </div>
         </div>
     );

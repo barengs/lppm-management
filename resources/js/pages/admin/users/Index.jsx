@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import { PlusCircle, Edit, Trash2, Upload, Download, User, BookOpen, Camera, Lock } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Upload, Download, User, BookOpen, Camera, Lock, Eye, EyeOff } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { toast } from 'react-toastify';
 
@@ -9,20 +9,23 @@ export default function UsersIndex() {
     const { token } = useAuth();
     const [users, setUsers] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    
+
     // Form and File state
-    const [formData, setFormData] = useState({ 
-        name: '', email: '', role: 'dosen', password: '', 
+    const [formData, setFormData] = useState({
+        name: '', email: '', role: 'dosen', password: '',
         nidn: '', prodi: '', fakultas: '',
-        scopus_id: '', sinta_id: '', google_scholar_id: '' 
+        scopus_id: '', sinta_id: '', google_scholar_id: ''
     });
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
-    
+
     const [editId, setEditId] = useState(null);
     const [activeTab, setActiveTab] = useState('account'); // account | profile
 
     const [roles, setRoles] = useState([]);
+    const [faculties, setFaculties] = useState([]);
+    const [studyPrograms, setStudyPrograms] = useState([]);
+    const [showPassword, setShowPassword] = useState(false);
 
     const fetchRoles = async () => {
         try {
@@ -48,8 +51,22 @@ export default function UsersIndex() {
     };
 
     useEffect(() => {
+        const fetchMasterData = async () => {
+            try {
+                const [facRes, prodiRes] = await Promise.all([
+                    axios.get('/api/faculties'),
+                    axios.get('/api/study-programs')
+                ]);
+                setFaculties(facRes.data);
+                setStudyPrograms(prodiRes.data);
+            } catch (error) {
+                console.error("Failed to fetch master data", error);
+            }
+        };
+
         fetchRoles();
         fetchUsers();
+        fetchMasterData();
     }, []);
 
     const handleFileChange = (e) => {
@@ -68,7 +85,7 @@ export default function UsersIndex() {
             payload.append('name', formData.name);
             payload.append('email', formData.email);
             payload.append('role', formData.role);
-            
+
             if (formData.password) payload.append('password', formData.password);
             if (avatarFile) payload.append('avatar', avatarFile);
 
@@ -84,9 +101,9 @@ export default function UsersIndex() {
 
             // Method Spoofing for PUT (Laravel requires POST for multipart with _method)
             if (editId) {
-                payload.append('_method', 'PUT'); 
+                payload.append('_method', 'PUT');
                 await axios.post(`/api/users/${editId}`, payload, {
-                    headers: { 
+                    headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
                     }
@@ -94,7 +111,7 @@ export default function UsersIndex() {
                 toast.success("User updated");
             } else {
                 await axios.post('/api/users', payload, {
-                    headers: { 
+                    headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
                     }
@@ -126,12 +143,12 @@ export default function UsersIndex() {
 
     const handleEdit = (user) => {
         const profile = user.dosen_profile || {};
-        setFormData({ 
-            name: user.name, 
-            email: user.email, 
-            role: user.role, 
-            password: '', 
-            nidn: profile.nidn || '', 
+        setFormData({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            password: '',
+            nidn: profile.nidn || '',
             prodi: profile.prodi || '',
             fakultas: profile.fakultas || '',
             scopus_id: profile.scopus_id || '',
@@ -142,19 +159,21 @@ export default function UsersIndex() {
         setAvatarPreview(user.avatar ? `/storage/${user.avatar}` : null);
         setAvatarFile(null);
         setActiveTab('account');
+        setShowPassword(false);
         setShowModal(true);
     };
 
     const resetForm = () => {
-        setFormData({ 
-            name: '', email: '', role: 'dosen', password: '', 
+        setFormData({
+            name: '', email: '', role: 'dosen', password: '',
             nidn: '', prodi: '', fakultas: '',
-            scopus_id: '', sinta_id: '', google_scholar_id: '' 
+            scopus_id: '', sinta_id: '', google_scholar_id: ''
         });
         setAvatarFile(null);
         setAvatarPreview(null);
         setEditId(null);
         setActiveTab('account');
+        setShowPassword(false);
     };
 
     const [showImportModal, setShowImportModal] = useState(false);
@@ -171,9 +190,9 @@ export default function UsersIndex() {
         setIsImporting(true);
         try {
             await axios.post('/api/users/import', formData, {
-                headers: { 
+                headers: {
                     'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${token}` 
+                    Authorization: `Bearer ${token}`
                 }
             });
             toast.success('Import successful');
@@ -212,7 +231,7 @@ export default function UsersIndex() {
             header: 'Name',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                     <div className="flex-shrink-0 h-10 w-10">
+                    <div className="flex-shrink-0 h-10 w-10">
                         {row.original.avatar ? (
                             <img className="h-10 w-10 rounded-full object-cover" src={`/storage/${row.original.avatar}`} alt="" />
                         ) : (
@@ -294,8 +313,8 @@ export default function UsersIndex() {
             </div>
 
             <div className="bg-white shadow rounded-lg p-4">
-                <DataTable 
-                    data={users} 
+                <DataTable
+                    data={users}
                     columns={columns}
                     options={{
                         enableGlobalFilter: true,
@@ -304,7 +323,7 @@ export default function UsersIndex() {
                         initialPageSize: 10,
                         searchPlaceholder: 'Search staff...',
                         emptyMessage: 'No staff found'
-                    }} 
+                    }}
                 />
             </div>
 
@@ -317,16 +336,16 @@ export default function UsersIndex() {
                             <h2 className="text-xl font-bold text-gray-800">{editId ? 'Edit Staff/Dosen' : 'Tambah Staff/Dosen Baru'}</h2>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">&times;</button>
                         </div>
-                        
+
                         {/* Tabs */}
                         <div className="flex border-b">
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('account')}
                                 className={`flex-1 py-3 text-sm font-medium text-center flex items-center justify-center gap-2 border-b-2 ${activeTab === 'account' ? 'border-green-600 text-green-700 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                             >
                                 <User size={16} /> Informasi Akun
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`flex-1 py-3 text-sm font-medium text-center flex items-center justify-center gap-2 border-b-2 ${activeTab === 'profile' ? 'border-green-600 text-green-700 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                             >
@@ -398,17 +417,32 @@ export default function UsersIndex() {
                                         </div>
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                <span className="flex items-center gap-1"><Lock size={12}/> Password</span>
+                                                <span className="flex items-center gap-1"><Lock size={12} /> Password</span>
                                             </label>
-                                            <input
-                                                type="password"
-                                                value={formData.password}
-                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5"
-                                                placeholder={editId ? 'Kosongkan jika tidak ingin mengubah password' : 'Masukkan password...'}
-                                                {...(!editId && { required: true })}
-                                                minLength={6}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={formData.password}
+                                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 pr-10"
+                                                    placeholder={editId ? 'Kosongkan jika tidak ingin mengubah password' : 'Masukkan password...'}
+                                                    {...(!editId && { required: true })}
+                                                    minLength={formData.nidn ? formData.nidn.length : 6}
+                                                    maxLength={formData.nidn ? formData.nidn.length : undefined}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
+                                            {formData.nidn && (
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Panjang password harus persis {formData.nidn.length} karakter (sama dengan panjang NIDN {formData.nidn}).
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -418,7 +452,7 @@ export default function UsersIndex() {
                                     {!['dosen', 'reviewer'].includes(formData.role) ? (
                                         <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
                                             Role <strong>{formData.role}</strong> tidak memerlukan profil akademik secara mandatory.
-                                            <br/>
+                                            <br />
                                             <span className="text-xs">Namun Anda tetap bisa mengisinya jika diperlukan.</span>
                                         </div>
                                     ) : (
@@ -438,22 +472,40 @@ export default function UsersIndex() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Program Studi</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.prodi}
-                                                        onChange={(e) => setFormData({ ...formData, prodi: e.target.value })}
-                                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5"
-                                                    />
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fakultas</label>
+                                                    <select
+                                                        value={formData.fakultas}
+                                                        onChange={(e) => {
+                                                            setFormData({ ...formData, fakultas: e.target.value, prodi: '' });
+                                                        }}
+                                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 bg-white"
+                                                    >
+                                                        <option value="">Pilih Fakultas...</option>
+                                                        {faculties.map(f => (
+                                                            <option key={f.id} value={f.name}>{f.name}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fakultas</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.fakultas}
-                                                        onChange={(e) => setFormData({ ...formData, fakultas: e.target.value })}
-                                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5"
-                                                    />
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Program Studi</label>
+                                                    <select
+                                                        value={formData.prodi}
+                                                        onChange={(e) => setFormData({ ...formData, prodi: e.target.value })}
+                                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 bg-white"
+                                                        disabled={!formData.fakultas}
+                                                    >
+                                                        <option value="">{formData.fakultas ? 'Pilih Program Studi...' : 'Pilih Fakultas terlebih dahulu'}</option>
+                                                        {studyPrograms
+                                                            .filter(p => {
+                                                                if (!formData.fakultas) return false;
+                                                                const selectedFac = faculties.find(f => f.name === formData.fakultas);
+                                                                return selectedFac ? p.faculty_id === selectedFac.id : false;
+                                                            })
+                                                            .map(p => (
+                                                                <option key={p.id} value={p.name}>{p.name}</option>
+                                                            ))
+                                                        }
+                                                    </select>
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Sinta ID</label>
@@ -490,7 +542,7 @@ export default function UsersIndex() {
                                     )}
                                 </div>
                             </div>
-                            
+
                             {/* Footer */}
                             <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg shrink-0">
                                 <button
@@ -525,12 +577,12 @@ export default function UsersIndex() {
                         <form onSubmit={handleImport} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Upload File Excel (.xlsx, .xls, .csv)</label>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     accept=".xlsx, .xls, .csv"
                                     onChange={(e) => setImportFile(e.target.files[0])}
                                     className="w-full border p-2 rounded"
-                                    required 
+                                    required
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
                                     Kolom: <strong>name, email, role, nidn, faculty_code, prodi_code</strong>

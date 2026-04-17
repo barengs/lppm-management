@@ -7,6 +7,7 @@ import {
     LineChart, Line
 } from 'recharts';
 import { Users, MapPin, BookOpen, UserCheck } from 'lucide-react';
+import MemberConsentList from '../components/MemberConsentList';
 
 export default function Dashboard() {
     const { user, token } = useAuth();
@@ -15,9 +16,23 @@ export default function Dashboard() {
         participants_per_period: [],
         lecturer_count: 0,
         locations_per_period: [],
-        abmas_per_period: []
+        abmas_per_period: [],
+        pending_consents_count: 0
     });
     const [loading, setLoading] = useState(true);
+
+    const fetchStats = async () => {
+        try {
+            const response = await axios.get('/api/dashboard/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStats(response.data);
+        } catch (error) {
+            console.error("Failed to fetch dashboard stats", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // Redirect student if they somehow access this page
@@ -26,24 +41,7 @@ export default function Dashboard() {
             return;
         }
 
-        console.log("Dashboard mounted. Token exists:", !!token);
-        const fetchStats = async () => {
-            console.log("Fetching dashboard stats...");
-            try {
-                const response = await axios.get('/api/dashboard/stats', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                console.log("Stats received:", response.data);
-                setStats(response.data);
-            } catch (error) {
-                console.error("Failed to fetch dashboard stats", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         if (token && user?.role !== 'mahasiswa') fetchStats();
-        else if (!token) console.log("No token available, skipping stats fetch");
     }, [token, user, navigate]);
 
     const StatCard = ({ title, value, icon, color }) => (
@@ -71,6 +69,9 @@ export default function Dashboard() {
                     Selamat datang, <span className="font-semibold text-green-700">{user?.name}</span>
                 </p>
             </div>
+
+            {/* Member Consent Invitations */}
+            <MemberConsentList onUpdate={fetchStats} />
 
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -107,7 +108,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Peserta KKN per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
                             <BarChart data={stats.participants_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -124,7 +125,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Lokasi KKN per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
                             <BarChart data={stats.locations_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -141,7 +142,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 shadow lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Pengabdian Masyarakat (Abmas) per Periode</h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" aspect={4} minHeight={288}>
                             <LineChart data={stats.abmas_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />

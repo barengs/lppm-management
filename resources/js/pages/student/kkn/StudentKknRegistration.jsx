@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
@@ -6,10 +7,12 @@ import { toast } from 'react-toastify';
 
 export default function KknStudentRegistration() {
     const { token, user } = useAuth();
+    const location = useLocation();
     const [registrations, setRegistrations] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
     const [selectedFy, setSelectedFy] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Master Data
     const [faculties, setFaculties] = useState([]);
@@ -40,11 +43,62 @@ export default function KknStudentRegistration() {
     ]);
     const [files, setFiles] = useState({ photo: null }); // Keep photo separate as it is in Step 3
 
+    // Camera states
+    const [showCamera, setShowCamera] = useState(false);
+    const videoRef = React.useRef(null);
+    const canvasRef = React.useRef(null);
+
+    const startCamera = async () => {
+        setShowCamera(true);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Tidak dapat mengakses kamera perangkat.");
+            setShowCamera(false);
+        }
+    };
+
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        }
+        setShowCamera(false);
+    };
+
+    const capturePhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+                    setFiles({ ...files, photo: file });
+                    stopCamera();
+                }
+            }, 'image/jpeg', 0.8);
+        }
+    };
+
     // Fetch initial data
     useEffect(() => {
         fetchData();
         fetchProfile();
-    }, [token]);
+
+        // Check if we reached here from "Upload Ulang" or "Edit" button
+        if (location.state?.edit) {
+            setIsEditing(true);
+            setStep(2); // Go straight to documents if it's a revision
+        }
+    }, [token, location]);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -140,6 +194,23 @@ export default function KknStudentRegistration() {
         setDocuments(newDocs);
     };
 
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setStep(1);
+
+        // Populate specific registration data if needed
+        if (myRegistration) {
+            setSelectedFy(myRegistration.fiscal_year_id);
+            setProfileData(prev => ({
+                ...prev,
+                registration_type: myRegistration.registration_type || 'reguler'
+            }));
+
+            // Note: We don't pre-fill files as HTML file inputs can't be pre-filled for security.
+            // The backend should ignore missing files and keep the old ones on update.
+        }
+    };
+
     const handleRegister = async () => {
         if (!confirm("Apakah Anda yakin data dan dokumen sudah benar?")) return;
 
@@ -174,15 +245,22 @@ export default function KknStudentRegistration() {
         // Photo (Step 3)
         if (files.photo) formData.append('photo', files.photo);
 
+        const isUpdating = isEditing && myRegistration;
+        if (isUpdating) {
+            formData.append('_method', 'PUT'); // Laravel method spoofing for form-data
+        }
+
         try {
             setIsLoading(true);
-            await api.post('/kkn-registrations', formData, {
+            const url = isUpdating ? `/kkn-registrations/${myRegistration.id}` : '/kkn-registrations';
+            await api.post(url, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Berhasil mendaftar KKN!");
+            toast.success(isUpdating ? "Berhasil mengupdate pendaftaran KKN!" : "Berhasil mendaftar KKN!");
+            setIsEditing(false);
             fetchData();
         } catch (error) {
-            toast.error(error.response?.data?.message || "Gagal mendaftar.");
+            toast.error(error.response?.data?.message || "Gagal menyimpan data.");
         } finally {
             setIsLoading(false);
         }
@@ -190,9 +268,9 @@ export default function KknStudentRegistration() {
 
     const myRegistration = registrations.length > 0 ? registrations[0] : null;
 
-    // Only show "already registered" message for students (mahasiswa)
+    // Only show "already registered" message for students (mahasiswa) and when not editing
     // Admin/staff should always see the form to register other students
-    if (myRegistration && user?.role === 'mahasiswa') {
+    if (myRegistration && user?.role === 'mahasiswa' && !isEditing) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-green-100 p-8 text-center max-w-2xl mx-auto mt-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -202,8 +280,8 @@ export default function KknStudentRegistration() {
                 <div className="text-gray-600 mb-6">
                     <p>Lokasi: <span className="font-semibold text-gray-900">{myRegistration.location?.name}</span></p>
                     <p>Status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${myRegistration.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                'bg-yellow-100 text-yellow-800'
+                        myRegistration.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
                         }`}>
                         {myRegistration.status.toUpperCase()}
                     </span></p>
@@ -212,13 +290,21 @@ export default function KknStudentRegistration() {
                 <div className="bg-gray-50 p-4 rounded-lg text-left text-sm text-gray-500">
                     <p>Validation Notes: {myRegistration.validation_notes || "Belum ada catatan validasi."}</p>
                 </div>
-                <div className="mt-6">
+                <div className="mt-6 flex justify-center space-x-4">
                     <a
                         href="/dashboard/kkn/status"
                         className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                     >
                         Lihat Detail Status
                     </a>
+                    {(myRegistration.status === 'pending' || myRegistration.status === 'needs_revision') && (
+                        <button
+                            onClick={handleEditClick}
+                            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer"
+                        >
+                            Edit Pendaftaran
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -349,7 +435,7 @@ export default function KknStudentRegistration() {
                                 <input type="text" name="phone" value={profileData.phone} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Indeks Prestasi Sementara (IPS)</label>
+                                <label className="block text-sm font-medium text-gray-700">Indeks Prestasi Kumulatif (IPK)</label>
                                 <input type="number" step="0.01" min="0" max="4.00" name="ips" value={profileData.ips} onChange={handleProfileChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm p-2 bg-white border" required placeholder="0.00 - 4.00" />
                             </div>
                             <div className="md:col-span-2">
@@ -464,20 +550,84 @@ export default function KknStudentRegistration() {
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold flex items-center mb-4 border-b pb-2"><Camera className="mr-2 w-5 h-5" /> Upload Pas Foto</h3>
 
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors">
-                            <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                            <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
-                            <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
-                            <input
-                                type="file"
-                                name="photo"
-                                onChange={handlePhotoChange}
-                                className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                accept=".jpg,.jpeg,.png"
-                            />
-                            {files.photo && (
-                                <div className="mt-4 text-sm text-green-600 font-medium">
-                                    ✓ File dipilih: {files.photo.name}
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 transition-colors relative">
+                            {showCamera ? (
+                                <div className="flex flex-col items-center">
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        playsInline
+                                        className="w-full max-w-sm rounded-lg shadow-md bg-black"
+                                    ></video>
+                                    <canvas ref={canvasRef} className="hidden"></canvas>
+                                    <div className="flex gap-4 mt-4">
+                                        <button
+                                            type="button"
+                                            onClick={capturePhoto}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                                        >
+                                            <Camera className="w-4 h-4 mr-2" /> Ambil Foto
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={stopCamera}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <Camera className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                                    <p className="text-lg font-medium text-gray-700 mb-2">Pas Foto (3x4)</p>
+                                    <p className="text-sm text-gray-500 mb-4">Format: JPG, JPEG, PNG (Max 2MB)</p>
+
+                                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                name="photo"
+                                                id="photo-upload"
+                                                onChange={handlePhotoChange}
+                                                className="hidden"
+                                                accept=".jpg,.jpeg,.png"
+                                                capture="user"
+                                            />
+                                            <label
+                                                htmlFor="photo-upload"
+                                                className="cursor-pointer px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                                            >
+                                                <Upload className="w-4 h-4 mr-2" />
+                                                Pilih File / Galeri
+                                            </label>
+                                        </div>
+                                        <span className="text-gray-400">atau</span>
+                                        <button
+                                            type="button"
+                                            onClick={startCamera}
+                                            className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                                        >
+                                            <Camera className="w-4 h-4 mr-2" />
+                                            Gunakan Kamera
+                                        </button>
+                                    </div>
+
+                                    {files.photo && (
+                                        <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg inline-block">
+                                            <div className="text-sm text-green-700 font-medium flex items-center justify-center">
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                File dipilih: {files.photo.name}
+                                            </div>
+                                            {files.photo.type && files.photo.type.startsWith('image/') && (
+                                                <img
+                                                    src={URL.createObjectURL(files.photo)}
+                                                    alt="Preview"
+                                                    className="mt-3 max-h-40 mx-auto rounded border border-green-200 shadow-sm"
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -490,7 +640,7 @@ export default function KknStudentRegistration() {
                                 className={`flex items-center bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-green-800'}`}
                             >
                                 <Save className="mr-2 w-5 h-5" />
-                                {isLoading ? 'Proses Mendaftar...' : 'Selesaikan Pendaftaran'}
+                                {isLoading ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Selesaikan Pendaftaran')}
                             </button>
                         </div>
                     </div>

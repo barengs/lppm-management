@@ -32,7 +32,20 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: formData,
             }),
-            invalidatesTags: [{ type: 'Registrations', id: 'LIST' }, 'Statistics'],
+            invalidatesTags: ['Registrations', 'Statistics'],
+        }),
+
+        updateRegistration: builder.mutation({
+            query: ({ id, ...data }) => ({
+                url: `/admin/kkn-registrations/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'Registration', id },
+                'Registrations',
+                'Statistics',
+            ],
         }),
 
         approveRegistration: builder.mutation({
@@ -56,7 +69,7 @@ export const kknApi = baseApi.injectEndpoints({
             },
             invalidatesTags: (result, error, { id }) => [
                 { type: 'Registration', id },
-                { type: 'Registrations', id: 'LIST' },
+                'Registrations',
                 'Statistics',
             ],
         }),
@@ -81,7 +94,7 @@ export const kknApi = baseApi.injectEndpoints({
             },
             invalidatesTags: (result, error, { id }) => [
                 { type: 'Registration', id },
-                { type: 'Registrations', id: 'LIST' },
+                'Registrations',
                 'Statistics',
             ],
         }),
@@ -106,7 +119,7 @@ export const kknApi = baseApi.injectEndpoints({
             },
             invalidatesTags: (result, error, { id }) => [
                 { type: 'Registration', id },
-                { type: 'Registrations', id: 'LIST' },
+                'Registrations',
                 'Statistics',
             ],
         }),
@@ -189,7 +202,7 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: data,
             }),
-            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+            invalidatesTags: ['KknLocations'],
         }),
 
         updateKknLocation: builder.mutation({
@@ -200,7 +213,7 @@ export const kknApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { id }) => [
                 { type: 'KknLocation', id },
-                { type: 'KknLocations', id: 'LIST' },
+                'KknLocations',
             ],
         }),
 
@@ -209,7 +222,7 @@ export const kknApi = baseApi.injectEndpoints({
                 url: `/kkn-locations/${id}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+            invalidatesTags: ['KknLocations'],
         }),
 
         importKknLocations: builder.mutation({
@@ -218,7 +231,7 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: formData,
             }),
-            invalidatesTags: [{ type: 'KknLocations', id: 'LIST' }],
+            invalidatesTags: ['KknLocations'],
         }),
 
         downloadKknLocationTemplate: builder.mutation({
@@ -251,7 +264,7 @@ export const kknApi = baseApi.injectEndpoints({
 
         getPostoById: builder.query({
             query: (id) => `/kkn/postos/${id}`,
-            providesTags: (result, error, id) => [{ type: 'Postos', id }],
+            providesTags: (result, error, id) => [{ type: 'Posto', id }],
         }),
 
         deletePosto: builder.mutation({
@@ -259,7 +272,7 @@ export const kknApi = baseApi.injectEndpoints({
                 url: `/kkn-postos/${id}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+            invalidatesTags: ['Postos'],
         }),
 
         createPosto: builder.mutation({
@@ -268,7 +281,7 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: data,
             }),
-            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+            invalidatesTags: ['Postos'],
         }),
 
         updatePosto: builder.mutation({
@@ -278,8 +291,8 @@ export const kknApi = baseApi.injectEndpoints({
                 body: data,
             }),
             invalidatesTags: (result, error, { id }) => [
-                { type: 'Postos', id: 'LIST' },
-                { type: 'Postos', id },
+                'Postos',
+                { type: 'Posto', id },
             ],
         }),
 
@@ -289,7 +302,7 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'DELETE',
             }),
             invalidatesTags: (result, error, { postoId }) => [
-                { type: 'Postos', id: postoId },
+                { type: 'Posto', id: postoId },
             ],
         }),
 
@@ -300,8 +313,8 @@ export const kknApi = baseApi.injectEndpoints({
                 body: { status },
             }),
             invalidatesTags: (result, error, { id }) => [
-                { type: 'Postos', id },
-                { type: 'Postos', id: 'LIST' },
+                { type: 'Posto', id },
+                'Postos',
             ],
         }),
 
@@ -311,7 +324,7 @@ export const kknApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: formData,
             }),
-            invalidatesTags: [{ type: 'Postos', id: 'LIST' }],
+            invalidatesTags: ['Postos'],
         }),
 
         downloadPostoTemplate: builder.mutation({
@@ -343,7 +356,7 @@ export const kknApi = baseApi.injectEndpoints({
                 body: { student_id, position },
             }),
             invalidatesTags: (result, error, { postoId }) => [
-                { type: 'Postos', id: postoId },
+                { type: 'Posto', id: postoId },
                 'AvailableStudents',
             ],
         }),
@@ -398,7 +411,7 @@ export const kknApi = baseApi.injectEndpoints({
                 body: data,
             }),
             invalidatesTags: (result, error, { kkn_period_id }) => [
-                'KknPeriods', 
+                'KknPeriods',
                 { type: 'KknPeriod', id: kkn_period_id }
             ],
         }),
@@ -459,6 +472,24 @@ export const kknApi = baseApi.injectEndpoints({
                 },
             }),
         }),
+        exportKknRegistrations: builder.mutation({
+            query: (params = {}) => ({
+                url: '/admin/kkn-registrations/export',
+                params,
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Rekap_Pendaftar_KKN_${new Date().getTime()}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
+        }),
     }),
 });
 
@@ -468,11 +499,12 @@ export const {
     useGetRegistrationByIdQuery,
     useGetStatisticsQuery,
     useCreateRegistrationMutation,
+    useUpdateRegistrationMutation,
     useApproveRegistrationMutation,
     useRejectRegistrationMutation,
     useRequestRevisionMutation,
     useAddNoteMutation,
-    
+
     // Document Templates
     useGetDocumentTemplatesQuery,
     useGetAdminDocumentTemplatesQuery,
@@ -480,7 +512,7 @@ export const {
     useUpdateDocumentTemplateMutation,
     useDeleteDocumentTemplateMutation,
     useReorderDocumentTemplatesMutation,
-    
+
     // KKN Locations
     useGetKknLocationsQuery,
     useCreateKknLocationMutation,
@@ -488,7 +520,7 @@ export const {
     useDeleteKknLocationMutation,
     useImportKknLocationsMutation,
     useDownloadKknLocationTemplateMutation,
-    
+
     // Postos
     useGetPostosQuery,
     useGetPostoByIdQuery,
@@ -501,11 +533,12 @@ export const {
     useDownloadPostoTemplateMutation,
     useGetAvailableStudentsQuery,
     useAddPostoMemberMutation,
-    
+
     // Assessments/Grades
     useGetKknGradesQuery,
     useSaveKknGradeMutation,
     useExportKknGradesMutation,
+    useExportKknRegistrationsMutation,
 
     // KKN Periods
     useGetKknPeriodsQuery,
@@ -513,7 +546,7 @@ export const {
     useCreateKknPeriodMutation,
     useUpdateKknPeriodMutation,
     useDeleteKknPeriodMutation,
-    
+
     // Registration Periods (Waves)
     useCreateRegistrationPeriodMutation,
     useUpdateRegistrationPeriodMutation,
