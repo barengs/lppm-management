@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ProposalCoverSetting;
+use App\Models\FiscalYear;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PkmProposalController extends Controller
 {
@@ -348,5 +351,22 @@ class PkmProposalController extends Controller
         $proposal->delete();
 
         return response()->json(['message' => 'Proposal PKM berhasil dihapus.']);
+    }
+
+    /**
+     * Download full proposal PDF including configured cover page for PKM.
+     */
+    public function downloadFull($id)
+    {
+        $proposal = PkmProposal::with(['fiscalYear', 'user.dosenProfile', 'personnel.user.dosenProfile'])
+            ->findOrFail($id);
+
+        $setting = ProposalCoverSetting::where('type', 'pkm')->first();
+        
+        $year = $proposal->fiscalYear->year ?? date('Y');
+
+        $pdf = Pdf::loadView('pdf.proposal_full', compact('proposal', 'setting', 'year'));
+        
+        return $pdf->download('Proposal_PKM_#' . $id . '.pdf');
     }
 }

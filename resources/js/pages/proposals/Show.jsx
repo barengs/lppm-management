@@ -7,6 +7,7 @@ import {
     ArrowLeft, CheckCircle, Clock, Printer, AlertCircle,
     ChevronDown, ChevronUp
 } from 'lucide-react';
+import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle }) => (
     <button
@@ -56,6 +57,8 @@ export default function ProposalShow() {
         budget: true,
         outputs: true,
     });
+
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const toggleSection = (key) => {
         setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -128,12 +131,20 @@ export default function ProposalShow() {
                             </span>
                         </div>
                     </div>
-                    <button
-                        onClick={() => window.open(`/api/proposals/${id}/endorsement?token=${token}`, '_blank')}
-                        className="flex items-center text-xs font-bold text-gray-600 hover:text-green-700 border border-gray-200 hover:border-green-300 rounded-sm px-4 py-2 transition-all"
-                    >
-                        <Printer size={14} className="mr-2" /> Lembar Pengesahan
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => window.open(`/api/proposals/${id}/download-endorsement?token=${token}`, '_blank')}
+                            className="flex items-center text-xs font-bold text-gray-600 hover:text-green-700 border border-gray-200 hover:border-green-300 rounded-sm px-4 py-2 transition-all shadow-sm"
+                        >
+                            <Printer size={14} className="mr-2" /> Lembar Pengesahan
+                        </button>
+                        <button
+                            onClick={() => setIsPreviewOpen(true)}
+                            className="flex items-center text-xs font-bold text-white bg-green-700 hover:bg-green-800 rounded-sm px-4 py-2 transition-all shadow-sm"
+                        >
+                            <FileText size={14} className="mr-2" /> Full PDF Preview
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -350,6 +361,13 @@ export default function ProposalShow() {
                     </div>
                 )}
             </div>
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={id}
+                type="research"
+            />
         </div>
     );
 }

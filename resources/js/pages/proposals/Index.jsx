@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { PlusCircle, FileText, MessageSquare, History, Eye, ClipboardCheck } from 'lucide-react';
 import RevisionHistory from './components/RevisionHistory';
 import ReportModal from './components/ReportModal';
+import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 export default function ProposalsIndex() {
     const { token } = useAuth();
@@ -13,6 +14,7 @@ export default function ProposalsIndex() {
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         const fetchProposals = async () => {
@@ -39,6 +41,11 @@ export default function ProposalsIndex() {
     const openReport = (proposal) => {
         setSelectedProposal(proposal);
         setIsReportOpen(true);
+    };
+
+    const openPreview = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsPreviewOpen(true);
     };
 
     return (
@@ -101,6 +108,13 @@ export default function ProposalsIndex() {
                                         </div>
                                     </div>
                                     <div className="flex items-center">
+                                        <button
+                                            onClick={() => openPreview(proposal)}
+                                            className="mr-3 p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors border border-blue-200"
+                                            title="Pratinjau PDF"
+                                        >
+                                            <FileText size={16} />
+                                        </button>
                                         <Link
                                             to={`/proposals/${proposal.id}`}
                                             className="mr-3 p-1.5 bg-gray-50 text-gray-500 rounded-full hover:bg-green-50 hover:text-green-700 transition-colors border border-gray-200"
@@ -162,6 +176,13 @@ export default function ProposalsIndex() {
                 }}
                 proposalId={selectedProposal?.id}
                 title={selectedProposal?.title}
+                type="research"
+            />
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={selectedProposal?.id}
                 type="research"
             />
         </div>

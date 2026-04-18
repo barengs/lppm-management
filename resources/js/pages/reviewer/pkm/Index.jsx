@@ -4,12 +4,15 @@ import { useAuth } from '../../../hooks/useAuth';
 import { FileText, ClipboardList, Search, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function ReviewerPkmIndex() {
     const { token } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedProposal, setSelectedProposal] = useState(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         fetchProposals();
@@ -47,6 +50,11 @@ export default function ReviewerPkmIndex() {
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         p.user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const openPreview = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsPreviewOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -111,18 +119,40 @@ export default function ReviewerPkmIndex() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="shrink-0">
-                                <Link 
-                                    to={`/reviewer/pkm/${p.id}`}
-                                    className="px-5 py-2 bg-green-700 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-green-800 transition-all"
+                            <div className="shrink-0 flex items-center gap-2">
+                                <button 
+                                    onClick={() => openPreview(p)}
+                                    className="px-3 py-2 bg-blue-50 text-blue-700 rounded-sm text-xs font-bold flex items-center gap-2 border border-blue-100 hover:bg-blue-100 transition-all"
                                 >
-                                    Berikan Penilaian <ArrowRight size={14} />
-                                </Link>
+                                    <FileText size={14} /> PDF
+                                </button>
+                                {p.pkm_reviews && p.pkm_reviews.length > 0 && p.pkm_reviews[0].decision ? (
+                                    <Link 
+                                        to={`/reviewer/pkm/${p.id}`}
+                                        className="px-5 py-2 bg-blue-600 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-blue-700 transition-all"
+                                    >
+                                        Detail Proposal <ArrowRight size={14} />
+                                    </Link>
+                                ) : (
+                                    <Link 
+                                        to={`/reviewer/pkm/${p.id}`}
+                                        className="px-5 py-2 bg-green-700 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-green-800 transition-all"
+                                    >
+                                        Berikan Penilaian <ArrowRight size={14} />
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={selectedProposal?.id}
+                type="pkm"
+            />
         </div>
     );
 }

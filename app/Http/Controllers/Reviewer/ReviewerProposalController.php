@@ -21,12 +21,16 @@ class ReviewerProposalController extends Controller
         
         // If user is a research reviewer, they see all proposals in 'review' status (Pool)
         if ($user->hasRole(['admin', 'reviewer_penelitian'])) {
-            $proposals = Proposal::with(['scheme', 'user'])
+            $proposals = Proposal::with(['scheme', 'user', 'reviews' => function($q) use ($user) {
+                $q->where('reviewer_id', $user->id);
+            }])
                 ->where('status', 'review')
                 ->get();
         } else {
             // Traditional Plotting fallback
-            $proposals = Proposal::with(['scheme', 'user'])
+            $proposals = Proposal::with(['scheme', 'user', 'reviews' => function($q) use ($user) {
+                $q->where('reviewer_id', $user->id);
+            }])
                 ->whereHas('reviews', function($q) use ($user) {
                     $q->where('reviewer_id', $user->id);
                 })
