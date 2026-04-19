@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
+import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminPkmDashboard() {
     const { token } = useAuth();
@@ -16,6 +17,7 @@ export default function AdminPkmDashboard() {
     // Modal State
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isAssigning, setIsAssigning] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -108,6 +110,11 @@ export default function AdminPkmDashboard() {
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         p.user?.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const openPreview = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsPreviewOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -214,7 +221,14 @@ export default function AdminPkmDashboard() {
                                     <td className="px-6 py-4 text-center">
                                         {getStatusBadge(p.status)}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right flex justify-end gap-1">
+                                        <button 
+                                            onClick={() => openPreview(p)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-sm transition-all"
+                                            title="Pratinjau PDF"
+                                        >
+                                            <FileText size={18} />
+                                        </button>
                                         <button 
                                             onClick={() => setSelectedProposal(p)}
                                             className="p-2 text-green-700 hover:bg-green-50 rounded-sm transition-all"
@@ -275,6 +289,13 @@ export default function AdminPkmDashboard() {
                     </div>
                 </div>
             )}
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={selectedProposal?.id}
+                type="pkm"
+            />
         </div>
     );
 }

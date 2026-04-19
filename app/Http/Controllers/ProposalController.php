@@ -13,6 +13,8 @@ use App\Services\TktService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProposalCoverSetting;
+use App\Models\FiscalYear;
 use Illuminate\Support\Facades\DB;
 
 class ProposalController extends Controller
@@ -305,6 +307,24 @@ class ProposalController extends Controller
         $pdf = Pdf::loadView('pdf.proposal_endorsement', compact('proposal'));
         
         return $pdf->download('Lembar_Pengesahan_#' . $id . '.pdf');
+    }
+
+    /**
+     * Download full proposal PDF including configured cover page.
+     */
+    public function downloadFull($id)
+    {
+        $proposal = Proposal::with(['scheme', 'fiscalYear', 'user.dosenProfile', 'identity', 'personnel.user.dosenProfile'])
+            ->findOrFail($id);
+
+        $setting = ProposalCoverSetting::where('type', 'penelitian')->first();
+        
+        // Use active fiscal year correctly
+        $year = $proposal->fiscalYear->year ?? date('Y');
+
+        $pdf = Pdf::loadView('pdf.proposal_full', compact('proposal', 'setting', 'year'));
+        
+        return $pdf->download('Proposal_Penelitian_#' . $id . '.pdf');
     }
 
     /**

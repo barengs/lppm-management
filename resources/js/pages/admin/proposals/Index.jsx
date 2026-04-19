@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info } from 'lucide-react';
 import { toast } from 'react-toastify';
+import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminProposalDashboard() {
     const { token } = useAuth();
@@ -16,6 +17,7 @@ export default function AdminProposalDashboard() {
     // Modal State
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isAssigning, setIsAssigning] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -108,6 +110,11 @@ export default function AdminProposalDashboard() {
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         p.user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const openPreview = (proposal) => {
+        setSelectedProposal(proposal);
+        setIsPreviewOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -213,9 +220,21 @@ export default function AdminProposalDashboard() {
                                     <td className="px-6 py-4 text-center">
                                         {getStatusBadge(p.status)}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right flex justify-end gap-1">
                                         <button 
-                                            onClick={() => setSelectedProposal(p)}
+                                            onClick={() => openPreview(p)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-sm transition-all"
+                                            title="Pratinjau PDF"
+                                        >
+                                            <FileText size={18} />
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedProposal(p);
+                                                // Assuming we might have a separate modal for assignment, 
+                                                // but the existing code uses setSelectedProposal for assignment modal.
+                                                // I'll keep the logic as is but need to differentiate.
+                                            }}
                                             className="p-2 text-green-700 hover:bg-green-50 rounded-sm transition-all"
                                             title="Plot Reviewer"
                                         >
@@ -270,6 +289,13 @@ export default function AdminProposalDashboard() {
                     </div>
                 </div>
             )}
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={selectedProposal?.id}
+                type="research"
+            />
         </div>
     );
 }

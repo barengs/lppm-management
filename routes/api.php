@@ -89,7 +89,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('proposals/tkt-questions', [ProposalController::class, 'tktQuestions']);
     Route::post('proposals/{id}/steps', [ProposalController::class, 'saveStep']);
     Route::post('proposals/{id}/submit', [ProposalController::class, 'submit']);
-    Route::get('proposals/{id}/endorsement', [ProposalController::class, 'downloadEndorsement']);
+    Route::get('proposals/{id}/download-endorsement', [App\Http\Controllers\ProposalController::class, 'downloadEndorsement']);
+    Route::get('proposals/{id}/download-full', [App\Http\Controllers\ProposalController::class, 'downloadFull']);
+    Route::get('pkm/{id}/download-full', [App\Http\Controllers\PkmProposalController::class, 'downloadFull']);
 
     // Monitoring Admin (Terpisah)
     Route::group(['middleware' => ['role:admin']], function () {
@@ -305,6 +307,10 @@ Route::middleware(['auth:api'])->group(function () {
 
     // Menu Management
     Route::post('system-settings', [App\Http\Controllers\SystemSettingController::class, 'update']); // Admin Update (Protected by Role check in FE/Controller)
+    
+    // Proposal Cover Settings
+    Route::get('proposal-cover-settings', [App\Http\Controllers\ProposalCoverSettingController::class, 'index']);
+    Route::post('proposal-cover-settings', [App\Http\Controllers\ProposalCoverSettingController::class, 'update']);
 
     Route::get('menus', [App\Http\Controllers\MenuController::class, 'index']);
     Route::get('menus/{id}', [App\Http\Controllers\MenuController::class, 'show']);

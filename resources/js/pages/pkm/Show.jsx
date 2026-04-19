@@ -7,6 +7,7 @@ import {
     ArrowLeft, CheckCircle, Clock, Printer, AlertCircle,
     ChevronDown, ChevronUp, MapPin, Briefcase, Info, Award
 } from 'lucide-react';
+import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle }) => (
     <button
@@ -63,6 +64,8 @@ export default function PkmShow() {
         outputs: true,
         documents: true,
     });
+
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const toggleSection = (key) => {
         setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -134,6 +137,14 @@ export default function PkmShow() {
                                 {proposal.status}
                             </span>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsPreviewOpen(true)}
+                            className="flex items-center text-xs font-bold text-white bg-green-700 hover:bg-green-800 rounded-sm px-4 py-2 transition-all shadow-sm"
+                        >
+                            <FileText size={14} className="mr-2" /> Full PDF Preview
+                        </button>
                     </div>
                 </div>
             </div>
@@ -417,6 +428,13 @@ export default function PkmShow() {
                     </div>
                 )}
             </div>
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={id}
+                type="pkm"
+            />
         </div>
     );
 }

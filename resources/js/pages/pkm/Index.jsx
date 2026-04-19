@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Plus, FileHeart, ChevronRight, Calendar, DollarSign, Clock, Eye, ClipboardCheck } from 'lucide-react';
 import ReportModal from '../proposals/components/ReportModal';
+import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 const STATUS_MAP = {
     draft:     { label: 'Draft',       bg: 'bg-gray-100',   text: 'text-gray-700' },
@@ -24,6 +25,7 @@ export default function PkmIndex() {
     const [loading,   setLoading]   = useState(true);
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         axios.get('/api/pkm-proposals', { headers: { Authorization: `Bearer ${token}` } })
@@ -86,6 +88,16 @@ export default function PkmIndex() {
                                                 title="Lihat Detail">
                                                 <Eye size={18} />
                                             </Link>
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedProposal(p);
+                                                    setIsPreviewOpen(true);
+                                                }}
+                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
+                                                title="Pratinjau PDF"
+                                            >
+                                                <FileHeart size={18} />
+                                            </button>
                                             {p.status === 'accepted' && (
                                                 <button 
                                                     onClick={() => {
@@ -149,6 +161,13 @@ export default function PkmIndex() {
                 onClose={() => setIsReportOpen(false)}
                 proposalId={selectedProposal?.id}
                 title={selectedProposal?.title}
+                type="pkm"
+            />
+
+            <FullProposalPreviewModal 
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                proposalId={selectedProposal?.id}
                 type="pkm"
             />
         </div>

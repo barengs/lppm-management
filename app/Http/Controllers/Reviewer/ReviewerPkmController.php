@@ -19,12 +19,16 @@ class ReviewerPkmController extends Controller
         
         // If user is a PKM reviewer, they see all proposals in 'submitted' or 'review' status (Pool)
         if ($user->hasRole(['admin', 'reviewer_pkm'])) {
-            $proposals = PkmProposal::with(['fiscalYear', 'user'])
+            $proposals = PkmProposal::with(['fiscalYear', 'user', 'pkmReviews' => function($q) use ($user) {
+                $q->where('reviewer_id', $user->id);
+            }])
                 ->whereIn('status', ['submitted', 'review'])
                 ->get();
         } else {
             // Traditional Plotting fallback
-            $proposals = PkmProposal::with(['fiscalYear', 'user'])
+            $proposals = PkmProposal::with(['fiscalYear', 'user', 'pkmReviews' => function($q) use ($user) {
+                $q->where('reviewer_id', $user->id);
+            }])
                 ->whereHas('pkmReviews', function($q) use ($user) {
                     $q->where('reviewer_id', $user->id);
                 })
