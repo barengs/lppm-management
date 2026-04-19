@@ -5,7 +5,7 @@ import { FileText, Calendar, CheckCircle, XCircle, AlertCircle, Eye, MessageSqua
 import { toast } from 'react-toastify';
 
 export default function ReportsIndex() {
-    const { token, user } = useAuth();
+    const { token, user, hasRole } = useAuth();
     
     // UI State
     const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'final'
@@ -309,7 +309,7 @@ export default function ReportsIndex() {
                                                     )}
                                                     
                                                     {/* Review Action (Only for Dosen) */}
-                                                    {user?.role === 'dosen' && (
+                                                    {hasRole('dosen') && (
                                                         <div className="mt-6 pt-4 border-t flex justify-end">
                                                             <button 
                                                                 onClick={() => handleOpenReview(report)}
@@ -454,7 +454,7 @@ export default function ReportsIndex() {
                                                 )}
 
                                                 {/* Action Buttons */}
-                                                {user?.role === 'dosen' && (
+                                                {hasRole('dosen') && (
                                                     <div className="mt-8 pt-6 border-t flex justify-end">
                                                         <button 
                                                             onClick={() => handleOpenReview(report)}
@@ -543,7 +543,7 @@ export default function ReportsIndex() {
                             <hr />
 
                             {/* Review Form - Only for Dosen */}
-                            {user?.role === 'dosen' ? (
+                            {hasRole('dosen') ? (
                                 <form id="review-form" onSubmit={handleSubmitReview} className="space-y-4">
                                     <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-4">
                                         <h4 className="font-semibold text-yellow-800 flex items-center text-sm mb-2">
@@ -632,7 +632,7 @@ export default function ReportsIndex() {
                             >
                                 Tutup
                             </button>
-                            {user?.role === 'dosen' && (
+                            {hasRole('dosen') && (
                                 <button 
                                     type="submit"
                                     form="review-form"

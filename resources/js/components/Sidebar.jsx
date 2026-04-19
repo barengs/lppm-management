@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { logout, user } = useAuth();
+    const { logout, user, hasRole } = useAuth();
     const dispatch = useDispatch();
     const isCollapsed = useSelector(selectIsCollapsed);
     const toggleSidebar = () => dispatch(toggleSidebarAction());
@@ -26,7 +26,7 @@ export default function Sidebar() {
     // Helper to check permission
     const can = (permission) => {
         if (!permission) return true;
-        if (user?.role === 'admin') return true;
+        if (hasRole('admin')) return true;
         return user?.granted_permissions?.includes(permission);
     };
 
@@ -38,7 +38,7 @@ export default function Sidebar() {
                 {
                     name: 'Dashboard',
                     icon: <LayoutDashboard size={20} />,
-                    path: user?.role === 'mahasiswa' ? '/dashboard/kkn' : '/dashboard'
+                    path: hasRole('mahasiswa') ? '/dashboard/kkn' : '/dashboard'
                 },
             ]
         },
@@ -59,7 +59,7 @@ export default function Sidebar() {
             title: 'KKN (Kuliah Kerja Nyata)',
             items: [
                 // Student Only - Status KKN
-                ...(user?.role === 'mahasiswa' ? [
+                ...(hasRole('mahasiswa') ? [
                     { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
                 ] : []),
                 { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
@@ -68,7 +68,7 @@ export default function Sidebar() {
                 { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
                 { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
                 // Student/Dosen Only (Requires My Posto context)
-                ...(user?.role !== 'admin' ? [
+                ...(!hasRole('admin') ? [
                     { name: 'Bimbingan', icon: <MessageSquare size={20} />, path: '/dashboard/kkn/guidance', permission: 'kkn_guidance.view' },
                     { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
                 ] : []),
@@ -117,7 +117,7 @@ export default function Sidebar() {
             items: [
                 { name: 'Profil Saya', icon: <User size={20} />, path: '/profile' },
                 // Only show Kinerja Dosen if user is a lecturer
-                ...(user?.role === 'dosen' ? [
+                ...(hasRole('dosen') ? [
                     { name: 'Kinerja Dosen', icon: <TrendingUp size={20} />, path: '/profile/stats' }
                 ] : []),
                 { name: 'Organisasi', icon: <Users size={20} />, path: '/organization', permission: 'organization.view' },

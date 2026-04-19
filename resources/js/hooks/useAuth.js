@@ -93,6 +93,24 @@ export const useAuth = () => {
         }
     };
     
+    /**
+     * Check if user has a specific role
+     * @param {string} roleName
+     * @returns {boolean}
+     */
+    const hasRole = (roleName) => {
+        return user?.all_roles?.includes(roleName) || user?.role === roleName;
+    };
+
+    /**
+     * Check if user has any of the specified roles
+     * @param {string[]} roleNames
+     * @returns {boolean}
+     */
+    const hasAnyRole = (roleNames) => {
+        return roleNames.some(role => hasRole(role));
+    };
+
     return {
         // State
         user,
@@ -108,5 +126,7 @@ export const useAuth = () => {
         lockScreen,
         unlockScreen,
         fetchUser,
+        hasRole,
+        hasAnyRole,
     };
 };
