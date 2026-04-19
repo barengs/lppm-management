@@ -4,8 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { MapPin, Calendar, CheckCircle } from 'lucide-react';
 import api from '../../utils/api';
 
-export default function PublicKknRegister() {
-    const { token, user } = useAuth();
+export default function KknRegister() {
+    const { token, user, hasRole } = useAuth();
     const [pageContent, setPageContent] = React.useState(null);
 
     React.useEffect(() => {
@@ -22,7 +22,7 @@ export default function PublicKknRegister() {
     };
 
     // Redirect logged-in students to dashboard
-    if (token && user?.role === 'mahasiswa') {
+    if (token && hasRole('mahasiswa')) {
         return <Navigate to="/dashboard/kkn" replace />;
     }
 

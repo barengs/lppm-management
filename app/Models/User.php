@@ -15,11 +15,18 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
 
     // Backward compatibility for frontend checking user.role
-    protected $appends = ['role', 'granted_permissions', 'avatar'];
+    protected $appends = ['role', 'all_roles', 'granted_permissions', 'avatar'];
 
     public function getRoleAttribute()
     {
+        // Prioritize admin role for backward compatibility in single-role checks
+        if ($this->hasRole('admin')) return 'admin';
         return $this->roles->first()?->name ?? 'mahasiswa';
+    }
+
+    public function getAllRolesAttribute()
+    {
+        return $this->roles->pluck('name')->toArray();
     }
 
     public function getGrantedPermissionsAttribute()

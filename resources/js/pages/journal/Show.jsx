@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth';
 export default function JournalShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, token, hasRole } = useAuth();
     const [journal, setJournal] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
@@ -77,7 +77,7 @@ export default function JournalShow() {
     if (isLoading) return <div className="p-8 text-center">Loading...</div>;
     if (!journal) return <div>Data not found</div>;
 
-    const isAdmin = user?.role === 'admin' || user?.role === 'lppm';
+    const isAdmin = hasRole('admin') || hasRole('lppm');
 
     return (
         <div className="h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6">

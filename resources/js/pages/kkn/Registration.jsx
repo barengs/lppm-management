@@ -9,8 +9,8 @@ import { useGetProfileQuery } from '../../store/api/authApi';
 
 export default function KknStudentRegistration() {
     const navigate = useNavigate();
-    const { user } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    const { user, hasRole } = useAuth();
+    const isAdmin = hasRole('admin');
 
     // Form States
     const [step, setStep] = useState(1);
@@ -385,7 +385,7 @@ export default function KknStudentRegistration() {
     const myRegistration = registrations.length > 0 ? registrations[0] : null;
 
     // Only show "already registered" message for students (mahasiswa) if status is NOT draft
-    if (myRegistration && user?.role === 'mahasiswa' && myRegistration.status !== 'draft') {
+    if (myRegistration && hasRole('mahasiswa') && myRegistration.status !== 'draft') {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-green-100 p-8 text-center max-w-2xl mx-auto mt-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $query = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'mahasiswa');
-        })->with('dosenProfile')->orderBy('name');
+        })->with(['roles', 'dosenProfile'])->orderBy('name');
 
         // Filter by role if provided
         if ($request->has('role')) {
@@ -71,7 +71,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role' => 'required|exists:roles,name', // Allow any valid role
+            'role' => 'required|array',
+            'role.*' => 'exists:roles,name',
             'avatar' => 'nullable|image|max:2048', // 2MB Max
             // Profile fields
             'nidn' => 'nullable|string|unique:dosen_profiles,nidn',
@@ -103,7 +104,7 @@ class UserController extends Controller
                  $avatarPath = $request->file('avatar')->store('avatars', 'public');
             }
 
-            if (in_array($validated['role'], ['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
+            if (array_intersect($validated['role'], ['dosen', 'reviewer', 'admin', 'tendik', 'staff_kkn'])) {
                  // Create or update DosenProfile (assuming staff also use this or a similar profile, 
                  // but schema implies this table is for lecturers. However, current controller logic uses it for staff too).
                  // Based on current logic, we create dosenProfile for these roles.
@@ -151,7 +152,8 @@ class UserController extends Controller
             'name' => 'string|max:255',
             'email' => 'email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
-            'role' => 'exists:roles,name', // Allow any valid role
+            'role' => 'array',
+            'role.*' => 'exists:roles,name',
             'avatar' => 'nullable|image|max:2048',
             'nidn' => ['nullable', 'string', \Illuminate\Validation\Rule::unique('dosen_profiles')->ignore($user->dosenProfile->id ?? null)],
             'prodi' => 'nullable|string',

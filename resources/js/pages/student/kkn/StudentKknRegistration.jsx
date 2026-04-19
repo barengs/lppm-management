@@ -6,7 +6,7 @@ import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'l
 import { toast } from 'react-toastify';
 
 export default function KknStudentRegistration() {
-    const { token, user } = useAuth();
+    const { token, user, hasRole } = useAuth();
     const location = useLocation();
     const [registrations, setRegistrations] = useState([]);
     const [fiscalYears, setFiscalYears] = useState([]);
@@ -270,7 +270,7 @@ export default function KknStudentRegistration() {
 
     // Only show "already registered" message for students (mahasiswa) and when not editing
     // Admin/staff should always see the form to register other students
-    if (myRegistration && user?.role === 'mahasiswa' && !isEditing) {
+    if (myRegistration && hasRole('mahasiswa') && !isEditing) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-green-100 p-8 text-center max-w-2xl mx-auto mt-10">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

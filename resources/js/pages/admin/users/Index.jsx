@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import { PlusCircle, Edit, Trash2, Upload, Download, User, BookOpen, Camera, Lock, Eye, EyeOff } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
+import MultiSelect from '../../../components/Form/MultiSelect';
 import { toast } from 'react-toastify';
 
 export default function UsersIndex() {
@@ -12,7 +13,7 @@ export default function UsersIndex() {
 
     // Form and File state
     const [formData, setFormData] = useState({
-        name: '', email: '', role: 'dosen', password: '',
+        name: '', email: '', role: ['dosen'], password: '',
         nidn: '', prodi: '', fakultas: '',
         scopus_id: '', sinta_id: '', google_scholar_id: ''
     });
@@ -84,13 +85,15 @@ export default function UsersIndex() {
             const payload = new FormData();
             payload.append('name', formData.name);
             payload.append('email', formData.email);
-            payload.append('role', formData.role);
+            // Append each role to the array
+            formData.role.forEach(r => payload.append('role[]', r));
 
             if (formData.password) payload.append('password', formData.password);
             if (avatarFile) payload.append('avatar', avatarFile);
 
             // Profile Fields
-            if (['dosen', 'reviewer'].includes(formData.role)) {
+            const hasAcademicRole = formData.role.some(r => ['dosen', 'reviewer'].includes(r));
+            if (hasAcademicRole) {
                 if (formData.nidn) payload.append('nidn', formData.nidn);
                 if (formData.prodi) payload.append('prodi', formData.prodi);
                 if (formData.fakultas) payload.append('fakultas', formData.fakultas);
@@ -146,7 +149,7 @@ export default function UsersIndex() {
         setFormData({
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.all_roles || [user.role],
             password: '',
             nidn: profile.nidn || '',
             prodi: profile.prodi || '',
@@ -165,7 +168,7 @@ export default function UsersIndex() {
 
     const resetForm = () => {
         setFormData({
-            name: '', email: '', role: 'dosen', password: '',
+            name: '', email: '', role: ['dosen'], password: '',
             nidn: '', prodi: '', fakultas: '',
             scopus_id: '', sinta_id: '', google_scholar_id: ''
         });
@@ -249,19 +252,25 @@ export default function UsersIndex() {
         },
         {
             accessorKey: 'role',
-            header: 'Role',
+            header: 'Roles',
             cell: ({ row }) => {
                 const colors = {
                     admin: 'bg-red-100 text-red-800',
                     dosen: 'bg-blue-100 text-blue-800',
                     reviewer: 'bg-yellow-100 text-yellow-800',
                     tendik: 'bg-green-100 text-green-800',
-                    staff_kkn: 'bg-purple-100 text-purple-800'
+                    staff_kkn: 'bg-purple-100 text-purple-800',
+                    lppm: 'bg-indigo-100 text-indigo-800'
                 };
+                const userRoles = row.original.all_roles || [row.original.role];
                 return (
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors[row.original.role] || 'bg-gray-100 text-gray-800'}`}>
-                        {row.original.role ? row.original.role.toUpperCase() : '-'}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                        {userRoles.map((r, i) => (
+                            <span key={i} className={`px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full border ${colors[r] || 'bg-gray-100 text-gray-800'}`}>
+                                {r.toUpperCase().replace(/_/g, ' ')}
+                            </span>
+                        ))}
+                    </div>
                 );
             }
         },
@@ -400,20 +409,18 @@ export default function UsersIndex() {
                                                 required
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                            <select
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Role (Dapat lebih dari satu)</label>
+                                            <MultiSelect
+                                                options={roles.map(r => ({
+                                                    label: r.name.charAt(0).toUpperCase() + r.name.slice(1).replace(/_/g, ' '),
+                                                    value: r.name
+                                                }))}
                                                 value={formData.role}
-                                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 bg-white"
-                                            >
-                                                <option value="" disabled>Pilih Role...</option>
-                                                {roles.map(role => (
-                                                    <option key={role.id} value={role.name}>
-                                                        {role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' ')}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={(newRoles) => setFormData({ ...formData, role: newRoles })}
+                                                placeholder="Pilih role staf..."
+                                                label="Cari role..."
+                                            />
                                         </div>
                                         <div className="col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -449,9 +456,9 @@ export default function UsersIndex() {
 
                                 {/* Profile Tab */}
                                 <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
-                                    {!['dosen', 'reviewer'].includes(formData.role) ? (
+                                    {!formData.role.some(r => ['dosen', 'reviewer'].includes(r)) ? (
                                         <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
-                                            Role <strong>{formData.role}</strong> tidak memerlukan profil akademik secara mandatory.
+                                            Role <strong>{formData.role.join(', ')}</strong> tidak memerlukan profil akademik secara mandatory.
                                             <br />
                                             <span className="text-xs">Namun Anda tetap bisa mengisinya jika diperlukan.</span>
                                         </div>
