@@ -100,22 +100,43 @@ class PkmProposalController extends Controller
             DB::beginTransaction();
 
             switch ($step) {
-                case 0: // Identitas & Ringkasan + Skema
+                case 0: // Identitas & Ringkasan Skema
                     $validated = $request->validate([
-                        'title'              => 'required|string|max:500',
-                        'summary'            => 'nullable|string',
-                        'substance_summary'  => 'required|string',
-                        'keywords'           => 'required|string|max:500',
-                        'scheme_group'       => 'required|string',
-                        'scope'              => 'required|string',
-                        'focus_area'         => 'required|string',
-                        'duration_years'     => 'required|integer|min:1|max:3',
-                        'first_year'         => 'required|integer|min:2020|max:2040',
+                        'title'             => 'required|string|max:500',
+                        'summary'           => 'nullable|string',
+                        'substance_summary' => 'required|string',
+                        'keywords'          => 'required|string|max:500',
+                        'scheme_group'      => 'required|string',
+                        'scope'             => 'nullable|string',   // now optional
+                        'focus_area'        => 'required|string',
+                        'duration_years'    => 'required|integer|min:1|max:3',
+                        'first_year'        => 'required|integer|min:2020|max:2040',
                     ]);
                     $proposal->update($validated);
                     break;
 
-                case 1: // Tim Pengusul
+                case 1: // Substansi Usulan (rich-text, same as penelitian)
+                    $data = $request->validate([
+                        'abstract'    => 'nullable|string',
+                        'keywords'    => 'nullable|string|max:1000',
+                        'background'  => 'nullable|string',
+                        'methodology' => 'nullable|string',
+                        'objectives'  => 'nullable|string',
+                        'references'  => 'nullable|string',
+                    ]);
+
+                    $substance = $proposal->substance()->firstOrNew(['pkm_proposal_id' => $id]);
+                    $substance->fill([
+                        'abstract'    => $data['abstract']    ?? '',
+                        'keywords'    => $data['keywords']    ?? '',
+                        'background'  => $data['background']  ?? '',
+                        'methodology' => $data['methodology'] ?? '',
+                        'objectives'  => $data['objectives']  ?? '',
+                        'references'  => $data['references']  ?? '',
+                    ])->save();
+                    break;
+
+                case 2: // Tim Pengusul
                     $data = $request->validate([
                         'members'                        => 'nullable|array',
                         'members.*.user_id'              => 'required|exists:users,id',
@@ -162,7 +183,7 @@ class PkmProposalController extends Controller
                     }
                     break;
 
-                case 2: // Mitra Kerjasama
+                case 3: // Mitra Kerjasama
                     $data = $request->validate([
                         'partners'                        => 'required|array|min:1',
                         'partners.*.partner_category'     => 'required|string',
@@ -187,38 +208,38 @@ class PkmProposalController extends Controller
                     }
                     break;
 
-                case 3: // SDGs
+                case 4: // SDGs
                     $data = $request->validate([
-                        'sdg_goals'                    => 'required|array|min:1',
-                        'sdg_goals.*.goal'             => 'required|string',
-                        'sdg_goals.*.indicator'        => 'required|string', // angka indikator keberhasilan
-                        'sdg_goals.*.description'      => 'required|string',
+                        'sdg_goals'               => 'required|array|min:1',
+                        'sdg_goals.*.goal'        => 'required|string',
+                        'sdg_goals.*.indicator'   => 'required|string',
+                        'sdg_goals.*.description' => 'required|string',
                     ]);
 
                     $substance = $proposal->substance()->firstOrNew(['pkm_proposal_id' => $id]);
                     $substance->fill(['sdg_goals' => $data['sdg_goals']])->save();
                     break;
 
-                case 4: // Bidang Strategis
+                case 5: // Bidang Strategis
                     $data = $request->validate([
-                        'strategic_fields'                      => 'required|array|min:1',
-                        'strategic_fields.*.field'              => 'required|string',
-                        'strategic_fields.*.problem_statement'  => 'required|string',
-                        'strategic_fields.*.description'        => 'required|string',
+                        'strategic_fields'                     => 'required|array|min:1',
+                        'strategic_fields.*.field'             => 'required|string',
+                        'strategic_fields.*.problem_statement' => 'required|string',
+                        'strategic_fields.*.description'       => 'required|string',
                     ]);
 
                     $substance = $proposal->substance()->firstOrNew(['pkm_proposal_id' => $id]);
                     $substance->fill(['strategic_fields' => $data['strategic_fields']])->save();
                     break;
 
-                case 5: // Luaran Dijanjikan
+                case 6: // Luaran Dijanjikan
                     $data = $request->validate([
-                        'outputs'               => 'required|array|min:1',
-                        'outputs.*.year'        => 'nullable|integer',
-                        'outputs.*.output_group'=> 'required|string',
-                        'outputs.*.output_type' => 'required|string',
+                        'outputs'                => 'required|array|min:1',
+                        'outputs.*.year'         => 'nullable|integer',
+                        'outputs.*.output_group' => 'required|string',
+                        'outputs.*.output_type'  => 'required|string',
                         'outputs.*.target_status'=> 'required|string',
-                        'outputs.*.notes'       => 'nullable|string',
+                        'outputs.*.notes'        => 'nullable|string',
                     ]);
 
                     PkmOutput::where('pkm_proposal_id', $id)->delete();
@@ -227,17 +248,17 @@ class PkmProposalController extends Controller
                     }
                     break;
 
-                case 6: // Anggaran (RAB)
+                case 7: // Anggaran (RAB)
                     $data = $request->validate([
-                        'budget_items'               => 'required|array|min:1',
-                        'budget_items.*.year'        => 'nullable|integer',
-                        'budget_items.*.cost_group'  => 'required|string',
-                        'budget_items.*.component'   => 'nullable|string',
-                        'budget_items.*.item_name'   => 'required|string',
-                        'budget_items.*.unit'        => 'required|string',
-                        'budget_items.*.volume'      => 'required|numeric|min:0',
-                        'budget_items.*.unit_cost'   => 'required|numeric|min:0',
-                        'budget_items.*.url_price'   => 'nullable|string',
+                        'budget_items'              => 'required|array|min:1',
+                        'budget_items.*.year'       => 'nullable|integer',
+                        'budget_items.*.cost_group' => 'required|string',
+                        'budget_items.*.component'  => 'nullable|string',
+                        'budget_items.*.item_name'  => 'required|string',
+                        'budget_items.*.unit'       => 'required|string',
+                        'budget_items.*.volume'     => 'required|numeric|min:0',
+                        'budget_items.*.unit_cost'  => 'required|numeric|min:0',
+                        'budget_items.*.url_price'  => 'nullable|string',
                     ]);
 
                     PkmBudgetItem::where('pkm_proposal_id', $id)->delete();
@@ -250,8 +271,8 @@ class PkmProposalController extends Controller
                     $proposal->update(['budget' => $total]);
                     break;
 
-                case 7: // Dokumen Pendukung (upload via separate endpoint)
-                    // Step 7 is handled by uploadDocument(), this just advances step.
+                case 8: // Dokumen Pendukung (upload via separate endpoint)
+                    // Step 8 is handled by uploadDocument(), this just advances step.
                     break;
 
                 default:
@@ -323,9 +344,9 @@ class PkmProposalController extends Controller
     {
         $proposal = PkmProposal::with('personnel')->findOrFail($id);
 
-        if ($proposal->current_step < 7) {
+        if ($proposal->current_step < 8) {
             return response()->json([
-                'message' => 'Harap selesaikan seluruh 8 tahap pengisian sebelum mengirim PKM.'
+                'message' => 'Harap selesaikan seluruh 9 tahap pengisian sebelum mengirim PKM.'
             ], 422);
         }
 

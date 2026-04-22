@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 
 // Step Components
 import StepPkmIdentity  from './components/StepPkmIdentity';
+import StepPkmSubstance from './components/StepPkmSubstance';
 import StepPkmPersonnel from './components/StepPkmPersonnel';
 import StepPkmPartner   from './components/StepPkmPartner';
 import StepPkmAstaCita  from './components/StepPkmAstaCita';
@@ -17,13 +18,14 @@ import StepPkmDocument  from './components/StepPkmDocument';
 
 const STEPS = [
     { id: 0, name: 'Identitas & Ringkasan Skema', label: 'Identitas' },
-    { id: 1, name: 'Tim Pengusul',                label: 'Tim' },
-    { id: 2, name: 'Mitra Kerjasama',             label: 'Mitra' },
-    { id: 3, name: 'SDGs',                        label: 'SDGs' },
-    { id: 4, name: '8 Bidang Strategis',          label: 'Bidang' },
-    { id: 5, name: 'Luaran Dijanjikan',           label: 'Luaran' },
-    { id: 6, name: 'Rincian Anggaran (RAB)',      label: 'RAB' },
-    { id: 7, name: 'Dokumen & Pratinjau',         label: 'Dokumen' },
+    { id: 1, name: 'Substansi Usulan',            label: 'Substansi' },
+    { id: 2, name: 'Tim Pengusul',                label: 'Tim' },
+    { id: 3, name: 'Mitra Kerjasama',             label: 'Mitra' },
+    { id: 4, name: 'SDGs',                        label: 'SDGs' },
+    { id: 5, name: '8 Bidang Strategis',          label: 'Bidang' },
+    { id: 6, name: 'Luaran Dijanjikan',           label: 'Luaran' },
+    { id: 7, name: 'Rincian Anggaran (RAB)',      label: 'RAB' },
+    { id: 8, name: 'Dokumen & Pratinjau',         label: 'Dokumen' },
 ];
 
 const STATUS_COLORS = {
@@ -273,13 +275,14 @@ export default function PkmCreate() {
                     )}
 
                     {currentStep === 0 && <StepPkmIdentity  proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 1 && <StepPkmPersonnel proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 2 && <StepPkmPartner   proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 3 && <StepPkmAstaCita  proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 4 && <StepPkmStrategic proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 5 && <StepPkmOutputs   proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 6 && <StepPkmBudget    proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
-                    {currentStep === 7 && <StepPkmDocument  proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 1 && <StepPkmSubstance proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 2 && <StepPkmPersonnel proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 3 && <StepPkmPartner   proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 4 && <StepPkmAstaCita  proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 5 && <StepPkmStrategic proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 6 && <StepPkmOutputs   proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 7 && <StepPkmBudget    proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
+                    {currentStep === 8 && <StepPkmDocument  proposalId={proposalId} token={token} onNext={onStepNext} onBack={onStepBack} initialData={proposalData} />}
                 </div>
 
                 {/* Footer: Final Submit */}

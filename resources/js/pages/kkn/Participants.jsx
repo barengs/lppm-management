@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
     Users, Search, Filter, CheckCircle, XCircle,
     AlertCircle, Clock, Eye, User, MapPin, Calendar,
     Mail, Phone, GraduationCap, Award, FileText,
-    BarChart2, PieChart as PieChartIcon, Map, ArrowLeft, Download
+    BarChart2, PieChart as PieChartIcon, Map, ArrowLeft, Download,
+    FileSpreadsheet, ChevronDown, Shirt, UsersRound
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
@@ -16,6 +17,7 @@ import {
     useExportKknRegistrationsMutation
 } from '../../store/api/kknApi';
 import { useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
+import { useAuth } from '../../hooks/useAuth';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import DataTable from '../../components/DataTable';
@@ -46,6 +48,7 @@ const STATUS_CONFIG = {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#F87171', '#60A5FA', '#34D399', '#FBBF24'];
 
 export default function KknParticipants() {
+    const { token } = useAuth();
     const [filters, setFilters] = useState({
         status: 'all',
         search: '',
@@ -56,6 +59,8 @@ export default function KknParticipants() {
     const [selectedId, setSelectedId] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'table'
+    const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+    const exportDropdownRef = useRef(null);
     // RTK Query hooks
     const { data: registrationsData, isLoading: loading, refetch } = useGetRegistrationsQuery(filters);
     const { data: statistics } = useGetStatisticsQuery();
@@ -70,6 +75,17 @@ export default function KknParticipants() {
 
     const registrations = registrationsData?.data || [];
     const pagination = registrationsData;
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target)) {
+                setExportDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
     const viewDetail = (id) => {
         setSelectedId(id);
@@ -123,6 +139,80 @@ export default function KknParticipants() {
         } catch (error) {
             console.error('Failed to export PDF:', error);
             alert('Gagal mengekspor PDF');
+        }
+    };
+
+    const handleExportExcel = async () => {
+        setExportDropdownOpen(false);
+        try {
+            const queryParams = new URLSearchParams({
+                status: filters.status || 'all',
+                search: filters.search || '',
+                prodi_id: filters.prodi_id || '',
+            }).toString();
+            const response = await fetch(
+                `/api/admin/kkn-registrations/export-excel?${queryParams}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!response.ok) throw new Error('Export failed');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Rekap-Peserta-KKN-${new Date().toISOString().slice(0, 10)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export Excel:', error);
+            alert('Gagal mengekspor Excel');
+        }
+    };
+
+    const handleExportJacketSize = async () => {
+        setExportDropdownOpen(false);
+        try {
+            const response = await fetch(
+                `/api/admin/kkn-registrations/export-jacket-size`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!response.ok) throw new Error('Export failed');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Rekap-Ukuran-Jaket-KKN-${new Date().toISOString().slice(0, 10)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export jacket size:', error);
+            alert('Gagal mengekspor rekap ukuran jaket');
+        }
+    };
+
+    const handleExportGender = async () => {
+        setExportDropdownOpen(false);
+        try {
+            const response = await fetch(
+                `/api/admin/kkn-registrations/export-gender`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!response.ok) throw new Error('Export failed');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Rekap-Jenis-Kelamin-KKN-${new Date().toISOString().slice(0, 10)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export gender:', error);
+            alert('Gagal mengekspor rekap jenis kelamin');
         }
     };
 
@@ -208,14 +298,65 @@ export default function KknParticipants() {
                             Kelola pendaftaran dan approval peserta KKN
                         </p>
                     </div>
-                    <button
-                        onClick={handleExportPdf}
-                        disabled={isExporting}
-                        className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                    >
-                        <Download size={18} />
-                        <span>{isExporting ? 'Mengekspor...' : 'Ekspor PDF'}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Excel Export Dropdown */}
+                        <div className="relative" ref={exportDropdownRef}>
+                            <button
+                                onClick={() => setExportDropdownOpen(prev => !prev)}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                            >
+                                <FileSpreadsheet size={18} />
+                                <span>Ekspor Excel</span>
+                                <ChevronDown size={16} className={`transition-transform duration-200 ${exportDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {exportDropdownOpen && (
+                                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Jenis Ekspor</p>
+                                    </div>
+                                    <button
+                                        onClick={handleExportExcel}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                                    >
+                                        <FileSpreadsheet size={16} className="text-emerald-600 shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Semua Peserta</div>
+                                            <div className="text-xs text-gray-400">Data lengkap seluruh peserta</div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={handleExportJacketSize}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border-t border-gray-50"
+                                    >
+                                        <Shirt size={16} className="text-orange-500 shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Rekap Ukuran Jaket</div>
+                                            <div className="text-xs text-gray-400">Rekapitulasi ukuran jaket peserta</div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={handleExportGender}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border-t border-gray-50"
+                                    >
+                                        <UsersRound size={16} className="text-blue-500 shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-medium">Rekap Jenis Kelamin</div>
+                                            <div className="text-xs text-gray-400">Total per jenis kelamin & prodi</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={handleExportPdf}
+                            disabled={isExporting}
+                            className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            <Download size={18} />
+                            <span>{isExporting ? 'Mengekspor...' : 'Ekspor PDF'}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

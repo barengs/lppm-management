@@ -8,7 +8,6 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
         substance_summary: '',
         keywords:          '',
         scheme_group:      '',
-        scope:             '',
         focus_area:        '',
         duration_years:    1,
         first_year:        new Date().getFullYear(),
@@ -18,20 +17,17 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
 
     // Dynamic master data
     const [schemeGroups, setSchemeGroups] = useState([]);
-    const [scopes,       setScopes]       = useState([]);
     const [focusAreas,   setFocusAreas]   = useState([]);
 
     // Fetch all master data types in parallel
     useEffect(() => {
         const fetchMaster = async () => {
             try {
-                const [sg, sc, fa] = await Promise.all([
+                const [sg, fa] = await Promise.all([
                     axios.get('/api/pkm-master-data?type=scheme_group', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('/api/pkm-master-data?type=scope',        { headers: { Authorization: `Bearer ${token}` } }),
                     axios.get('/api/pkm-master-data?type=focus_area',   { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
                 setSchemeGroups(sg.data);
-                setScopes(sc.data);
                 setFocusAreas(fa.data);
             } catch {
                 // fallback: keep empty, form still works
@@ -47,7 +43,6 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                 substance_summary: initialData.substance_summary || '',
                 keywords:          initialData.keywords          || '',
                 scheme_group:      initialData.scheme_group      || '',
-                scope:             initialData.scope             || '',
                 focus_area:        initialData.focus_area        || '',
                 duration_years:    initialData.duration_years    || 1,
                 first_year:        initialData.first_year        || new Date().getFullYear(),
@@ -118,17 +113,6 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                     </div>
                     <div>
                         <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">
-                            Ruang Lingkup <span className="text-red-500">*</span>
-                        </label>
-                        <select required value={form.scope}
-                            onChange={e => set('scope', e.target.value)}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
-                            <option value="">-- Pilih Ruang Lingkup --</option>
-                            {scopes.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">
                             Bidang Fokus <span className="text-red-500">*</span>
                         </label>
                         <select required value={form.focus_area}
@@ -162,11 +146,10 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                 </div>
             </div>
 
-            {/* Substansi - Section 9 BIMA */}
             <div className="border border-gray-200 rounded-sm overflow-hidden">
                 <div className="bg-indigo-50 px-5 py-3 border-b border-indigo-200">
-                    <h4 className="font-bold text-indigo-800 text-sm">📝 Substansi Proposal</h4>
-                    <p className="text-xs text-indigo-500 mt-0.5">Ringkasan substansi menjelaskan latar belakang, solusi, metode pelaksanaan, dan manfaat PKM secara komprehensif.</p>
+                    <h4 className="font-bold text-indigo-800 text-sm">📝 Substansi Proposal (Ringkasan)</h4>
+                    <p className="text-xs text-indigo-500 mt-0.5">Ringkasan singkat substansi untuk identitas proposal. Detail substansi lengkap diisi pada langkah berikutnya.</p>
                 </div>
                 <div className="p-5 space-y-4">
                     <div>

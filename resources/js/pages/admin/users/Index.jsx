@@ -252,7 +252,7 @@ export default function UsersIndex() {
         },
         {
             accessorKey: 'role',
-            header: 'Roles',
+            header: 'Hak Akses',
             cell: ({ row }) => {
                 const colors = {
                     admin: 'bg-red-100 text-red-800',
@@ -410,7 +410,7 @@ export default function UsersIndex() {
                                             />
                                         </div>
                                         <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Role (Dapat lebih dari satu)</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Hak Akses (Dapat lebih dari satu)</label>
                                             <MultiSelect
                                                 options={roles.map(r => ({
                                                     label: r.name.charAt(0).toUpperCase() + r.name.slice(1).replace(/_/g, ' '),
@@ -418,8 +418,8 @@ export default function UsersIndex() {
                                                 }))}
                                                 value={formData.role}
                                                 onChange={(newRoles) => setFormData({ ...formData, role: newRoles })}
-                                                placeholder="Pilih role staf..."
-                                                label="Cari role..."
+                                                placeholder="Pilih hak akses staf..."
+                                                label="Cari hak akses..."
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -458,7 +458,7 @@ export default function UsersIndex() {
                                 <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
                                     {!formData.role.some(r => ['dosen', 'reviewer'].includes(r)) ? (
                                         <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
-                                            Role <strong>{formData.role.join(', ')}</strong> tidak memerlukan profil akademik secara mandatory.
+                                            Hak Akses <strong>{formData.role.join(', ')}</strong> tidak memerlukan profil akademik secara mandatory.
                                             <br />
                                             <span className="text-xs">Namun Anda tetap bisa mengisinya jika diperlukan.</span>
                                         </div>

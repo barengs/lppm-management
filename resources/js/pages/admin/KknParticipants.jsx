@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Users, Search, Filter, CheckCircle, XCircle,
-    AlertCircle, Clock, Eye, FileText, Download
+    AlertCircle, Clock, Eye, FileText, Download, FileSpreadsheet
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -165,6 +165,30 @@ export default function KknParticipants() {
         }
     };
 
+    const handleExportExcel = async () => {
+        try {
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await axios.get(
+                `/api/admin/kkn-registrations/export-excel?${queryParams}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                    responseType: 'blob'
+                }
+            );
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Rekap-Peserta-KKN-${new Date().toISOString().slice(0,10)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export Excel:', error);
+            alert('Gagal mengekspor Excel');
+        }
+    };
+
     const StatusBadge = ({ status }) => {
         const config = STATUS_CONFIG[status];
         const Icon = config.icon;
@@ -190,13 +214,22 @@ export default function KknParticipants() {
                             Kelola pendaftaran dan approval peserta KKN
                         </p>
                     </div>
-                    <button
-                        onClick={handleExportPdf}
-                        className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
-                    >
-                        <Download size={18} />
-                        <span>Ekspor PDF</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportExcel}
+                            className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                        >
+                            <FileSpreadsheet size={18} />
+                            <span>Ekspor Excel</span>
+                        </button>
+                        <button
+                            onClick={handleExportPdf}
+                            className="flex items-center space-x-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                        >
+                            <Download size={18} />
+                            <span>Ekspor PDF</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

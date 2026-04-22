@@ -10,6 +10,12 @@ class PkmSubstance extends Model
         'pkm_proposal_id',
         'sdg_goals',
         'strategic_fields',
+        'abstract',
+        'keywords',
+        'background',
+        'methodology',
+        'objectives',
+        'references',
     ];
 
     protected $casts = [
