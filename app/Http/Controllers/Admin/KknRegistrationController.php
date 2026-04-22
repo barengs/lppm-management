@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KknRegistration;
 use App\Models\KknRegistrationLog;
+use App\Exports\KknParticipantsExport;
+use App\Exports\KknJacketSizeExport;
+use App\Exports\KknGenderExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KknRegistrationController extends Controller
 {
@@ -385,5 +389,32 @@ class KknRegistrationController extends Controller
         
         $pdf->setPaper('A4', 'landscape');
         return $pdf->stream('Rekap-Pendaftar-KKN.pdf');
+    }
+
+    /**
+     * Export registrations as Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        $filename = 'Rekap-Peserta-KKN-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new KknParticipantsExport($request), $filename);
+    }
+
+    /**
+     * Export jacket size recap as Excel
+     */
+    public function exportJacketSize(Request $request)
+    {
+        $filename = 'Rekap-Ukuran-Jaket-KKN-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new KknJacketSizeExport($request), $filename);
+    }
+
+    /**
+     * Export gender recap as Excel
+     */
+    public function exportGender(Request $request)
+    {
+        $filename = 'Rekap-Jenis-Kelamin-KKN-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new KknGenderExport($request), $filename);
     }
 }
