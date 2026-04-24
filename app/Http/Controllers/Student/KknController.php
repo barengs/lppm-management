@@ -110,8 +110,18 @@ class KknController extends Controller
                 $directory = ($doc->doc_type === 'required_photo' || $key === 'photo') ? 'kkn_photos' : 'kkn_documents';
                 $path = $file->store($directory, 'public');
                 
-                $doc->update(['file_path' => $path]);
-                $uploadedDocs[] = $doc->name;
+                \Illuminate\Support\Facades\Log::info("KKN Reupload - File stored: {$doc->name}", [
+                    'reg_id' => $registration->id,
+                    'path' => $path,
+                    'original_name' => $file->getClientOriginalName()
+                ]);
+
+                if ($path) {
+                    $doc->update(['file_path' => $path]);
+                    $uploadedDocs[] = $doc->name;
+                } else {
+                    \Illuminate\Support\Facades\Log::error("KKN Reupload - Failed to store file: {$doc->name}");
+                }
             }
         }
         

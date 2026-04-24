@@ -6,6 +6,7 @@ use App\Models\KknRegistration;
 use App\Models\KknLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class KknRegistrationController extends Controller
 {
@@ -199,36 +200,59 @@ class KknRegistrationController extends Controller
             // Handle Dynamic Documents
             if ($request->has('documents')) {
                 $docs = $request->documents;
+                Log::info('KKN Store - Documents Payload:', ['docs_count' => count($docs)]);
+                
                 foreach ($docs as $index => $docData) {
-                    if ($request->hasFile("documents.{$index}.file")) {
-                        $file = $request->file("documents.{$index}.file");
+                    $fileKey = "documents.{$index}.file";
+                    if ($request->hasFile($fileKey)) {
+                        $file = $request->file($fileKey);
                         $path = $file->store('kkn_documents', 'public');
                         
-                        // Delete old document with same type/name if exists
-                        $reg->kknRegistrationDocuments()
-                            ->where('doc_type', $docData['type'] ?? 'custom')
-                            ->where('name', $docData['name'] ?? 'Dokumen')
-                            ->delete();
-
-                        $reg->kknRegistrationDocuments()->create([
-                            'name' => $docData['name'] ?? 'Dokumen',
-                            'file_path' => $path,
-                            'file_type' => $file->extension(),
-                            'doc_type' => $docData['type'] ?? 'custom', 
+                        Log::info("KKN Store - Uploading doc: {$docData['name']}", [
+                            'index' => $index,
+                            'path' => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                            'size' => $file->getSize()
                         ]);
+
+                        if ($path) {
+                            // Delete old document with same type/name if exists
+                            $reg->kknRegistrationDocuments()
+                                ->where('doc_type', $docData['type'] ?? 'custom')
+                                ->where('name', $docData['name'] ?? 'Dokumen')
+                                ->delete();
+
+                            $reg->kknRegistrationDocuments()->create([
+                                'name' => $docData['name'] ?? 'Dokumen',
+                                'file_path' => $path,
+                                'file_type' => $file->extension(),
+                                'doc_type' => $docData['type'] ?? 'custom', 
+                            ]);
+                        } else {
+                            Log::error("KKN Store - Failed to store file for index {$index}");
+                        }
+                    } else {
+                        Log::warning("KKN Store - No file found for document index {$index}", ['doc_data' => $docData]);
                     }
                 }
             }
             
-            // Handle standalone photo if needed (legacy/fallback)
+            // Handle standalone photo if needed (legacy/fallback) - check if not already created
             if ($request->hasFile('photo')) {
-                 $path = $request->file('photo')->store('kkn_photos', 'public');
-                 $reg->kknRegistrationDocuments()->create([
-                    'name' => 'Pas Foto',
-                    'file_path' => $path,
-                    'file_type' => $request->file('photo')->extension(),
-                    'doc_type' => 'required_photo',
-                ]);
+                 $photoFile = $request->file('photo');
+                 $path = $photoFile->store('kkn_photos', 'public');
+                 
+                 Log::info('KKN Store - Standalone Photo upload', ['path' => $path]);
+
+                 if ($path) {
+                     $reg->kknRegistrationDocuments()->where('doc_type', 'required_photo')->delete();
+                     $reg->kknRegistrationDocuments()->create([
+                        'name' => 'Pas Foto',
+                        'file_path' => $path,
+                        'file_type' => $photoFile->extension(),
+                        'doc_type' => 'required_photo',
+                    ]);
+                 }
             }
             
             DB::commit();
@@ -350,24 +374,34 @@ class KknRegistrationController extends Controller
             // Handle Dynamic Documents
             if ($request->has('documents')) {
                 $docs = $request->documents;
+                Log::info("KKN Update - Documents Payload for Reg #{$kknRegistration->id}:", ['docs_count' => count($docs)]);
+
                 foreach ($docs as $index => $docData) {
-                    if ($request->hasFile("documents.{$index}.file")) {
-                        $file = $request->file("documents.{$index}.file");
+                    $fileKey = "documents.{$index}.file";
+                    if ($request->hasFile($fileKey)) {
+                        $file = $request->file($fileKey);
                         $path = $file->store('kkn_documents', 'public');
                         
-                        // Delete old document with same name
-                        $kknRegistration->kknRegistrationDocuments()
-                            ->where('name', $docData['name'])
-                            ->delete();
-                        
-                        $kknRegistration->kknRegistrationDocuments()->create([
-                            'name' => $docData['name'] ?? 'Dokumen',
-                            'file_path' => $path,
-                            'file_type' => $file->extension(),
-                            'doc_type' => $docData['type'] ?? 'custom', 
+                        Log::info("KKN Update - Uploading doc: {$docData['name']}", [
+                            'path' => $path,
+                            'size' => $file->getSize()
                         ]);
+
+                        if ($path) {
+                            // Delete old document with same name
+                            $kknRegistration->kknRegistrationDocuments()
+                                ->where('name', $docData['name'])
+                                ->delete();
+                            
+                            $kknRegistration->kknRegistrationDocuments()->create([
+                                'name' => $docData['name'] ?? 'Dokumen',
+                                'file_path' => $path,
+                                'file_type' => $file->extension(),
+                                'doc_type' => $docData['type'] ?? 'custom', 
+                            ]);
+                        }
                     } elseif (isset($docData['name']) && $request->has("documents.{$index}.type")) {
-                        // If only name changed? Not strictly handled yet but keeping simple
+                        Log::info("KKN Update - Keeping existing document or metadata only for: {$docData['name']}");
                     }
                 }
             }
