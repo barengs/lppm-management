@@ -856,7 +856,7 @@ export default function KknStudentRegistration() {
                                                         type="file"
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                         onChange={(e) => handleDocumentFileChange(index, e.target.files[0])}
-                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                                     />
                                                     <div className="text-center">
                                                         {doc.file ? (
