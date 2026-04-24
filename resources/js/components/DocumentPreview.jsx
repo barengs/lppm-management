@@ -24,17 +24,77 @@ export default function DocumentPreview({ document, title, onClose }) {
             </div>
         );
     }
-
-    const fileUrl = `/storage/${filePath}`;
     const fileExtension = filePath.split('.').pop().toLowerCase();
     const isPDF = fileExtension === 'pdf';
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+    const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension);
+
+    // Build absolute URL for external viewers (like Google Docs)
+    const absoluteFileUrl = window.location.origin + `/storage/${filePath}`;
+    const fileUrl = `/storage/${filePath}`;
 
     const handleDownload = () => {
         const link = window.document.createElement('a');
         link.href = fileUrl;
         link.download = filePath.split('/').pop();
         link.click();
+    };
+
+    const renderPreview = () => {
+        if (isPDF) {
+            return (
+                <iframe
+                    src={`${fileUrl}#toolbar=0`}
+                    className="w-full h-full border-0 rounded-lg bg-white"
+                    title={title}
+                />
+            );
+        }
+
+        if (isImage) {
+            return (
+                <div className="flex items-center justify-center h-full">
+                    <img
+                        src={fileUrl}
+                        alt={title}
+                        style={{ 
+                            maxWidth: `${zoom}%`,
+                            maxHeight: `${zoom}%`,
+                            objectFit: 'contain'
+                        }}
+                        className="rounded-lg shadow-lg"
+                    />
+                </div>
+            );
+        }
+
+        if (isOffice) {
+            // Using Google Docs Viewer for Office files
+            // Note: This requires the file to be publicly accessible
+            return (
+                <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(absoluteFileUrl)}&embedded=true`}
+                    className="w-full h-full border-0 rounded-lg bg-white"
+                    title={title}
+                />
+            );
+        }
+
+        // Fallback for unknown types or when preview is unavailable
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <FileText size={64} className="mb-4 opacity-50" />
+                <p className="text-lg mb-2">Preview tidak tersedia untuk tipe file ini</p>
+                <p className="text-sm mb-4">Silakan download untuk melihat file</p>
+                <button
+                    onClick={handleDownload}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                    <Download size={18} />
+                    <span>Download File</span>
+                </button>
+            </div>
+        );
     };
 
     return (
@@ -86,39 +146,7 @@ export default function DocumentPreview({ document, title, onClose }) {
 
                 {/* Content */}
                 <div className="flex-1 overflow-auto bg-gray-100 p-4">
-                    {isPDF ? (
-                        <iframe
-                            src={fileUrl}
-                            className="w-full h-full border-0 rounded-lg bg-white"
-                            title={title}
-                        />
-                    ) : isImage ? (
-                        <div className="flex items-center justify-center h-full">
-                            <img
-                                src={fileUrl}
-                                alt={title}
-                                style={{ 
-                                    maxWidth: `${zoom}%`,
-                                    maxHeight: `${zoom}%`,
-                                    objectFit: 'contain'
-                                }}
-                                className="rounded-lg shadow-lg"
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                            <FileText size={64} className="mb-4 opacity-50" />
-                            <p className="text-lg mb-2">Preview tidak tersedia untuk tipe file ini</p>
-                            <p className="text-sm mb-4">Silakan download untuk melihat file</p>
-                            <button
-                                onClick={handleDownload}
-                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                <Download size={18} />
-                                <span>Download File</span>
-                            </button>
-                        </div>
-                    )}
+                    {renderPreview()}
                 </div>
             </div>
         </div>

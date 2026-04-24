@@ -367,7 +367,7 @@ export default function StudentKknStatus() {
                                                                 type="file" 
                                                                 id={`upload-${doc.id}`}
                                                                 className="hidden" 
-                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                                                 onChange={(e) => handleFileChange(doc.id, e.target.files[0])}
                                                             />
                                                             <label 

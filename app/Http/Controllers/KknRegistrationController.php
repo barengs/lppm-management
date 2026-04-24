@@ -64,7 +64,7 @@ class KknRegistrationController extends Controller
             // Documents & Photo
             'documents' => 'array',
             'documents.*.name' => $isDraft ? 'nullable|string' : 'required|string',
-            'documents.*.file' => $isDraft ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'documents.*.file' => $isDraft ? 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ];
 
@@ -293,7 +293,7 @@ class KknRegistrationController extends Controller
             // Documents & Photo
             'documents' => 'array',
             'documents.*.name' => 'required|string',
-            'documents.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'documents.*.file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ];
 
