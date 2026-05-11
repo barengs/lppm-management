@@ -267,6 +267,7 @@ Route::middleware(['auth:api'])->group(function () {
     // KKN Reporting & Guidance
     Route::apiResource('kkn-reports', App\Http\Controllers\KknReportController::class);
     Route::put('kkn-reports/{id}/status', [App\Http\Controllers\KknReportController::class, 'updateStatus']); // Review
+    Route::apiResource('kkn-field-monitorings', App\Http\Controllers\KknFieldMonitoringController::class);
 
     Route::prefix('kkn-guidance')->group(function () {
         Route::get('/', [App\Http\Controllers\KknGuidanceController::class, 'index']);
