@@ -43,6 +43,7 @@ class RolePermissionSeeder extends Seeder
             'master_science_clusters',
             'master_research_priorities',
             'master_selections',
+            'kkn_field_monitorings',
         ];
 
         // Custom/Extra Actions per module
@@ -123,6 +124,7 @@ class RolePermissionSeeder extends Seeder
                 'kkn_reports.review', 'kkn_reports.approve', 'kkn_reports.reject', 'kkn_reports.revise',
                 'kkn_guidance.view', 'kkn_guidance.create', 'kkn_guidance.reply',
                 'kkn_postos.view', 'kkn_postos.manage_members',
+                'kkn_field_monitorings.view',
                 'documents.view',
                 'posts.view',
             ]);
@@ -186,6 +188,7 @@ class RolePermissionSeeder extends Seeder
                 'kkn_reports.view', 'kkn_reports.review', 'kkn_reports.approve', 'kkn_reports.reject',
                 // KKN Poskos
                 'kkn_postos.view', 'kkn_postos.create', 'kkn_postos.edit', 'kkn_postos.delete', 'kkn_postos.manage_members',
+                'kkn_field_monitorings.view', 'kkn_field_monitorings.create', 'kkn_field_monitorings.edit', 'kkn_field_monitorings.delete',
                 // KKN Guidance
                 'kkn_guidance.view'
             ]);

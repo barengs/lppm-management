@@ -93,6 +93,7 @@ import JournalCreate from './pages/journal/Create';
 import JournalShow from './pages/journal/Show';
 
 import KknAssessment from './pages/kkn/Assessment';
+import FieldMonitoring from './pages/kkn/FieldMonitoring';
 
 import PrivateRoute from './components/PrivateRoute';
 import { Provider, useSelector, useDispatch } from 'react-redux';
@@ -264,6 +265,7 @@ function App() {
 
                         {/* KKN Assessment (Admin/Staff) */}
                         <Route path="kkn/assessment" element={<KknAssessment />} />
+                        <Route path="kkn/monitoring-lapangan" element={<FieldMonitoring />} />
                         <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
 
                         {/* CMS */}

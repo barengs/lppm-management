@@ -74,6 +74,7 @@ export default function Sidebar() {
                 ] : []),
                 // Admin/Dosen Monitoring
                 { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
+                { name: 'Monitoring Lapangan', icon: <TrendingUp size={20} />, path: '/kkn/monitoring-lapangan', permission: 'kkn_field_monitorings.view' },
                 { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
             ]
         },
