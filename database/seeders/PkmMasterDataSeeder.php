@@ -66,6 +66,25 @@ class PkmMasterDataSeeder extends Seeder
             ['type' => 'cost_group', 'name' => 'Sewa',                      'sort_order' => 6],
             ['type' => 'cost_group', 'name' => 'Diseminasi Hasil',          'sort_order' => 7],
             ['type' => 'cost_group', 'name' => 'Lainnya',                   'sort_order' => 8],
+
+            // ── Tujuan SDGs ─────────────────────────────────────────────
+            ['type' => 'sdg_goal', 'name' => 'SDG 1: Tanpa Kemiskinan',                                 'sort_order' =>  1],
+            ['type' => 'sdg_goal', 'name' => 'SDG 2: Tanpa Kelaparan',                                  'sort_order' =>  2],
+            ['type' => 'sdg_goal', 'name' => 'SDG 3: Kehidupan Sehat dan Sejahtera',                    'sort_order' =>  3],
+            ['type' => 'sdg_goal', 'name' => 'SDG 4: Pendidikan Berkualitas',                          'sort_order' =>  4],
+            ['type' => 'sdg_goal', 'name' => 'SDG 5: Kesetaraan Gender',                               'sort_order' =>  5],
+            ['type' => 'sdg_goal', 'name' => 'SDG 6: Air Bersih dan Sanitasi Layak',                   'sort_order' =>  6],
+            ['type' => 'sdg_goal', 'name' => 'SDG 7: Energi Bersih dan Terjangkau',                    'sort_order' =>  7],
+            ['type' => 'sdg_goal', 'name' => 'SDG 8: Pekerjaan Layak dan Pertumbuhan Ekonomi',         'sort_order' =>  8],
+            ['type' => 'sdg_goal', 'name' => 'SDG 9: Industri, Inovasi dan Infrastruktur',              'sort_order' =>  9],
+            ['type' => 'sdg_goal', 'name' => 'SDG 10: Berkurangnya Kesenjangan',                       'sort_order' => 10],
+            ['type' => 'sdg_goal', 'name' => 'SDG 11: Kota dan Pemukiman yang Berkelanjutan',          'sort_order' => 11],
+            ['type' => 'sdg_goal', 'name' => 'SDG 12: Konsumsi dan Produksi yang Bertanggung Jawab',   'sort_order' => 12],
+            ['type' => 'sdg_goal', 'name' => 'SDG 13: Penanganan Perubahan Iklim',                      'sort_order' => 13],
+            ['type' => 'sdg_goal', 'name' => 'SDG 14: Ekosistem Lautan',                                'sort_order' => 14],
+            ['type' => 'sdg_goal', 'name' => 'SDG 15: Ekosistem Daratan',                               'sort_order' => 15],
+            ['type' => 'sdg_goal', 'name' => 'SDG 16: Perdamaian, Keadilan dan Kelembagaan yang Tangguh','sort_order' => 16],
+            ['type' => 'sdg_goal', 'name' => 'SDG 17: Kemitraan untuk Mencapai Tujuan',                 'sort_order' => 17],
         ];
 
         foreach ($data as $row) {

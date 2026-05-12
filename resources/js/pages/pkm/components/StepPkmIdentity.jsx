@@ -5,10 +5,7 @@ import axios from 'axios';
 export default function StepPkmIdentity({ proposalId, token, onNext, initialData }) {
     const [form, setForm] = useState({
         title:             '',
-        substance_summary: '',
-        keywords:          '',
         scheme_group:      '',
-        focus_area:        '',
         duration_years:    1,
         first_year:        new Date().getFullYear(),
     });
@@ -17,18 +14,15 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
 
     // Dynamic master data
     const [schemeGroups, setSchemeGroups] = useState([]);
-    const [focusAreas,   setFocusAreas]   = useState([]);
 
     // Fetch all master data types in parallel
     useEffect(() => {
         const fetchMaster = async () => {
             try {
-                const [sg, fa] = await Promise.all([
+                const [sg] = await Promise.all([
                     axios.get('/api/pkm-master-data?type=scheme_group', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('/api/pkm-master-data?type=focus_area',   { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
                 setSchemeGroups(sg.data);
-                setFocusAreas(fa.data);
             } catch {
                 // fallback: keep empty, form still works
             }
@@ -40,10 +34,7 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
         if (initialData) {
             setForm({
                 title:             initialData.title             || '',
-                substance_summary: initialData.substance_summary || '',
-                keywords:          initialData.keywords          || '',
                 scheme_group:      initialData.scheme_group      || '',
-                focus_area:        initialData.focus_area        || '',
                 duration_years:    initialData.duration_years    || 1,
                 first_year:        initialData.first_year        || new Date().getFullYear(),
             });
@@ -113,17 +104,6 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                     </div>
                     <div>
                         <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">
-                            Bidang Fokus <span className="text-red-500">*</span>
-                        </label>
-                        <select required value={form.focus_area}
-                            onChange={e => set('focus_area', e.target.value)}
-                            className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
-                            <option value="">-- Pilih Bidang Fokus --</option>
-                            {focusAreas.map((f) => <option key={f.id} value={f.name}>{f.name}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-gray-700 mb-2 block uppercase tracking-wide">
                             Lama Kegiatan (Tahun) <span className="text-red-500">*</span>
                         </label>
                         <select required value={form.duration_years}
@@ -142,37 +122,6 @@ export default function StepPkmIdentity({ proposalId, token, onNext, initialData
                             value={form.first_year}
                             onChange={e => set('first_year', parseInt(e.target.value))}
                             className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="border border-gray-200 rounded-sm overflow-hidden">
-                <div className="bg-indigo-50 px-5 py-3 border-b border-indigo-200">
-                    <h4 className="font-bold text-indigo-800 text-sm">📝 Substansi Proposal (Ringkasan)</h4>
-                    <p className="text-xs text-indigo-500 mt-0.5">Ringkasan singkat substansi untuk identitas proposal. Detail substansi lengkap diisi pada langkah berikutnya.</p>
-                </div>
-                <div className="p-5 space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                            Ringkasan Substansi <span className="text-red-500">*</span>
-                        </label>
-                        <textarea required rows={10}
-                            className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                            placeholder="Tuliskan ringkasan substansi PKM yang mencakup: latar belakang permasalahan, solusi yang ditawarkan, metode pelaksanaan, luaran dan manfaat bagi mitra..."
-                            value={form.substance_summary}
-                            onChange={e => set('substance_summary', e.target.value)} />
-                        <p className="text-xs text-gray-500 mt-1">Min. 300 kata. Uraikan permasalahan mitra, solusi, metode, luaran, dan dampak yang diharapkan.</p>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                            Keyword <span className="text-red-500">*</span>
-                        </label>
-                        <input type="text" required
-                            className="w-full border border-gray-300 rounded-sm p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                            placeholder="Contoh: Pemberdayaan Masyarakat; Tanaman Obat Keluarga (TOGA); Bebas Mikroplastik; Kesehatan Preventif"
-                            value={form.keywords}
-                            onChange={e => set('keywords', e.target.value)} />
-                        <p className="text-xs text-gray-500 mt-1">Pisahkan keyword dengan titik koma ( ; ).</p>
                     </div>
                 </div>
             </div>

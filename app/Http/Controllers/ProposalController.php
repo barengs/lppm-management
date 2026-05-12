@@ -117,9 +117,9 @@ class ProposalController extends Controller
                     $validated = $request->validate([
                         'duration_years' => 'required|integer|min:1|max:3',
                         'science_cluster_level_3' => 'required|string',
-                        'focus_area' => 'required|string',
-                        'research_theme' => 'required|string',
-                        'research_topic' => 'required|string',
+                        'focus_area' => 'nullable|string',
+                        'research_theme' => 'nullable|string',
+                        'research_topic' => 'nullable|string',
                         'tkt_initial' => 'required|integer',
                         'tkt_target' => 'required|integer',
                     ]);
@@ -332,7 +332,7 @@ class ProposalController extends Controller
      */
     public function show(Proposal $proposal)
     {
-        return response()->json($proposal->load(['scheme', 'fiscalYear', 'reviews', 'identity', 'personnel.user.dosenProfile', 'outputs', 'budgetItems', 'content', 'schedules', 'notes.user']));
+        return response()->json($proposal->load(['scheme', 'fiscalYear', 'reviews.reviewer', 'identity', 'personnel.user.dosenProfile', 'outputs', 'budgetItems', 'content', 'schedules', 'notes.user']));
     }
 
     /**

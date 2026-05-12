@@ -205,6 +205,17 @@ class RolePermissionSeeder extends Seeder
                 'documents.view',
                 'organization.view'
             ]);
+
+            // KETUA LPPM: Final Approval before review
+            $roleKetuaLppm = Role::firstOrCreate(['name' => 'ketua_lppm', 'guard_name' => $guard]);
+            $roleKetuaLppm->syncPermissions([
+                'dashboard.view',
+                'proposals.view', 'proposals.approve', 'proposals.reject',
+                'pkm_proposals.view', 'pkm_proposals.approve', 'pkm_proposals.reject',
+                'reports.view',
+                'documents.view',
+                'posts.view',
+            ]);
         }
 
         // 5. PRODUCTION MIGRATION: Auto-assign dpl_kkn role to existing DPLs

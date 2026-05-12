@@ -34,6 +34,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
     const [cities, setCities]       = useState({});
     const [districts, setDistricts] = useState({});
     const [villages, setVillages]   = useState({});
+    const [partnerGroups, setPartnerGroups] = useState([]);
     
     // Auxiliary state to track selected IDs for cascading logic within the component
     const [selectedIds, setSelectedIds] = useState({});
@@ -73,6 +74,10 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
     useEffect(() => {
         axios.get('/api/indonesia/provinces', { headers: { Authorization: `Bearer ${token}` } })
             .then(r => setProvinces(r.data || []))
+            .catch(() => {});
+        
+        axios.get('/api/pkm-master-data?type=partner_group', { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => setPartnerGroups(r.data || []))
             .catch(() => {});
     }, [token]);
 
@@ -153,7 +158,7 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
         try {
             await axios.post(
                 `/api/pkm-proposals/${proposalId}/save-step`,
-                { step: 2, partners },
+                { step: 3, partners },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onNext();
@@ -209,12 +214,16 @@ export default function StepPkmPartner({ proposalId, token, onNext, onBack, init
                                     className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500"
                                     placeholder="Contoh: Asman Toga Gandaria" />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Kelompok Mitra Sasaran</label>
-                                <input type="text" value={pt.partner_description}
+                             <div className="md:col-span-2">
+                                <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Kelompok Mitra Sasaran <span className="text-red-500">*</span></label>
+                                <select required value={pt.partner_description}
                                     onChange={e => update(idx, 'partner_description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm"
-                                    placeholder="Contoh: Kelompok masyarakat yang tidak produktif secara ekonomi" />
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-sm focus:ring-2 focus:ring-green-500">
+                                    <option value="">-- Pilih Kelompok Mitra --</option>
+                                    {partnerGroups.map(g => (
+                                        <option key={g.id} value={g.name}>{g.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-600 mb-1 block uppercase tracking-tight">Pimpinan Mitra</label>

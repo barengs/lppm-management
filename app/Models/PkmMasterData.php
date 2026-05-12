@@ -8,9 +8,12 @@ class PkmMasterData extends Model
 {
     protected $table = 'pkm_master_data';
 
-    protected $fillable = ['type', 'name', 'is_active', 'sort_order'];
+    protected $fillable = ['type', 'name', 'is_active', 'sort_order', 'parent_id', 'metadata'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'metadata' => 'array',
+    ];
 
     /**
      * Valid types for PKM master data
@@ -18,9 +21,11 @@ class PkmMasterData extends Model
     const TYPES = [
         'scheme_group' => 'Kelompok Skema',
         'scope'        => 'Ruang Lingkup',
-        'focus_area'   => 'Bidang Fokus',
         'output_group' => 'Kelompok Luaran',
         'cost_group'   => 'Kelompok Biaya (RAB)',
+        'sdg_goal'     => 'Tujuan SDGs',
+        'partner_group' => 'Kelompok Mitra Sasaran',
+        'budget_component' => 'Komponen Biaya',
     ];
 
     /**

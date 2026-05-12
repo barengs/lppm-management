@@ -1,53 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { Plus, Trash2, Globe, AlertCircle, Info } from 'lucide-react';
 
-// From image: SDGs terkait = dropdown tujuan, Indikator Keberhasilan = angka/kode, Uraian Kegiatan = text
-const SDG_GOALS = [
-    '1. Tanpa Kemiskinan',
-    '2. Tanpa Kelaparan',
-    '3. Kehidupan Sehat dan Sejahtera',
-    '4. Pendidikan Berkualitas',
-    '5. Kesetaraan Gender',
-    '6. Air Bersih dan Sanitasi Layak',
-    '7. Energi Bersih dan Terjangkau',
-    '8. Pekerjaan Layak dan Pertumbuhan Ekonomi',
-    '9. Industri, Inovasi, dan Infrastruktur',
-    '10. Berkurangnya Kesenjangan',
-    '11. Kota dan Permukiman yang Berkelanjutan',
-    '12. Konsumsi dan Produksi yang Bertanggung Jawab',
-    '13. Penanganan Perubahan Iklim',
-    '14. Ekosistem Lautan',
-    '15. Ekosistem Daratan',
-    '16. Perdamaian, Keadilan, dan Kelembagaan yang Tangguh',
-    '17. Kemitraan untuk Mencapai Tujuan',
-];
+const emptySDG = { goal: '', indicator: '', description: '' };
 
-const emptySdg = { goal: '', indicator: '', description: '' };
-
-export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initialData }) {
-    const [sdgGoals, setSdgGoals] = useState([{ ...emptySdg }]);
-    const [loading,  setLoading]  = useState(false);
-    const [error,    setError]    = useState(null);
+export default function StepPkmAstaCita({ proposalId, token, onNext, onBack, initialData }) {
+    const [sdgGoals, setSdgGoals] = useState([emptySDG]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [masterGoals, setMasterGoals] = useState([]);
 
     useEffect(() => {
-        const sub = initialData?.substance;
-        if (sub?.sdg_goals?.length > 0) setSdgGoals(sub.sdg_goals);
+        fetchMasterData();
+        if (initialData?.substance?.sdg_goals) {
+            setSdgGoals(initialData.substance.sdg_goals);
+        }
     }, [initialData]);
 
-    const addSdg    = () => setSdgGoals(s => [...s, { ...emptySdg }]);
-    const removeSdg = (idx) => { if (sdgGoals.length > 1) setSdgGoals(s => s.filter((_, i) => i !== idx)); };
-    const updateSdg = (idx, field, val) =>
-        setSdgGoals(s => s.map((g, i) => i === idx ? { ...g, [field]: val } : g));
+    const fetchMasterData = async () => {
+        try {
+            const res = await axios.get('/api/pkm-master-data?type=sdg_goal', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMasterGoals(res.data);
+        } catch (err) {
+            console.error("Failed to fetch SDGs master data", err);
+        }
+    };
+
+    const addSDG = () => setSdgGoals([...sdgGoals, { ...emptySDG }]);
+    const removeSDG = (idx) => {
+        if (sdgGoals.length === 1) return;
+        setSdgGoals(sdgGoals.filter((_, i) => i !== idx));
+    };
+
+    const updateSDG = (idx, field, val) => {
+        const newGoals = [...sdgGoals];
+        newGoals[idx][field] = val;
+        setSdgGoals(newGoals);
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
         try {
             await axios.post(
                 `/api/pkm-proposals/${proposalId}/save-step`,
-                { step: 3, sdg_goals: sdgGoals },
+                { step: 5, sdg_goals: sdgGoals },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onNext();
@@ -63,79 +64,80 @@ export default function StepPkmSdgs({ proposalId, token, onNext, onBack, initial
 
     return (
         <form onSubmit={handleSave} className="space-y-6">
-            {error && (
-                <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0" /><span>{error}</span>
-                </div>
-            )}
-
-            {/* SDGs */}
-            <div className="border border-gray-200 rounded-sm overflow-hidden">
-                <div className="bg-blue-50 px-5 py-3 border-b border-blue-200 flex items-center justify-between">
-                    <div>
-                        <h4 className="font-bold text-blue-800 text-sm">🌐 Tujuan Pembangunan Berkelanjutan (SDGs)</h4>
-                        <p className="text-xs text-blue-500 mt-0.5">Daftarkan semua SDGs yang relevan dengan kegiatan PKM.</p>
-                    </div>
-                    <button type="button" onClick={addSdg}
-                        className="flex items-center gap-1 text-xs text-blue-700 font-semibold hover:underline shrink-0">
-                        <Plus size={13} /> Tambah SDG
-                    </button>
-                </div>
-                <div className="p-5 space-y-4">
-                    {sdgGoals.map((g, idx) => (
-                        <div key={idx} className="p-4 border border-blue-100 rounded-lg bg-blue-50/30 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-blue-700">SDG #{idx + 1}</span>
-                                {sdgGoals.length > 1 && (
-                                    <button type="button" onClick={() => removeSdg(idx)}
-                                        className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="md:col-span-2">
-                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                                        SDGs Terkait <span className="text-red-500">*</span>
-                                    </label>
-                                    <select required value={g.goal} onChange={e => updateSdg(idx, 'goal', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400">
-                                        <option value="">-- Pilih Tujuan SDG --</option>
-                                        {SDG_GOALS.map((s, i) => <option key={i} value={s}>{s}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                                        Indikator Keberhasilan <span className="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" required value={g.indicator}
-                                        onChange={e => updateSdg(idx, 'indicator', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400"
-                                        placeholder="Contoh: 29" />
-                                    <p className="text-xs text-gray-400 mt-1">Nomor/kode indikator keberhasilan.</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                                    Uraian Kegiatan terkait SDG <span className="text-red-500">*</span>
-                                </label>
-                                <textarea required rows={5} value={g.description}
-                                    onChange={e => updateSdg(idx, 'description', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-sm p-2 text-sm focus:ring-2 focus:ring-blue-400"
-                                    placeholder="Jelaskan secara rinci bagaimana kegiatan PKM ini berkontribusi pada SDG yang dipilih..." />
-                            </div>
-                        </div>
-                    ))}
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 flex items-start">
+                <Info className="text-green-600 mr-3 mt-0.5" size={20} />
+                <div className="text-[11px] text-green-800 leading-relaxed uppercase tracking-tight">
+                    <p className="font-bold mb-1">Sustainable Development Goals (SDGs):</p>
+                    <p>Pilih tujuan SDGs yang relevan dengan kegiatan pengabdian Anda dan uraikan indikator serta deskripsi keterkaitannya.</p>
                 </div>
             </div>
 
-            <div className="flex justify-between pt-2">
+            {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-sm text-red-700 text-sm flex items-start gap-2">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                {sdgGoals.map((item, idx) => (
+                    <div key={idx} className="p-5 border border-gray-200 rounded-sm bg-gray-50/50 space-y-4 shadow-sm relative">
+                        <div className="flex items-center justify-between border-b pb-2">
+                            <span className="text-xs font-black text-green-800 uppercase tracking-widest flex items-center gap-2">
+                                <Globe size={14} /> SDGs Goal #{idx + 1}
+                            </span>
+                            {sdgGoals.length > 1 && (
+                                <button type="button" onClick={() => removeSDG(idx)}
+                                    className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-full transition-colors">
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-700 mb-1.5 block uppercase tracking-wider">Tujuan SDGs <span className="text-red-500">*</span></label>
+                                <select required value={item.goal}
+                                    onChange={e => updateSDG(idx, 'goal', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-xs bg-white focus:ring-2 focus:ring-green-500 font-medium">
+                                    <option value="">-- Pilih Tujuan SDGs --</option>
+                                    {masterGoals.map(m => (
+                                        <option key={m.id} value={m.name}>{m.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-700 mb-1.5 block uppercase tracking-wider">Indikator <span className="text-red-500">*</span></label>
+                                <input type="text" required value={item.indicator}
+                                    onChange={e => updateSDG(idx, 'indicator', e.target.value)}
+                                    className="w-full border border-gray-300 rounded-sm p-2.5 text-xs focus:ring-2 focus:ring-green-500"
+                                    placeholder="Contoh: Rasio jumlah penduduk miskin" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-700 mb-1.5 block uppercase tracking-wider">Deskripsi Keterkaitan <span className="text-red-500">*</span></label>
+                            <textarea required rows={3} value={item.description}
+                                onChange={e => updateSDG(idx, 'description', e.target.value)}
+                                className="w-full border border-gray-300 rounded-sm p-2.5 text-xs focus:ring-2 focus:ring-green-500"
+                                placeholder="Jelaskan bagaimana kegiatan ini berkontribusi pada tujuan SDGs tersebut..." />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <button type="button" onClick={addSDG}
+                className="flex items-center gap-2 text-[10px] font-black text-green-700 hover:text-green-800 uppercase tracking-widest bg-white border border-green-200 px-4 py-2 rounded-sm shadow-sm transition-all active:scale-95">
+                <Plus size={14} /> Tambah Tujuan SDGs
+            </button>
+
+            <div className="flex justify-between pt-6 border-t">
                 <button type="button" onClick={onBack}
-                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-gray-600 hover:bg-gray-50 text-sm font-semibold">
+                    className="px-6 py-2.5 border border-gray-300 rounded-sm text-[11px] font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-all">
                     ← Kembali
                 </button>
                 <button type="submit" disabled={loading}
-                    className="px-8 py-2.5 bg-green-700 text-white rounded-sm font-bold shadow hover:bg-green-800 transition-all disabled:opacity-50 text-sm">
+                    className="px-10 py-2.5 bg-green-700 text-white rounded-sm text-[11px] font-bold uppercase tracking-widest shadow-md hover:bg-green-800 transition-all disabled:opacity-50">
                     {loading ? 'Menyimpan...' : 'Simpan & Lanjut →'}
                 </button>
             </div>

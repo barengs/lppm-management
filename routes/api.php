@@ -94,13 +94,14 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('pkm/{id}/download-full', [App\Http\Controllers\PkmProposalController::class, 'downloadFull']);
 
     // Monitoring Admin (Terpisah)
-    Route::group(['middleware' => ['role:admin']], function () {
+    Route::group(['middleware' => ['role:admin|ketua_lppm']], function () {
         // Monitoring Penelitian
         Route::prefix('admin_proposals')->group(function () {
             Route::get('/', [AdminProposalController::class, 'index']);
             Route::get('/stats', [AdminProposalController::class, 'stats']);
             Route::get('/reviewers', [AdminProposalController::class, 'reviewers']);
             Route::post('/{id}/assign', [AdminProposalController::class, 'assignReviewer']);
+            Route::post('/{id}/approve-lppm', [AdminProposalController::class, 'approveLppm']);
             Route::post('/{id}/finalize', [AdminProposalController::class, 'finalize']);
             Route::post('/batch-assign', [AdminProposalController::class, 'batchAssign']);
         });
@@ -111,6 +112,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('/stats', [AdminPkmController::class, 'stats']);
             Route::get('/reviewers', [AdminPkmController::class, 'reviewers']);
             Route::post('/{id}/assign', [AdminPkmController::class, 'assignReviewer']);
+            Route::post('/{id}/approve-lppm', [AdminPkmController::class, 'approveLppm']);
             Route::post('/{id}/finalize', [AdminPkmController::class, 'finalize']);
             Route::post('/batch-assign', [AdminPkmController::class, 'batchAssign']);
         });

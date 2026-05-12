@@ -83,6 +83,8 @@ class PkmProposalController extends Controller
             'outputs',
             'budgetItems',
             'documents',
+            'schedules',
+            'pkmReviews.reviewer',
         ])->findOrFail($id);
 
         return response()->json($proposal);
@@ -104,11 +106,10 @@ class PkmProposalController extends Controller
                     $validated = $request->validate([
                         'title'             => 'required|string|max:500',
                         'summary'           => 'nullable|string',
-                        'substance_summary' => 'required|string',
-                        'keywords'          => 'required|string|max:500',
+                        'substance_summary' => 'nullable|string',
+                        'keywords'          => 'nullable|string|max:500',
                         'scheme_group'      => 'required|string',
                         'scope'             => 'nullable|string',   // now optional
-                        'focus_area'        => 'required|string',
                         'duration_years'    => 'required|integer|min:1|max:3',
                         'first_year'        => 'required|integer|min:2020|max:2040',
                     ]);
@@ -139,9 +140,9 @@ class PkmProposalController extends Controller
                 case 2: // Tim Pengusul
                     $data = $request->validate([
                         'members'                        => 'nullable|array',
-                        'members.*.user_id'              => 'required|exists:users,id',
-                        'members.*.role'                 => 'required|in:anggota',
-                        'members.*.institution'          => 'nullable|string',
+                        'members.*.student_name'         => 'nullable|string', // used as name for manual dosen
+                        'members.*.student_nim'          => 'nullable|string', // used as NIDN for manual dosen
+                        'members.*.institution'          => 'nullable|string', // Kampus Asal
                         'members.*.study_program'        => 'nullable|string',
                         'members.*.sinta_id'             => 'nullable|string',
                         'members.*.science_cluster'      => 'nullable|string',
@@ -167,6 +168,7 @@ class PkmProposalController extends Controller
                             PkmPersonnel::create(array_merge($member, [
                                 'pkm_proposal_id' => $id,
                                 'type'            => 'dosen',
+                                'role'            => 'anggota',
                                 'is_confirmed'    => false,
                             ]));
                         }
@@ -208,7 +210,21 @@ class PkmProposalController extends Controller
                     }
                     break;
 
-                case 4: // SDGs
+                case 4: // Jadwal
+                    $data = $request->validate([
+                        'schedules'                  => 'required|array|min:1',
+                        'schedules.*.execution_year' => 'required|integer',
+                        'schedules.*.activity'       => 'required|string',
+                        'schedules.*.months'         => 'required|array|min:1',
+                    ]);
+
+                    $proposal->schedules()->delete();
+                    foreach ($data['schedules'] as $sch) {
+                        $proposal->schedules()->create($sch);
+                    }
+                    break;
+
+                case 5: // SDGs
                     $data = $request->validate([
                         'sdg_goals'               => 'required|array|min:1',
                         'sdg_goals.*.goal'        => 'required|string',
@@ -220,7 +236,7 @@ class PkmProposalController extends Controller
                     $substance->fill(['sdg_goals' => $data['sdg_goals']])->save();
                     break;
 
-                case 5: // Bidang Strategis
+                case 6: // Bidang Strategis
                     $data = $request->validate([
                         'strategic_fields'                     => 'required|array|min:1',
                         'strategic_fields.*.field'             => 'required|string',
@@ -232,7 +248,7 @@ class PkmProposalController extends Controller
                     $substance->fill(['strategic_fields' => $data['strategic_fields']])->save();
                     break;
 
-                case 6: // Luaran Dijanjikan
+                case 7: // Luaran Dijanjikan
                     $data = $request->validate([
                         'outputs'                => 'required|array|min:1',
                         'outputs.*.year'         => 'nullable|integer',
@@ -248,7 +264,7 @@ class PkmProposalController extends Controller
                     }
                     break;
 
-                case 7: // Anggaran (RAB)
+                case 8: // Anggaran (RAB)
                     $data = $request->validate([
                         'budget_items'              => 'required|array|min:1',
                         'budget_items.*.year'       => 'nullable|integer',
@@ -271,8 +287,8 @@ class PkmProposalController extends Controller
                     $proposal->update(['budget' => $total]);
                     break;
 
-                case 8: // Dokumen Pendukung (upload via separate endpoint)
-                    // Step 8 is handled by uploadDocument(), this just advances step.
+                case 9: // Dokumen Pendukung (upload via separate endpoint)
+                    // Step 9 is handled by uploadDocument(), this just advances step.
                     break;
 
                 default:
@@ -290,7 +306,7 @@ class PkmProposalController extends Controller
                 $proposal->fresh()->load([
                     'fiscalYear', 'user',
                     'personnel.user.dosenProfile',
-                    'partners', 'substance',
+                    'partners', 'substance', 'schedules',
                     'outputs', 'budgetItems', 'documents',
                 ])
             );

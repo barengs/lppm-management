@@ -37,7 +37,7 @@ export default function StepPkmStrategic({ proposalId, token, onNext, onBack, in
         try {
             await axios.post(
                 `/api/pkm-proposals/${proposalId}/save-step`,
-                { step: 4, strategic_fields: fields },
+                { step: 6, strategic_fields: fields },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onNext();

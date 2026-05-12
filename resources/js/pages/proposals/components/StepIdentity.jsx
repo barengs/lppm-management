@@ -21,9 +21,6 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
     const [clustersL2, setClustersL2] = useState([]);
     const [clustersL3, setClustersL3] = useState([]);
     
-    const [focusAreas, setFocusAreas] = useState([]);
-    const [themes, setThemes] = useState([]);
-    const [topics, setTopics] = useState([]);
     const [sdgs, setSdgs] = useState([]);
 
     const [isSaving, setIsSaving] = useState(false);
@@ -33,13 +30,11 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
     useEffect(() => {
         const fetchL1 = async () => {
             try {
-                const [cRes, fRes, sRes] = await Promise.all([
+                const [cRes, sRes] = await Promise.all([
                     axios.get('/api/master/science-clusters?level=1', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('/api/master/research-priorities?type=focus_area', { headers: { Authorization: `Bearer ${token}` } }),
                     axios.get('/api/master/selections/sdg_goal', { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 setClustersL1(cRes.data);
-                setFocusAreas(fRes.data);
                 setSdgs(sRes.data);
             } catch (err) { console.error(err); }
         };
@@ -71,25 +66,6 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
         }
     }, [formData.science_cluster_level_2, token]);
 
-    // Handle Cascading Priorities
-    useEffect(() => {
-        if (formData.focus_area) {
-            axios.get(`/api/master/research-priorities?parent_id=${formData.focus_area}`, { headers: { Authorization: `Bearer ${token}` } })
-                .then(res => setThemes(res.data));
-        } else {
-            setThemes([]);
-            setTopics([]);
-        }
-    }, [formData.focus_area, token]);
-
-    useEffect(() => {
-        if (formData.research_theme) {
-            axios.get(`/api/master/research-priorities?parent_id=${formData.research_theme}`, { headers: { Authorization: `Bearer ${token}` } })
-                .then(res => setTopics(res.data));
-        } else {
-            setTopics([]);
-        }
-    }, [formData.research_theme, token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -149,18 +125,6 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Bidang Fokus</label>
-                    <select 
-                        required
-                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white"
-                        value={formData.focus_area}
-                        onChange={e => setFormData({...formData, focus_area: e.target.value, research_theme: '', research_topic: ''})}
-                    >
-                        <option value="">-- Pilih Bidang Fokus --</option>
-                        {focusAreas.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                </div>
-                <div>
                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Lama Kegiatan (Tahun)</label>
                     <select 
                         className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white"
@@ -187,36 +151,8 @@ export default function StepIdentity({ proposalId, token, onNext, onBack, initia
                         {sdgs.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                     </select>
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Tema Penelitian</label>
-                    <select 
-                        required
-                        disabled={!formData.focus_area}
-                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
-                        value={formData.research_theme}
-                        onChange={e => setFormData({...formData, research_theme: e.target.value, research_topic: ''})}
-                    >
-                        <option value="">-- Pilih Tema --</option>
-                        {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Topik Penelitian</label>
-                    <select 
-                        required
-                        disabled={!formData.research_theme}
-                        className="w-full text-sm border border-gray-300 rounded-sm p-2 bg-white disabled:bg-gray-50"
-                        value={formData.research_topic}
-                        onChange={e => setFormData({...formData, research_topic: e.target.value})}
-                    >
-                        <option value="">-- Pilih Topik --</option>
-                        {topics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-sm border border-gray-100">
                 <div>

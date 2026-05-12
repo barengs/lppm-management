@@ -25,12 +25,14 @@ class ReviewerProposalController extends Controller
                 $q->where('reviewer_id', $user->id);
             }])
                 ->where('status', 'review')
+                ->where('lppm_approval_status', 'approved') // Only show LPPM-approved
                 ->get();
         } else {
             // Traditional Plotting fallback
             $proposals = Proposal::with(['scheme', 'user', 'reviews' => function($q) use ($user) {
                 $q->where('reviewer_id', $user->id);
             }])
+                ->where('lppm_approval_status', 'approved') // Only show LPPM-approved
                 ->whereHas('reviews', function($q) use ($user) {
                     $q->where('reviewer_id', $user->id);
                 })

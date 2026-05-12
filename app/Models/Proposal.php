@@ -23,6 +23,9 @@ class Proposal extends Model
         'tkt_level',
         'tkt_score',
         'rejection_reason',
+        'lppm_approval_status',
+        'lppm_approval_date',
+        'lppm_approval_note',
     ];
 
     public function identity()

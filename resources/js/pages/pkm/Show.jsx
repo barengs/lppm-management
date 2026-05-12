@@ -5,8 +5,9 @@ import { useAuth } from '../../hooks/useAuth';
 import {
     FileText, Users, BookOpen, Calendar, DollarSign, Target,
     ArrowLeft, CheckCircle, Clock, Printer, AlertCircle,
-    ChevronDown, ChevronUp, MapPin, Briefcase, Info, Award
+    ChevronDown, ChevronUp, MapPin, Briefcase, Info, Award, ShieldCheck, XCircle, MessageSquare
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle }) => (
@@ -48,11 +49,16 @@ const ContentBlock = ({ label, html, text, borderColor = 'border-gray-200' }) =>
 export default function PkmShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
 
     const [proposal, setProposal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isApproving, setIsApproving] = useState(false);
+    const [approvalNote, setApprovalNote] = useState('');
+
+    // Role check
+    const isKetuaLppm = user?.roles?.some(r => r.name === 'ketua_lppm' || r.name === 'admin');
 
     // Collapsible section state
     const [openSections, setOpenSections] = useState({
@@ -63,6 +69,7 @@ export default function PkmShow() {
         budget: true,
         outputs: true,
         documents: true,
+        history: true,
     });
 
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -71,22 +78,42 @@ export default function PkmShow() {
         setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    useEffect(() => {
-        const fetchProposal = async () => {
-            try {
-                const res = await axios.get(`/api/pkm-proposals/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setProposal(res.data);
-            } catch (err) {
-                setError('Gagal memuat data usulan PKM. Anda mungkin tidak memiliki akses.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const fetchProposal = async () => {
+        try {
+            const res = await axios.get(`/api/pkm-proposals/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProposal(res.data);
+            setApprovalNote(res.data.lppm_approval_note || '');
+        } catch (err) {
+            setError('Gagal memuat data usulan PKM. Anda mungkin tidak memiliki akses.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (token && id) fetchProposal();
     }, [token, id]);
+
+    const handleLppmApproval = async (status) => {
+        if (!confirm(`Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} usulan PKM ini?`)) return;
+        setIsApproving(true);
+        try {
+            await axios.post(`/api/admin_pkm/${id}/approve-lppm`, {
+                status,
+                note: approvalNote
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(`Berhasil memproses keputusan LPPM untuk PKM.`);
+            fetchProposal();
+        } catch (err) {
+            toast.error("Gagal memproses keputusan LPPM.");
+        } finally {
+            setIsApproving(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -149,6 +176,51 @@ export default function PkmShow() {
                 </div>
             </div>
 
+            {/* Ketua LPPM Action Card */}
+            {isKetuaLppm && proposal.status === 'submitted' && (
+                <div className="bg-white border-2 border-green-700 rounded-sm shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="bg-green-700 p-4 flex items-center justify-between text-white">
+                        <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <ShieldCheck size={18} /> Panel Persetujuan Ketua LPPM (PKM)
+                        </h3>
+                        <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-sm">ADMINISTRATIVE ACTION</span>
+                    </div>
+                    <div className="p-6">
+                        <p className="text-xs text-gray-500 mb-4 font-medium italic">
+                            Silakan periksa kelengkapan administrasi usulan PKM sebelum memberikan persetujuan untuk dilanjutkan ke tahap review.
+                        </p>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-wider">Catatan / Feedback LPPM</label>
+                                <textarea 
+                                    rows={3}
+                                    className="w-full border-gray-200 rounded-sm text-xs focus:ring-green-500 bg-gray-50/50"
+                                    placeholder="Berikan catatan jika diperlukan..."
+                                    value={approvalNote}
+                                    onChange={(e) => setApprovalNote(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => handleLppmApproval('approved')}
+                                    disabled={isApproving}
+                                    className="flex-1 bg-green-700 text-white py-3 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-green-800 transition-all shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle size={16} /> {isApproving ? 'Memproses...' : 'Setujui Usulan'}
+                                </button>
+                                <button 
+                                    onClick={() => handleLppmApproval('rejected')}
+                                    disabled={isApproving}
+                                    className="flex-1 border-2 border-red-600 text-red-600 py-3 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <XCircle size={16} /> Tolak Usulan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 1. Identitas */}
             <div className="bg-white border border-gray-100 rounded-sm shadow-sm p-6">
                 <SectionHeader icon={Info} title="Ringkasan Usulan" isOpen={openSections.identity} onToggle={() => toggleSection('identity')} />
@@ -158,10 +230,6 @@ export default function PkmShow() {
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ruang Lingkup</p>
                                 <p className="text-gray-700 font-medium">{proposal.scope || '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bidang Fokus</p>
-                                <p className="text-gray-700 font-medium">{proposal.focus_area || '-'}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lama Kegiatan</p>
@@ -331,40 +399,65 @@ export default function PkmShow() {
             <div className="bg-white border border-gray-100 rounded-sm shadow-sm p-6">
                 <SectionHeader icon={DollarSign} title="Rencana Anggaran (RAB)" isOpen={openSections.budget} onToggle={() => toggleSection('budget')} />
                 {openSections.budget && (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs">
-                            <thead className="bg-gray-50">
-                                <tr className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                    <th className="px-4 py-3 text-left">Grup Biaya</th>
-                                    <th className="px-4 py-3 text-left">Item / Komponen</th>
-                                    <th className="px-4 py-3 text-right">Vol</th>
-                                    <th className="px-4 py-3 text-right">Satuan</th>
-                                    <th className="px-4 py-3 text-right">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {proposal.budget_items?.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50/30">
-                                        <td className="px-4 py-3">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase">{item.cost_group}</p>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-gray-800 font-medium">{item.item_name}</p>
-                                            <p className="text-[10px] text-gray-400 italic">{item.component}</p>
-                                        </td>
-                                        <td className="px-4 py-3 text-right text-gray-600">{item.volume} {item.unit}</td>
-                                        <td className="px-4 py-3 text-right text-gray-600">Rp {item.unit_cost?.toLocaleString('id-ID')}</td>
-                                        <td className="px-4 py-3 text-right font-bold text-gray-800">Rp {item.total_cost?.toLocaleString('id-ID')}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot className="bg-gray-900 text-white font-bold">
-                                <tr>
-                                    <td colSpan={4} className="px-4 py-3 text-right text-xs text-gray-400 uppercase">Total Anggaran Diusulkan</td>
-                                    <td className="px-4 py-3 text-right text-green-400 text-sm">Rp {proposal.budget?.toLocaleString('id-ID')}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <div className="space-y-8">
+                        {/* Grouped Tables */}
+                        {(() => {
+                            const groups = [...new Set(proposal.budget_items?.map(it => it.cost_group))];
+                            const grandTotal = proposal.budget || 0;
+
+                            return groups.map((gName, idx) => {
+                                const groupItems = proposal.budget_items?.filter(it => it.cost_group === gName);
+                                const groupTotal = groupItems.reduce((sum, it) => sum + (it.total_cost || 0), 0);
+                                const percentage = grandTotal > 0 ? (groupTotal / grandTotal) * 100 : 0;
+
+                                return (
+                                    <div key={idx} className="border border-gray-100 rounded-sm overflow-hidden">
+                                        <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                                            <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">{gName}</span>
+                                            <span className="text-[10px] font-black text-green-700">{percentage.toFixed(1)}% dari Total</span>
+                                        </div>
+                                        <table className="min-w-full text-[11px]">
+                                            <thead className="bg-white">
+                                                <tr className="text-gray-400 uppercase tracking-tighter border-b border-gray-50">
+                                                    <th className="px-4 py-2 text-left font-bold">Komponen / Item</th>
+                                                    <th className="px-4 py-2 text-right font-bold w-20">Vol</th>
+                                                    <th className="px-4 py-2 text-right font-bold w-32">Harga Satuan</th>
+                                                    <th className="px-4 py-2 text-right font-bold w-32">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {groupItems.map((item, i) => (
+                                                    <tr key={i}>
+                                                        <td className="px-4 py-2">
+                                                            <p className="font-bold text-gray-700">{item.item_name}</p>
+                                                            <p className="text-[9px] text-gray-400 italic">{item.component}</p>
+                                                        </td>
+                                                        <td className="px-4 py-2 text-right text-gray-500">{item.volume} {item.unit}</td>
+                                                        <td className="px-4 py-2 text-right text-gray-500">Rp {item.unit_cost?.toLocaleString('id-ID')}</td>
+                                                        <td className="px-4 py-2 text-right font-bold text-gray-700">Rp {item.total_cost?.toLocaleString('id-ID')}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot className="bg-gray-50/50 font-bold border-t border-gray-100">
+                                                <tr>
+                                                    <td colSpan={3} className="px-4 py-2 text-right text-[10px] text-gray-400 uppercase">Subtotal {gName}</td>
+                                                    <td className="px-4 py-2 text-right text-gray-900">Rp {groupTotal.toLocaleString('id-ID')}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                );
+                            });
+                        })()}
+
+                        {/* Grand Total Footer */}
+                        <div className="bg-green-700 text-white p-5 rounded-sm flex items-center justify-between shadow-md">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Total Anggaran Diusulkan</p>
+                                <h4 className="text-2xl font-black mt-1">Rp {proposal.budget?.toLocaleString('id-ID')}</h4>
+                            </div>
+                            <Calculator size={32} className="opacity-30" />
+                        </div>
                     </div>
                 )}
             </div>
@@ -425,6 +518,65 @@ export default function PkmShow() {
                                 </a>
                             </div>
                         ))}
+                    </div>
+                )}
+            </div>
+
+            {/* 8. Riwayat Keputusan & Review PKM */}
+            <div className="bg-white border border-gray-100 rounded-sm shadow-sm p-6">
+                <SectionHeader icon={MessageSquare} title="Riwayat Keputusan & Review (PKM)" isOpen={openSections.history} onToggle={() => toggleSection('history')} />
+                {openSections.history && (
+                    <div className="space-y-6">
+                        {/* LPPM Approval History */}
+                        <div className="relative pl-8 border-l-2 border-gray-100 space-y-4">
+                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-2 border-green-700 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-700" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Verifikasi Awal LPPM (PKM)</p>
+                                {proposal.lppm_approval_status ? (
+                                    <div className={`p-4 rounded-sm border ${proposal.lppm_approval_status === 'approved' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest ${proposal.lppm_approval_status === 'approved' ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`}>
+                                                {proposal.lppm_approval_status === 'approved' ? 'DISETUJUI' : 'DITOLAK'}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-medium italic">{proposal.lppm_approval_date ? new Date(proposal.lppm_approval_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-700 leading-relaxed font-medium">"{proposal.lppm_approval_note || 'Tidak ada catatan.'}"</p>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gray-50 rounded-sm border border-gray-100 text-xs text-gray-400 italic">
+                                        Menunggu verifikasi administrasi oleh Ketua LPPM.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reviewer History */}
+                            {proposal.pkm_reviews?.length > 0 && proposal.pkm_reviews.map((rev, i) => (
+                                <div key={i} className="relative pt-4">
+                                    <div className="absolute -left-[33px] top-6 w-4 h-4 rounded-full bg-white border-2 border-orange-500 flex items-center justify-center">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1">Hasil Reviewer {i + 1}</p>
+                                    <div className="p-4 bg-orange-50/30 border border-orange-100 rounded-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800 uppercase tracking-tighter">{rev.reviewer?.name || 'Reviewer'}</p>
+                                                <p className="text-[10px] text-orange-600 font-bold">Skor: {rev.score || 0}</p>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest ${
+                                                rev.decision === 'accepted' ? 'bg-green-600 text-white' : 
+                                                rev.decision === 'rejected' ? 'bg-red-600 text-white' : 
+                                                'bg-yellow-500 text-white'
+                                            }`}>
+                                                {rev.decision}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed italic">"{rev.comment || 'Tidak ada komentar.'}"</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
