@@ -23,12 +23,14 @@ class ReviewerPkmController extends Controller
                 $q->where('reviewer_id', $user->id);
             }])
                 ->whereIn('status', ['submitted', 'review'])
+                ->where('lppm_approval_status', 'approved') // Only show LPPM-approved
                 ->get();
         } else {
             // Traditional Plotting fallback
             $proposals = PkmProposal::with(['fiscalYear', 'user', 'pkmReviews' => function($q) use ($user) {
                 $q->where('reviewer_id', $user->id);
             }])
+                ->where('lppm_approval_status', 'approved') // Only show LPPM-approved
                 ->whereHas('pkmReviews', function($q) use ($user) {
                     $q->where('reviewer_id', $user->id);
                 })

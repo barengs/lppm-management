@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, Plus } from 'lucide-react';
+import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, Plus, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminPkmDashboard() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [reviewers, setReviewers] = useState([]);
     const [stats, setStats] = useState(null);
@@ -14,10 +14,15 @@ export default function AdminPkmDashboard() {
     const [filterStatus, setFilterStatus] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     
+    // Role check
+    const isKetuaLppm = user?.roles?.some(r => r.name === 'ketua_lppm' || r.name === 'admin');
+
     // Modal State
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isAssigning, setIsAssigning] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
+    const [approvalModal, setApprovalModal] = useState({ open: false, proposal: null, status: '', note: '' });
 
     useEffect(() => {
         fetchData();
@@ -79,6 +84,25 @@ export default function AdminPkmDashboard() {
         }
     };
 
+    const handleLppmApproval = async () => {
+        setIsApproving(true);
+        try {
+            await axios.post(`/api/admin_pkm/${approvalModal.proposal.id}/approve-lppm`, {
+                status: approvalModal.status,
+                note: approvalModal.note
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(`Usulan PKM berhasil ${approvalModal.status === 'approved' ? 'disetujui' : 'ditolak'}!`);
+            setApprovalModal({ open: false, proposal: null, status: '', note: '' });
+            fetchData();
+        } catch (err) {
+            toast.error("Gagal memproses persetujuan LPPM.");
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
     const handleBatchAssign = async () => {
         if (!confirm('Plot semua usulan PKM baru secara otomatis ke reviewer tersedia?')) return;
         setIsLoading(true);
@@ -104,6 +128,22 @@ export default function AdminPkmDashboard() {
             rejected: 'bg-red-100 text-red-700'
         };
         return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
+    };
+
+    const getApprovalBadge = (status) => {
+        const styles = {
+            pending: 'bg-gray-100 text-gray-500',
+            approved: 'bg-green-100 text-green-700',
+            rejected: 'bg-red-100 text-red-700'
+        };
+        const labels = {
+            pending: 'Pending LPPM',
+            approved: 'Disetujui LPPM',
+            rejected: 'Ditolak LPPM'
+        };
+        return <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm border border-white ${styles[status] || 'bg-gray-100'}`}>
+            {labels[status] || status}
+        </span>;
     };
 
     const filteredProposals = proposals.filter(p => 
@@ -187,15 +227,16 @@ export default function AdminPkmDashboard() {
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase">Usulan PKM</th>
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase">Ketua</th>
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase">Reviewer</th>
+                                <th className="px-6 py-3 text-center text-[10px] font-bold text-gray-500 uppercase">Approval LPPM</th>
                                 <th className="px-6 py-3 text-center text-[10px] font-bold text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
                             {isLoading ? (
-                                <tr><td colSpan={5} className="py-10 text-center text-sm text-gray-400">Memuat data...</td></tr>
+                                <tr><td colSpan={6} className="py-10 text-center text-sm text-gray-400">Memuat data...</td></tr>
                             ) : filteredProposals.length === 0 ? (
-                                <tr><td colSpan={5} className="py-10 text-center text-sm text-gray-400">Tidak ada usulan PKM.</td></tr>
+                                <tr><td colSpan={6} className="py-10 text-center text-sm text-gray-400">Tidak ada usulan PKM.</td></tr>
                             ) : filteredProposals.map((p) => (
                                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
@@ -219,6 +260,9 @@ export default function AdminPkmDashboard() {
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-center">
+                                        {getApprovalBadge(p.lppm_approval_status || 'pending')}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
                                         {getStatusBadge(p.status)}
                                     </td>
                                     <td className="px-6 py-4 text-right flex justify-end gap-1">
@@ -229,9 +273,21 @@ export default function AdminPkmDashboard() {
                                         >
                                             <FileText size={18} />
                                         </button>
+                                        
+                                        {isKetuaLppm && (
+                                            <button 
+                                                onClick={() => setApprovalModal({ open: true, proposal: p, status: 'approved', note: '' })}
+                                                className={`p-2 rounded-sm transition-all ${p.lppm_approval_status === 'approved' ? 'text-gray-300 cursor-not-allowed' : 'text-green-700 hover:bg-green-50'}`}
+                                                disabled={p.lppm_approval_status === 'approved'}
+                                                title="Approval Ketua LPPM"
+                                            >
+                                                <CheckCircle size={18} />
+                                            </button>
+                                        )}
+
                                         <button 
                                             onClick={() => setSelectedProposal(p)}
-                                            className="p-2 text-green-700 hover:bg-green-50 rounded-sm transition-all"
+                                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-sm transition-all"
                                             title="Plot Reviewer"
                                         >
                                             <UserPlus size={18} />
@@ -245,7 +301,7 @@ export default function AdminPkmDashboard() {
             </div>
 
             {/* Assignment Modal */}
-            {selectedProposal && (
+            {selectedProposal && !isPreviewOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-green-700">
                         <div className="p-4 border-b border-gray-100">
@@ -284,6 +340,66 @@ export default function AdminPkmDashboard() {
                                 className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-red-600 transition-colors"
                             >
                                 Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* LPPM Approval Modal */}
+            {approvalModal.open && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="bg-green-800 p-4 text-white flex justify-between items-center border-b-4 border-green-600">
+                            <div>
+                                <h3 className="font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                                    <ShieldCheck size={16} /> Persetujuan Ketua LPPM (PKM)
+                                </h3>
+                                <p className="text-[10px] text-green-200 mt-1 uppercase line-clamp-1">{approvalModal.proposal?.title}</p>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={() => setApprovalModal({...approvalModal, status: 'approved'})}
+                                    className={`flex-1 p-4 border rounded-sm flex flex-col items-center gap-2 transition-all ${approvalModal.status === 'approved' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                    <CheckCircle size={24} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Setujui Usulan</span>
+                                </button>
+                                <button 
+                                    onClick={() => setApprovalModal({...approvalModal, status: 'rejected'})}
+                                    className={`flex-1 p-4 border rounded-sm flex flex-col items-center gap-2 transition-all ${approvalModal.status === 'rejected' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`}
+                                >
+                                    <XCircle size={24} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Tolak Usulan</span>
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block tracking-wider">Catatan / Keterangan (Opsional)</label>
+                                <textarea 
+                                    rows={4}
+                                    className="w-full border-gray-200 rounded-sm text-sm focus:ring-green-500"
+                                    placeholder="Masukkan alasan penolakan atau catatan tambahan..."
+                                    value={approvalModal.note}
+                                    onChange={(e) => setApprovalModal({...approvalModal, note: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                            <button 
+                                onClick={() => setApprovalModal({ open: false, proposal: null, status: '', note: '' })}
+                                className="px-6 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-gray-700"
+                            >
+                                Tutup
+                            </button>
+                            <button 
+                                onClick={handleLppmApproval}
+                                disabled={isApproving || !approvalModal.status}
+                                className="px-8 py-2 bg-green-700 text-white rounded-sm text-xs font-bold uppercase tracking-widest shadow-md hover:bg-green-800 transition-all disabled:opacity-50"
+                            >
+                                {isApproving ? 'Memproses...' : 'Simpan Keputusan'}
                             </button>
                         </div>
                     </div>

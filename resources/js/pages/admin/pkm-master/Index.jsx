@@ -7,17 +7,17 @@ import { toast } from 'react-toastify';
 const TYPE_LABELS = {
     scheme_group:  'Kelompok Skema',
     scope:         'Ruang Lingkup',
-    focus_area:    'Bidang Fokus',
     output_group:  'Kelompok Luaran',
     cost_group:    'Kelompok Biaya (RAB)',
+    partner_group: 'Kelompok Mitra Sasaran',
 };
 
 const TYPE_COLORS = {
     scheme_group:  'green',
     scope:         'blue',
-    focus_area:    'purple',
     output_group:  'orange',
     cost_group:    'red',
+    partner_group: 'teal',
 };
 
 function TypeTab({ type, label, color, active, count, onClick }) {
@@ -27,6 +27,7 @@ function TypeTab({ type, label, color, active, count, onClick }) {
         purple: 'bg-purple-700 text-white border-purple-700',
         orange: 'bg-orange-600 text-white border-orange-600',
         red:    'bg-red-700 text-white border-red-700',
+        teal:   'bg-teal-700 text-white border-teal-700',
     };
     const inactiveClasses = 'bg-white text-gray-600 border-gray-200 hover:border-gray-400';
 

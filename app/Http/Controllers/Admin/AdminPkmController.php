@@ -144,4 +144,27 @@ class AdminPkmController extends Controller
             'processed_count' => $count
         ]);
     }
+
+    /**
+     * LPPM Head Approval
+     */
+    public function approveLppm(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'note'   => 'nullable|string'
+        ]);
+
+        $proposal = PkmProposal::findOrFail($id);
+        $proposal->update([
+            'lppm_approval_status' => $validated['status'],
+            'lppm_approval_date'   => now(),
+            'lppm_approval_note'   => $validated['note']
+        ]);
+
+        return response()->json([
+            'message' => 'Persetujuan Ketua LPPM berhasil disimpan.',
+            'proposal' => $proposal
+        ]);
+    }
 }

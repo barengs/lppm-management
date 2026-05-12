@@ -5,8 +5,9 @@ import { useAuth } from '../../hooks/useAuth';
 import {
     FileText, Users, BookOpen, Calendar, DollarSign, Target,
     ArrowLeft, CheckCircle, Clock, Printer, AlertCircle,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, ShieldCheck, XCircle, MessageSquare
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle }) => (
@@ -42,13 +43,18 @@ const ContentBlock = ({ label, html, borderColor = 'border-gray-200' }) => {
 export default function ProposalShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
 
     const [proposal, setProposal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isApproving, setIsApproving] = useState(false);
+    const [approvalNote, setApprovalNote] = useState('');
 
-    // Collapsible section state - all open by default
+    // Role check
+    const isKetuaLppm = user?.roles?.some(r => r.name === 'ketua_lppm' || r.name === 'admin');
+
+    // Collapsible section state
     const [openSections, setOpenSections] = useState({
         identity: true,
         personnel: true,
@@ -56,6 +62,7 @@ export default function ProposalShow() {
         schedule: true,
         budget: true,
         outputs: true,
+        history: true,
     });
 
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -64,22 +71,42 @@ export default function ProposalShow() {
         setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    useEffect(() => {
-        const fetchProposal = async () => {
-            try {
-                const res = await axios.get(`/api/proposals/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setProposal(res.data);
-            } catch (err) {
-                setError('Gagal memuat data usulan. Anda mungkin tidak memiliki akses.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const fetchProposal = async () => {
+        try {
+            const res = await axios.get(`/api/proposals/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProposal(res.data);
+            setApprovalNote(res.data.lppm_approval_note || '');
+        } catch (err) {
+            setError('Gagal memuat data usulan. Anda mungkin tidak memiliki akses.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (token && id) fetchProposal();
     }, [token, id]);
+
+    const handleLppmApproval = async (status) => {
+        if (!confirm(`Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} usulan ini?`)) return;
+        setIsApproving(true);
+        try {
+            await axios.post(`/api/admin_proposals/${id}/approve-lppm`, {
+                status,
+                note: approvalNote
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(`Berhasil memproses keputusan LPPM.`);
+            fetchProposal();
+        } catch (err) {
+            toast.error("Gagal memproses keputusan LPPM.");
+        } finally {
+            setIsApproving(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -148,6 +175,51 @@ export default function ProposalShow() {
                 </div>
             </div>
 
+            {/* Ketua LPPM Action Card */}
+            {isKetuaLppm && proposal.status === 'submitted' && (
+                <div className="bg-white border-2 border-green-700 rounded-sm shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="bg-green-700 p-4 flex items-center justify-between text-white">
+                        <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <ShieldCheck size={18} /> Panel Persetujuan Ketua LPPM
+                        </h3>
+                        <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-sm">ADMINISTRATIVE ACTION</span>
+                    </div>
+                    <div className="p-6">
+                        <p className="text-xs text-gray-500 mb-4 font-medium italic">
+                            Silakan periksa kelengkapan administrasi usulan sebelum memberikan persetujuan untuk dilanjutkan ke tahap review.
+                        </p>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-wider">Catatan / Feedback LPPM</label>
+                                <textarea 
+                                    rows={3}
+                                    className="w-full border-gray-200 rounded-sm text-xs focus:ring-green-500 bg-gray-50/50"
+                                    placeholder="Berikan catatan jika diperlukan..."
+                                    value={approvalNote}
+                                    onChange={(e) => setApprovalNote(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => handleLppmApproval('approved')}
+                                    disabled={isApproving}
+                                    className="flex-1 bg-green-700 text-white py-3 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-green-800 transition-all shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle size={16} /> {isApproving ? 'Memproses...' : 'Setujui Usulan'}
+                                </button>
+                                <button 
+                                    onClick={() => handleLppmApproval('rejected')}
+                                    disabled={isApproving}
+                                    className="flex-1 border-2 border-red-600 text-red-600 py-3 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <XCircle size={16} /> Tolak Usulan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 1. Identitas */}
             <div className="bg-white border border-gray-100 rounded-sm shadow-sm p-6">
                 <SectionHeader icon={FileText} title="Identitas Usulan" isOpen={openSections.identity} onToggle={() => toggleSection('identity')} />
@@ -164,10 +236,6 @@ export default function ProposalShow() {
                         <div>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tahun Anggaran</p>
                             <p className="text-gray-700 font-medium">{proposal.fiscal_year?.year}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bidang Fokus</p>
-                            <p className="text-gray-700 font-medium">{proposal.identity?.focus_area || '-'}</p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lama Penelitian</p>
@@ -358,6 +426,65 @@ export default function ProposalShow() {
                                 <p className="text-[10px] text-gray-500 mt-2 italic">{o.target_description}</p>
                             </div>
                         ))}
+                    </div>
+                )}
+            </div>
+
+            {/* 7. Riwayat Keputusan & Review */}
+            <div className="bg-white border border-gray-100 rounded-sm shadow-sm p-6">
+                <SectionHeader icon={MessageSquare} title="Riwayat Keputusan & Review" isOpen={openSections.history} onToggle={() => toggleSection('history')} />
+                {openSections.history && (
+                    <div className="space-y-6">
+                        {/* LPPM Approval History */}
+                        <div className="relative pl-8 border-l-2 border-gray-100 space-y-4">
+                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-2 border-green-700 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-700" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Verifikasi Awal LPPM</p>
+                                {proposal.lppm_approval_status ? (
+                                    <div className={`p-4 rounded-sm border ${proposal.lppm_approval_status === 'approved' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest ${proposal.lppm_approval_status === 'approved' ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`}>
+                                                {proposal.lppm_approval_status === 'approved' ? 'DISETUJUI' : 'DITOLAK'}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-medium italic">{proposal.lppm_approval_date ? new Date(proposal.lppm_approval_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-700 leading-relaxed font-medium">"{proposal.lppm_approval_note || 'Tidak ada catatan.'}"</p>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gray-50 rounded-sm border border-gray-100 text-xs text-gray-400 italic">
+                                        Menunggu verifikasi administrasi oleh Ketua LPPM.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reviewer History */}
+                            {proposal.reviews?.length > 0 && proposal.reviews.map((rev, i) => (
+                                <div key={i} className="relative pt-4">
+                                    <div className="absolute -left-[33px] top-6 w-4 h-4 rounded-full bg-white border-2 border-orange-500 flex items-center justify-center">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1">Hasil Reviewer {i + 1}</p>
+                                    <div className="p-4 bg-orange-50/30 border border-orange-100 rounded-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800 uppercase tracking-tighter">{rev.reviewer?.name || 'Reviewer'}</p>
+                                                <p className="text-[10px] text-orange-600 font-bold">Skor: {rev.score || 0}</p>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest ${
+                                                rev.decision === 'accepted' ? 'bg-green-600 text-white' : 
+                                                rev.decision === 'rejected' ? 'bg-red-600 text-white' : 
+                                                'bg-yellow-500 text-white'
+                                            }`}>
+                                                {rev.decision}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed italic">"{rev.comment || 'Tidak ada komentar.'}"</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

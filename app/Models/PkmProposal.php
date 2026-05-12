@@ -24,6 +24,9 @@ class PkmProposal extends Model
         'status',
         'current_step',
         'budget',
+        'lppm_approval_status',
+        'lppm_approval_date',
+        'lppm_approval_note',
     ];
 
     public function user()
@@ -74,5 +77,10 @@ class PkmProposal extends Model
     public function focusArea()
     {
         return $this->belongsTo(MasterResearchPriority::class, 'focus_area');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(PkmProposalSchedule::class, 'pkm_proposal_id');
     }
 }

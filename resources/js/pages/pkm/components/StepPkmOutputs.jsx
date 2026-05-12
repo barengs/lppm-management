@@ -49,7 +49,7 @@ export default function StepPkmOutputs({ proposalId, token, onNext, onBack, init
         try {
             await axios.post(
                 `/api/pkm-proposals/${proposalId}/save-step`,
-                { step: 5, outputs },
+                { step: 7, outputs },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onNext();

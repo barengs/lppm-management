@@ -63,7 +63,7 @@ export default function StepPkmDocument({ proposalId, token, onNext, onBack, ini
             // Advance step 7
             await axios.post(
                 `/api/pkm-proposals/${proposalId}/save-step`,
-                { step: 7 },
+                { step: 9 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onNext();
