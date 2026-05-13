@@ -93,6 +93,7 @@ import JournalCreate from './pages/journal/Create';
 import JournalShow from './pages/journal/Show';
 
 import KknAssessment from './pages/kkn/Assessment';
+import KknGradingSettings from './pages/kkn/GradingSettings';
 import FieldMonitoring from './pages/kkn/FieldMonitoring';
 
 import PrivateRoute from './components/PrivateRoute';
@@ -263,8 +264,9 @@ function App() {
                         <Route path="kkn/postos/:id/edit" element={<PostoForm />} />
                         <Route path="kkn/postos/:id/members/add" element={<PostoAddMember />} />
 
-                        {/* KKN Assessment (Admin/Staff) */}
+                        {/* KKN Assessment (Admin/Staff/DPL) */}
                         <Route path="kkn/assessment" element={<KknAssessment />} />
+                        <Route path="kkn/grading-settings" element={<KknGradingSettings />} />
                         <Route path="kkn/monitoring-lapangan" element={<FieldMonitoring />} />
                         <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
 

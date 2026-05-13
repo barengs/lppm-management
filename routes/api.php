@@ -293,12 +293,31 @@ Route::middleware(['auth:api'])->group(function () {
 
     // KKN Assessment (Grading & Certificate)
     Route::prefix('kkn-grades')->group(function () {
-        Route::get('/export', [App\Http\Controllers\KknGradeController::class, 'exportPdf']); // Admin Export
-        Route::get('/', [App\Http\Controllers\KknGradeController::class, 'index']); // Staff Index
-        Route::post('/', [App\Http\Controllers\KknGradeController::class, 'store']); // Staff Grade
-        Route::get('/my-grade', [App\Http\Controllers\KknGradeController::class, 'myGrade']); // Student View
-        Route::get('/certificate/download', [App\Http\Controllers\KknGradeController::class, 'downloadCertificate']); // Student Download
+        // Admin / Staff
+        Route::get('/export', [App\Http\Controllers\KknGradeController::class, 'exportPdf']);
+        Route::get('/export-excel', [App\Http\Controllers\KknGradeController::class, 'exportExcel']);
+        Route::get('/', [App\Http\Controllers\KknGradeController::class, 'index']);
+
+        // Settings (Admin only)
+        Route::get('/settings', [App\Http\Controllers\KknGradeController::class, 'getGradingSettings']);
+        Route::post('/settings', [App\Http\Controllers\KknGradeController::class, 'saveGradingSettings']);
+
+        // DPL Grading
+        Route::get('/dpl-students', [App\Http\Controllers\KknGradeController::class, 'dplStudents']);
+        Route::post('/dpl-score', [App\Http\Controllers\KknGradeController::class, 'saveDplScore']);
+        Route::post('/dpl-batch', [App\Http\Controllers\KknGradeController::class, 'saveDplBatch']);
+
+        // LPPM / Staff - Article Score
+        Route::post('/article-score', [App\Http\Controllers\KknGradeController::class, 'saveArticleScore']);
+
+        // Legacy
+        Route::post('/', [App\Http\Controllers\KknGradeController::class, 'store']);
+
+        // Student
+        Route::get('/my-grade', [App\Http\Controllers\KknGradeController::class, 'myGrade']);
+        Route::get('/certificate/download', [App\Http\Controllers\KknGradeController::class, 'downloadCertificate']);
     });
+
 
     // Architecture Refinements
     Route::apiResource('reports', App\Http\Controllers\ReportController::class);
