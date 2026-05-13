@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Save, Download, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
@@ -227,6 +227,51 @@ export default function KknAssessment() {
 
     const s = settings || { w1_max: 10, w2_max: 10, w3_max: 10, w4_max: 10, secondary_max: 60, article_max: 100 };
 
+    // Build export URL with current filter params
+    const buildExportUrl = (base) => {
+        const params = new URLSearchParams();
+        if (filterPosto)   params.append('kkn_posto_id', filterPosto);
+        if (filterFaculty) params.append('faculty_id', filterFaculty);
+        const qs = params.toString();
+        return `/api${base}${qs ? '?' + qs : ''}`;
+    };
+
+    // Authenticated file download (blob) — avoids redirect-to-login on new tab
+    const [exportLoading, setExportLoading] = useState(null); // 'pdf' | 'excel' | null
+    const downloadFile = async (urlPath, filename) => {
+        const key = filename.endsWith('.pdf') ? 'pdf' : 'excel';
+        setExportLoading(key);
+        try {
+            const response = await axios.get(buildExportUrl(urlPath), {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob',
+            });
+            const blob = new Blob([response.data], { type: response.headers['content-type'] });
+            const url  = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            toast.error('Gagal mengunduh file. Silakan coba lagi.');
+        } finally {
+            setExportLoading(null);
+            setExportOpen(false);
+        }
+    };
+
+    // Export dropdown state
+    const [exportOpen, setExportOpen] = useState(false);
+    const exportRef = useRef(null);
+    useEffect(() => {
+        const handler = (e) => { if (exportRef.current && !exportRef.current.contains(e.target)) setExportOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
     return (
         <div className="space-y-5 pb-16">
             {/* Header */}
@@ -251,10 +296,37 @@ export default function KknAssessment() {
                         <Save size={15} />
                         {isSavingAll ? 'Menyimpan...' : `Simpan Semua${changedCount > 0 ? ` (${changedCount})` : ''}`}
                     </button>
-                    <a href="/api/kkn-grades/export" target="_blank"
-                        className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-black hover:bg-red-700 transition-all">
-                        <Download size={15} /> Export PDF
-                    </a>
+                    {/* Export Dropdown */}
+                    <div className="relative" ref={exportRef}>
+                        <button
+                            onClick={() => setExportOpen(o => !o)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-sm text-xs font-black hover:bg-red-700 transition-all"
+                        >
+                            <Download size={15} />
+                            {exportLoading ? 'Mengunduh...' : 'Export'}
+                            <ChevronDown size={13} className={`transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {exportOpen && (
+                            <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-sm shadow-xl z-50">
+                                <button
+                                    onClick={() => downloadFile('/kkn-grades/export', 'Rekap-Nilai-KKN.pdf')}
+                                    disabled={!!exportLoading}
+                                    className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors border-b border-gray-100 disabled:opacity-50"
+                                >
+                                    <FileText size={15} className="text-red-500" />
+                                    {exportLoading === 'pdf' ? 'Mengunduh...' : 'Export PDF'}
+                                </button>
+                                <button
+                                    onClick={() => downloadFile('/kkn-grades/export-excel', `Rekap-Nilai-KKN-${new Date().toISOString().slice(0,10)}.xlsx`)}
+                                    disabled={!!exportLoading}
+                                    className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors disabled:opacity-50"
+                                >
+                                    <Sheet size={15} className="text-green-600" />
+                                    {exportLoading === 'excel' ? 'Mengunduh...' : 'Export Excel'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

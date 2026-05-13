@@ -9,6 +9,8 @@ use App\Models\KknGradingSetting;
 use App\Models\KknPosto;
 use App\Models\KknPostoMember;
 use App\Models\KknPeriod;
+use App\Exports\KknGradesExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KknGradeController extends Controller
 {
@@ -320,6 +322,12 @@ class KknGradeController extends Controller
 
         $pdf->setPaper('A4', 'landscape');
         return $pdf->stream('Rekap-Nilai-KKN.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $filename = 'Rekap-Nilai-KKN-' . date('Ymd-His') . '.xlsx';
+        return Excel::download(new KknGradesExport($request), $filename);
     }
 
     // ─── Student Endpoints ───────────────────────────────────────────────────
