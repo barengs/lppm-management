@@ -119,4 +119,26 @@ class KknRegistration extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    public function kknGrade()
+    {
+        return $this->hasOne(KknGrade::class, 'kkn_registration_id');
+    }
+
+    public function kknLocation()
+    {
+        return $this->belongsTo(KknLocation::class, 'kkn_location_id');
+    }
+
+    public function kknPosto()
+    {
+        return $this->hasOneThrough(
+            KknPosto::class,
+            KknPostoMember::class,
+            'kkn_registration_id', // FK on kkn_posto_members
+            'id',                  // PK on kkn_postos
+            'id',                  // PK on kkn_registrations
+            'kkn_posto_id'         // FK on kkn_posto_members pointing to kkn_postos
+        );
+    }
 }

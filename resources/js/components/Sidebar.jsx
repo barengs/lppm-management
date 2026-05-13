@@ -10,7 +10,8 @@ import {
     User, Award, Users, LogOut,
     LayoutDashboard, PlusCircle, BarChart2,
     Calendar, Settings, TrendingUp, Shield, Star,
-    Building, School, MessageSquare, ChevronLeft, ChevronRight
+    Building, School, MessageSquare, ChevronLeft, ChevronRight,
+    SlidersHorizontal
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -74,6 +75,9 @@ export default function Sidebar() {
                 ] : []),
                 // Admin/Dosen Monitoring
                 { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
+                ...(hasRole('admin') || hasRole('ketua_lppm') ? [
+                    { name: 'Pengaturan Penilaian', icon: <SlidersHorizontal size={20} />, path: '/kkn/grading-settings', permission: 'kkn_grades.view' },
+                ] : []),
                 { name: 'Monitoring Lapangan', icon: <TrendingUp size={20} />, path: '/kkn/monitoring-lapangan', permission: 'kkn_field_monitorings.view' },
                 { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
             ]
