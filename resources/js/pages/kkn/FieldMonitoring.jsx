@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { 
     Camera, 
@@ -16,82 +15,61 @@ import {
     Trash2
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import api from '../../utils/api';
+import {
+    useGetPostosQuery,
+    useGetFieldMonitoringsQuery,
+    useCreateFieldMonitoringMutation,
+    useDeleteFieldMonitoringMutation,
+} from '../../store/api/kknApi';
 
 export default function FieldMonitoring() {
-    const { token, user, hasRole } = useAuth();
+    const { user, hasRole } = useAuth();
     
     // UI State
-    const [isLoadingPostos, setIsLoadingPostos] = useState(false);
-    const [isLoadingMonitorings, setIsLoadingMonitorings] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    // Data State
-    const [postos, setPostos] = useState([]);
-    const [filteredPostos, setFilteredPostos] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPosto, setSelectedPosto] = useState(null);
-    const [monitorings, setMonitorings] = useState([]);
     
     // Form State
     const [description, setDescription] = useState('');
     const [monitoredAt, setMonitoredAt] = useState(new Date().toISOString().slice(0, 16));
     const [selectedImages, setSelectedImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        fetchPostos();
-    }, []);
+    // RTK Query hooks
+    const { data: postosData, isFetching: isPostosLoading } = useGetPostosQuery();
+    const { data: monitoringsData, isFetching: isMonitoringsLoading } = useGetFieldMonitoringsQuery(
+        selectedPosto ? { kkn_posto_id: selectedPosto.id } : {},
+        { skip: !selectedPosto }
+    );
+    const [createFieldMonitoring, { isLoading: isSubmitting }] = useCreateFieldMonitoringMutation();
+    const [deleteFieldMonitoring] = useDeleteFieldMonitoringMutation();
 
+    const postos = useMemo(() => {
+        return postosData?.data || postosData || [];
+    }, [postosData]);
+
+    const monitorings = useMemo(() => {
+        return monitoringsData?.data || monitoringsData || [];
+    }, [monitoringsData]);
+
+    // Set initial selected posto
     useEffect(() => {
-        if (!searchTerm) {
-            setFilteredPostos(postos);
-        } else {
-            const lower = searchTerm.toLowerCase();
-            setFilteredPostos(postos.filter(p => 
-                p.name.toLowerCase().includes(lower) || 
-                p.village?.toLowerCase().includes(lower)
-            ));
+        if (postos.length > 0 && !selectedPosto) {
+            setSelectedPosto(postos[0]);
         }
+    }, [postos, selectedPosto]);
+
+    // Filter postos
+    const filteredPostos = useMemo(() => {
+        if (!searchTerm) return postos;
+        const lower = searchTerm.toLowerCase();
+        return postos.filter(p => 
+            p.name.toLowerCase().includes(lower) || 
+            p.location?.name?.toLowerCase().includes(lower) ||
+            p.location?.village?.toLowerCase().includes(lower)
+        );
     }, [searchTerm, postos]);
-
-    useEffect(() => {
-        if (selectedPosto) {
-            fetchMonitorings();
-        }
-    }, [selectedPosto]);
-
-    const fetchPostos = async () => {
-        setIsLoadingPostos(true);
-        try {
-            const { data } = await api.get('/kkn/postos');
-            const postoData = data.data || data;
-            setPostos(postoData);
-            setFilteredPostos(postoData);
-            if (postoData.length > 0 && !selectedPosto) {
-                setSelectedPosto(postoData[0]);
-            }
-        } catch (error) {
-            toast.error("Gagal memuat data posko");
-        } finally {
-            setIsLoadingPostos(false);
-        }
-    };
-
-    const fetchMonitorings = async () => {
-        setIsLoadingMonitorings(true);
-        try {
-            const { data } = await api.get('/kkn-field-monitorings', {
-                params: { kkn_posto_id: selectedPosto.id }
-            });
-            setMonitorings(data.data || data);
-        } catch (error) {
-            toast.error("Gagal memuat riwayat monitoring");
-        } finally {
-            setIsLoadingMonitorings(false);
-        }
-    };
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
@@ -116,7 +94,6 @@ export default function FieldMonitoring() {
         e.preventDefault();
         if (!selectedPosto) return;
         
-        setIsSubmitting(true);
         const formData = new FormData();
         formData.append('kkn_posto_id', selectedPosto.id);
         formData.append('description', description);
@@ -127,17 +104,12 @@ export default function FieldMonitoring() {
         });
 
         try {
-            await api.post('/kkn-field-monitorings', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await createFieldMonitoring(formData).unwrap();
             toast.success("Laporan monitoring berhasil disimpan");
             setIsModalOpen(false);
             resetForm();
-            fetchMonitorings();
         } catch (error) {
-            toast.error(error.response?.data?.message || "Gagal menyimpan laporan");
-        } finally {
-            setIsSubmitting(false);
+            toast.error(error.data?.message || error.message || "Gagal menyimpan laporan");
         }
     };
 
@@ -152,11 +124,10 @@ export default function FieldMonitoring() {
     const handleDelete = async (id) => {
         if (!window.confirm("Hapus laporan monitoring ini?")) return;
         try {
-            await api.delete(`/kkn-field-monitorings/${id}`);
+            await deleteFieldMonitoring(id).unwrap();
             toast.success("Laporan berhasil dihapus");
-            fetchMonitorings();
         } catch (error) {
-            toast.error("Gagal menghapus laporan");
+            toast.error(error.data?.message || error.message || "Gagal menghapus laporan");
         }
     };
 
@@ -178,7 +149,7 @@ export default function FieldMonitoring() {
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
-                    {isLoadingPostos ? (
+                    {isPostosLoading ? (
                         <div className="p-4 text-center text-sm text-gray-500 animate-pulse">Memuat...</div>
                     ) : (
                         <div className="space-y-1">
@@ -194,7 +165,7 @@ export default function FieldMonitoring() {
                                         <div className="font-semibold text-sm truncate">{posto.name}</div>
                                         <div className="text-xs text-gray-500 flex items-center mt-0.5 truncate">
                                             <Home size={10} className="mr-1" />
-                                            {posto.village || 'Tanpa lokasi'}
+                                            {posto.location?.village || posto.village || 'Tanpa lokasi'}
                                         </div>
                                     </div>
                                     {selectedPosto?.id === posto.id && <ChevronRight size={16} />}

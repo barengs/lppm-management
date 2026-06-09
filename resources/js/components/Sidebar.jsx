@@ -43,25 +43,28 @@ export default function Sidebar() {
                 },
             ]
         },
-        {
-            title: 'Penelitian & Pengabdian',
-            items: [
-                { name: 'Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
-                { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
-                { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
-                { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
-                { name: 'Monitoring Laporan', icon: <ClipboardList size={20} />, path: '/admin/reports', permission: 'admin' },
-                { name: 'Penilaian Penelitian', icon: <Star size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
-                { name: 'Penilaian PKM', icon: <Star size={20} />, path: '/reviewer/pkm', permission: 'pkm_proposals.review' },
-                { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
-            ]
-        },
+        ...(!hasRole('mahasiswa') ? [
+            {
+                title: 'Penelitian & Pengabdian',
+                items: [
+                    { name: 'Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
+                    { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
+                    { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
+                    { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
+                    { name: 'Monitoring Laporan', icon: <ClipboardList size={20} />, path: '/admin/reports', permission: 'admin' },
+                    { name: 'Penilaian Penelitian', icon: <Star size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
+                    { name: 'Penilaian PKM', icon: <Star size={20} />, path: '/reviewer/pkm', permission: 'pkm_proposals.review' },
+                    { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
+                ]
+            }
+        ] : []),
         {
             title: 'KKN (Kuliah Kerja Nyata)',
             items: [
-                // Student Only - Status KKN
+                // Student Only - Status KKN & Kelompok KKN
                 ...(hasRole('mahasiswa') ? [
                     { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
+                    { name: 'Kelompok KKN Saya', icon: <Users size={20} />, path: '/dashboard/kkn/group', permission: 'kkn_postos.view' },
                 ] : []),
                 { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
                 { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
@@ -74,12 +77,14 @@ export default function Sidebar() {
                     { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
                 ] : []),
                 // Admin/Dosen Monitoring
-                { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
-                ...(hasRole('admin') || hasRole('ketua_lppm') ? [
-                    { name: 'Pengaturan Penilaian', icon: <SlidersHorizontal size={20} />, path: '/kkn/grading-settings', permission: 'kkn_grades.view' },
+                ...(!hasRole('mahasiswa') ? [
+                    { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
+                    ...(hasRole('admin') || hasRole('ketua_lppm') ? [
+                        { name: 'Pengaturan Penilaian', icon: <SlidersHorizontal size={20} />, path: '/kkn/grading-settings', permission: 'kkn_grades.view' },
+                    ] : []),
+                    { name: 'Monitoring Lapangan', icon: <TrendingUp size={20} />, path: '/kkn/monitoring-lapangan', permission: 'kkn_field_monitorings.view' },
+                    { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
                 ] : []),
-                { name: 'Monitoring Lapangan', icon: <TrendingUp size={20} />, path: '/kkn/monitoring-lapangan', permission: 'kkn_field_monitorings.view' },
-                { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
             ]
         },
         {
@@ -98,25 +103,27 @@ export default function Sidebar() {
                 { name: 'Master Data PKM', icon: <Settings size={20} />, path: '/master/pkm', permission: 'admin' },
             ]
         },
-        {
-            title: 'Manajemen Sistem',
-            items: [
-                { name: 'Struktur Organisasi', icon: <Users size={20} />, path: '/admin/organization', permission: 'organization.view' },
-                { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
-                { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
-                { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
-                { name: 'Halaman Statis', icon: <FileText size={20} />, path: '/admin/pages', permission: 'pages.view' },
-                { name: 'Sistem Setting', icon: <Settings size={20} />, path: '/admin/settings', permission: 'settings.view' }, // Admin only by default logic or add permission
-            ]
-        },
-        {
-            title: 'CMS & Informasi',
-            items: [
-                { name: 'Berita & Artikel', icon: <Newspaper size={20} />, path: '/cms/posts', permission: 'posts.view' },
-                { name: 'Dokumen', icon: <FileText size={20} />, path: '/cms/documents', permission: 'documents.view' },
-                { name: 'Galeri', icon: <Image size={20} />, path: '/cms/galleries', permission: 'galleries.view' }
-            ]
-        },
+        ...(!hasRole('mahasiswa') ? [
+            {
+                title: 'Manajemen Sistem',
+                items: [
+                    { name: 'Struktur Organisasi', icon: <Users size={20} />, path: '/admin/organization', permission: 'organization.view' },
+                    { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
+                    { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
+                    { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
+                    { name: 'Halaman Statis', icon: <FileText size={20} />, path: '/admin/pages', permission: 'pages.view' },
+                    { name: 'Sistem Setting', icon: <Settings size={20} />, path: '/admin/settings', permission: 'settings.view' },
+                ]
+            },
+            {
+                title: 'CMS & Informasi',
+                items: [
+                    { name: 'Berita & Artikel', icon: <Newspaper size={20} />, path: '/cms/posts', permission: 'posts.view' },
+                    { name: 'Dokumen', icon: <FileText size={20} />, path: '/cms/documents', permission: 'documents.view' },
+                    { name: 'Galeri', icon: <Image size={20} />, path: '/cms/galleries', permission: 'galleries.view' }
+                ]
+            }
+        ] : []),
         {
             title: 'Profil',
             items: [

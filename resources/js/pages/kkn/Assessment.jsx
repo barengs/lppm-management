@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown } from 'lucide-react';
-import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
+import {
+    useGetKknGradesQuery,
+    useGetDplKknGradesQuery,
+    useGetKknGradeSettingsQuery,
+    useSaveDplScoreMutation,
+    useSaveArticleScoreMutation,
+    useGetPostosQuery,
+} from '../../store/api/kknApi';
+import { useGetFacultiesQuery } from '../../store/api/masterDataApi';
 
 const fmt = (v) => (v !== null && v !== undefined && v !== '') ? Number(v).toFixed(1) : '-';
 
@@ -71,13 +79,6 @@ export default function KknAssessment() {
     // DPL or admin can input field scores
     const canField   = isDpl || isAdmin;
 
-    const [registrations, setRegistrations] = useState([]);
-    const [postos, setPostos] = useState([]);
-    const [settings, setSettings] = useState(null);
-    const [faculties, setFaculties] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSavingAll, setIsSavingAll] = useState(false);
-
     // Filters
     const [filterPosto, setFilterPosto] = useState('');
     const [filterFaculty, setFilterFaculty] = useState('');
@@ -86,40 +87,62 @@ export default function KknAssessment() {
     // Inline edits: { [regId]: { w1_score, w2_score, w3_score, w4_score, secondary_score, article_score } }
     const [edits, setEdits] = useState({});
     const [rowSaving, setRowSaving] = useState({});
+    const [isSavingAll, setIsSavingAll] = useState(false);
 
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const endpoint = isDpl ? '/api/kkn-grades/dpl-students' : '/api/kkn-grades';
-            const params = new URLSearchParams();
-            if (filterPosto)   params.append('kkn_posto_id', filterPosto);
-            if (filterFaculty) params.append('faculty_id', filterFaculty);
+    // RTK Query parameters
+    const queryParams = useMemo(() => {
+        const params = {};
+        if (filterPosto) params.kkn_posto_id = filterPosto;
+        if (filterFaculty) params.faculty_id = filterFaculty;
+        return params;
+    }, [filterPosto, filterFaculty]);
 
-            const [gradesRes, settingsRes] = await Promise.all([
-                axios.get(`${endpoint}?${params}`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/kkn-grades/settings', { headers: { Authorization: `Bearer ${token}` } }),
-            ]);
+    // RTK Query fetches
+    const {
+        data: dplGradesData,
+        isFetching: isDplLoading,
+        refetch: refetchDpl
+    } = useGetDplKknGradesQuery(queryParams, { skip: !isDpl });
 
-            const data = gradesRes.data;
-            setRegistrations(data.data?.data || data.data || []);
-            if (data.postos)   setPostos(data.postos);
-            if (settingsRes.data) setSettings(settingsRes.data);
+    const {
+        data: adminGradesData,
+        isFetching: isAdminLoading,
+        refetch: refetchAdmin
+    } = useGetKknGradesQuery(queryParams, { skip: isDpl });
 
-        } catch {
-            toast.error('Gagal memuat data penilaian.');
-        } finally {
-            setIsLoading(false);
+    const {
+        data: allPostosData,
+    } = useGetPostosQuery({}, { skip: !isAdmin });
+
+    const {
+        data: gradeSettings,
+    } = useGetKknGradeSettingsQuery();
+
+    const {
+        data: facultiesData,
+    } = useGetFacultiesQuery(undefined, { skip: !isAdmin });
+
+    // Mutations
+    const [saveDplScore] = useSaveDplScoreMutation();
+    const [saveArticleScore] = useSaveArticleScoreMutation();
+
+    const gradesData = isDpl ? dplGradesData : adminGradesData;
+    const isLoading = isDpl ? isDplLoading : isAdminLoading;
+    const refetchData = isDpl ? refetchDpl : refetchAdmin;
+
+    const registrations = useMemo(() => {
+        return gradesData?.data?.data || gradesData?.data || [];
+    }, [gradesData]);
+
+    const postos = useMemo(() => {
+        if (isDpl) {
+            return gradesData?.postos || [];
         }
-    }, [token, isDpl, filterPosto, filterFaculty]);
+        return allPostosData || [];
+    }, [isDpl, gradesData, allPostosData]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
-
-    useEffect(() => {
-        if (isAdmin) {
-            axios.get('/api/faculties', { headers: { Authorization: `Bearer ${token}` } })
-                .then(r => setFaculties(r.data || []));
-        }
-    }, [token, isAdmin]);
+    const settings = gradeSettings || null;
+    const faculties = facultiesData || [];
 
     // ── Score helpers ──────────────────────────────────────────────────────
 
@@ -162,24 +185,23 @@ export default function KknAssessment() {
             const hasArticleEdit = 'article_score' in e;
 
             if (hasFieldEdits && canField) {
-                await axios.post('/api/kkn-grades/dpl-score', {
+                await saveDplScore({
                     kkn_registration_id: reg.id,
                     ...Object.fromEntries(fieldKeys.map(k => [k, k in e ? e[k] : getVal(reg, k)]))
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                }).unwrap();
             }
 
             if (hasArticleEdit && canArticle) {
-                await axios.post('/api/kkn-grades/article-score', {
+                await saveArticleScore({
                     kkn_registration_id: reg.id,
                     article_score: e.article_score,
-                }, { headers: { Authorization: `Bearer ${token}` } });
+                }).unwrap();
             }
 
             toast.success(`Nilai ${reg.student?.name} berhasil disimpan.`);
             setEdits(p => { const n = {...p}; delete n[reg.id]; return n; });
-            fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Gagal menyimpan nilai.');
+            toast.error(err.data?.message || err.message || 'Gagal menyimpan nilai.');
         } finally {
             setRowSaving(p => ({ ...p, [reg.id]: false }));
         }
@@ -209,7 +231,6 @@ export default function KknAssessment() {
         setIsSavingAll(false);
         if (successCount > 0) toast.success(`${successCount} data nilai berhasil disimpan.`);
         if (failCount > 0)    toast.error(`${failCount} data gagal disimpan.`);
-        fetchData();
     };
 
     // ── Filtered list ──────────────────────────────────────────────────────
@@ -242,11 +263,11 @@ export default function KknAssessment() {
         const key = filename.endsWith('.pdf') ? 'pdf' : 'excel';
         setExportLoading(key);
         try {
-            const response = await axios.get(buildExportUrl(urlPath), {
+            const response = await fetch(buildExportUrl(urlPath), {
                 headers: { Authorization: `Bearer ${token}` },
-                responseType: 'blob',
             });
-            const blob = new Blob([response.data], { type: response.headers['content-type'] });
+            if (!response.ok) throw new Error('Gagal mengunduh file.');
+            const blob = await response.blob();
             const url  = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;

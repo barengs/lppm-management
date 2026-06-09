@@ -35,7 +35,12 @@ class AuthController extends Controller
         }
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            $http = \Illuminate\Support\Facades\Http::timeout(5);
+            if (app()->environment('local')) {
+                $http = $http->withoutVerifying();
+            }
+            
+            $response = $http->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
                 'secret' => env('RECAPTCHA_SECRET_KEY'),
                 'response' => $recaptchaToken,
             ]);

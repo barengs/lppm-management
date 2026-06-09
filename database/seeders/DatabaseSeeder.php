@@ -84,6 +84,7 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             SystemSettingSeeder::class,
             KknDocumentTemplateSeeder::class,
+            KknTestDataSeeder::class,
         ]);
     }
 }

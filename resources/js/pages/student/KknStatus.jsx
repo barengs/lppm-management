@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     CheckCircle, XCircle, AlertCircle, Clock, Upload,
     User, FileText, MapPin, Calendar, Award, Mail, Phone,
-    RefreshCw, Download, Eye, Briefcase, BookOpen
+    RefreshCw, Download, Eye, Briefcase, BookOpen, Home, Users
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
@@ -273,6 +273,26 @@ export default function StudentKknStatus() {
                                         {registration.reviewer.name}
                                     </p>
                                 </div>
+                            </div>
+                        )}
+                        {registration.kkn_posto && (
+                            <div className="flex items-start border-t border-gray-100 pt-3 mt-3 flex-col gap-2 w-full">
+                                <div className="flex items-start w-full">
+                                    <Home className="mr-2 text-gray-400 mt-1" size={16} />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Posko / Kelompok KKN Saya</p>
+                                        <p className="text-sm font-bold text-gray-900">
+                                            {registration.kkn_posto.name}
+                                        </p>
+                                    </div>
+                                </div>
+                                <a 
+                                    href="/dashboard/kkn/group"
+                                    className="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-sm hover:bg-green-100 transition-colors inline-flex items-center mt-1"
+                                >
+                                    <Users size={12} className="mr-1.5" />
+                                    Lihat Anggota Kelompok
+                                </a>
                             </div>
                         )}
                     </div>

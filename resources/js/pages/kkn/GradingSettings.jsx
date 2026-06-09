@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, Save, AlertCircle, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Settings, Save } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
+import {
+    useGetKknPeriodsQuery,
+    useGetKknGradeSettingsQuery,
+    useSaveKknGradeSettingsMutation,
+} from '../../store/api/kknApi';
 
 const DEFAULT_SETTINGS = {
     w1_max: 10, w2_max: 10, w3_max: 10, w4_max: 10,
@@ -12,29 +16,37 @@ const DEFAULT_SETTINGS = {
 
 export default function KknGradingSettings() {
     const { token } = useAuth();
-    const [periods, setPeriods] = useState([]);
     const [selectedPeriod, setSelectedPeriod] = useState('');
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-    const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        axios.get('/api/kkn-periods', { headers: { Authorization: `Bearer ${token}` } })
-            .then(r => {
-                setPeriods(r.data?.data || r.data || []);
-                const active = (r.data?.data || r.data || []).find(p => p.is_active);
-                if (active) setSelectedPeriod(String(active.id));
-            });
-    }, [token]);
+    // RTK Query hooks
+    const { data: periodsData } = useGetKknPeriodsQuery();
+    const { data: apiSettings } = useGetKknGradeSettingsQuery(
+        selectedPeriod ? { kkn_period_id: selectedPeriod } : {},
+        { skip: !selectedPeriod }
+    );
+    const [saveKknGradeSettings, { isLoading: isSaving }] = useSaveKknGradeSettingsMutation();
 
+    const periods = useMemo(() => {
+        return periodsData?.data || periodsData || [];
+    }, [periodsData]);
+
+    // Set initial selected period to active one
     useEffect(() => {
-        if (!selectedPeriod) return;
-        axios.get(`/api/kkn-grades/settings?kkn_period_id=${selectedPeriod}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(r => {
-            if (r.data) setSettings({ ...DEFAULT_SETTINGS, ...r.data });
-            else setSettings(DEFAULT_SETTINGS);
-        }).catch(() => setSettings(DEFAULT_SETTINGS));
-    }, [selectedPeriod, token]);
+        if (periods.length > 0 && !selectedPeriod) {
+            const active = periods.find(p => p.is_active);
+            if (active) setSelectedPeriod(String(active.id));
+        }
+    }, [periods, selectedPeriod]);
+
+    // Sync settings when apiSettings changes or period selection changes
+    useEffect(() => {
+        if (apiSettings) {
+            setSettings({ ...DEFAULT_SETTINGS, ...apiSettings });
+        } else {
+            setSettings(DEFAULT_SETTINGS);
+        }
+    }, [apiSettings, selectedPeriod]);
 
     const maxPrimer = settings.w1_max + settings.w2_max + settings.w3_max + settings.w4_max;
     const maxTotalBobot = maxPrimer + settings.secondary_max;
@@ -42,17 +54,14 @@ export default function KknGradingSettings() {
     const handleSave = async (e) => {
         e.preventDefault();
         if (!selectedPeriod) { toast.error('Pilih periode KKN terlebih dahulu.'); return; }
-        setIsSaving(true);
         try {
-            await axios.post('/api/kkn-grades/settings', {
+            await saveKknGradeSettings({
                 kkn_period_id: selectedPeriod,
                 ...settings
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            }).unwrap();
             toast.success('Pengaturan penilaian berhasil disimpan.');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Gagal menyimpan pengaturan.');
-        } finally {
-            setIsSaving(false);
+            toast.error(err.data?.message || err.message || 'Gagal menyimpan pengaturan.');
         }
     };
 
@@ -62,7 +71,7 @@ export default function KknGradingSettings() {
             <div className="flex items-center gap-2">
                 <input
                     type="number" min="1" max="500"
-                    value={settings[fieldKey]}
+                    value={settings[fieldKey] ?? ''}
                     onChange={e => setSettings(p => ({ ...p, [fieldKey]: Number(e.target.value) }))}
                     className="w-24 border border-gray-300 rounded-sm p-2 text-sm font-bold text-center focus:ring-2 focus:ring-green-500"
                 />

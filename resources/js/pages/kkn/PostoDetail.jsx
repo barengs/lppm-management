@@ -3,15 +3,18 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Edit, Users, MapPin, Calendar, User, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
+import { useAuth } from '../../hooks/useAuth';
 import {
     useGetPostoByIdQuery,
     useRemovePostoMemberMutation,
     useUpdatePostoStatusMutation,
+    useUpdatePostoMemberMutation,
 } from '../../store/api/kknApi';
 
 export default function PostoDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user, hasRole } = useAuth();
 
     // RTK Query hooks
     const { data: posto, isLoading, error } = useGetPostoByIdQuery(id);
@@ -19,6 +22,9 @@ export default function PostoDetail() {
     // Mutations
     const [removePostoMember] = useRemovePostoMemberMutation();
     const [updatePostoStatus] = useUpdatePostoStatusMutation();
+    const [updatePostoMember] = useUpdatePostoMemberMutation();
+
+    const canManage = hasRole('admin') || (hasRole('dosen') && posto?.dpl?.id === user?.id) || hasRole('staff_kkn');
 
 
     const handleRemoveMember = async (memberId) => {
@@ -112,28 +118,58 @@ export default function PostoDetail() {
                 accessorKey: 'position',
                 header: 'Jabatan',
                 cell: ({ row }) => (
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${getPositionBadge(row.original.position)}`}>
-                        {row.original.position_name}
-                    </span>
+                    canManage ? (
+                        <select
+                            value={row.original.position}
+                            onChange={async (e) => {
+                                try {
+                                    await updatePostoMember({
+                                        postoId: id,
+                                        memberId: row.original.id,
+                                        position: e.target.value
+                                    }).unwrap();
+                                    toast.success('Jabatan berhasil diubah!');
+                                } catch (err) {
+                                    toast.error(err.data?.message || 'Gagal mengubah jabatan');
+                                }
+                            }}
+                            className="text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white font-medium text-gray-900"
+                        >
+                            <option value="kordes">Koordinator Desa (Kordes)</option>
+                            <option value="sekretaris">Sekretaris</option>
+                            <option value="bendahara">Bendahara</option>
+                            <option value="humas">Humas</option>
+                            <option value="publikasi">Publikasi</option>
+                            <option value="anggota">Anggota</option>
+                        </select>
+                    ) : (
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${getPositionBadge(row.original.position)}`}>
+                            {row.original.position_name}
+                        </span>
+                    )
                 ),
             },
             {
                 id: 'actions',
                 header: 'Aksi',
                 cell: ({ row }) => (
-                    <div className="text-right">
-                        <button
-                            onClick={() => handleRemoveMember(row.original.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Hapus anggota"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
+                    canManage ? (
+                        <div className="text-right">
+                            <button
+                                onClick={() => handleRemoveMember(row.original.id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Hapus anggota"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="text-right text-gray-300">—</div>
+                    )
                 ),
             },
         ],
-        []
+        [canManage, updatePostoMember, id]
     );
 
     if (isLoading) {

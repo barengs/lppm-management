@@ -26,7 +26,8 @@ class KknController extends Controller
             'fiscalYear',
             'dpl',
             'reviewer',
-            'logs.creator'
+            'logs.creator',
+            'kknPosto'
         ])->where('student_id', $user->id);
         
         if ($fiscalYearId) {

@@ -14,7 +14,6 @@ const baseQuery = fetchBaseQuery({
             headers.set('Authorization', `Bearer ${token}`);
         }
         headers.set('Accept', 'application/json');
-        headers.set('Content-Type', 'application/json');
         return headers;
     },
 });
@@ -49,6 +48,8 @@ export const baseApi = createApi({
         'Postos',
         'Posto',
         'KknGrades',
+        'KknGradeSettings',
+        'FieldMonitorings',
         'AvailableStudents',
         'KknPeriods',
         'KknPeriod',

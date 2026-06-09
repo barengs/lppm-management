@@ -197,7 +197,8 @@ class RolePermissionSeeder extends Seeder
             $roleMahasiswa = Role::firstOrCreate(['name' => 'mahasiswa', 'guard_name' => $guard]);
             $roleMahasiswa->syncPermissions([
                 'dashboard.view',
-                'kkn.register', 
+                'kkn.register',
+                'kkn_postos.view',
                 'kkn_reports.view', 'kkn_reports.create', 'kkn_reports.edit', // Student Reports
                 'kkn_guidance.view', 'kkn_guidance.create', 'kkn_guidance.reply', // Student Guidance
                 'kkn_grades.view', 'kkn_grades.download_certificate', // Student Grade & Cert

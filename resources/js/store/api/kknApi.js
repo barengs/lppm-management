@@ -306,6 +306,18 @@ export const kknApi = baseApi.injectEndpoints({
             ],
         }),
 
+        updatePostoMember: builder.mutation({
+            query: ({ postoId, memberId, position, status, notes }) => ({
+                url: `/kkn/postos/${postoId}/members/${memberId}`,
+                method: 'PUT',
+                body: { position, status, notes },
+            }),
+            invalidatesTags: (result, error, { postoId }) => [
+                { type: 'Posto', id: postoId },
+                'AvailableStudents',
+            ],
+        }),
+
         updatePostoStatus: builder.mutation({
             query: ({ id, status }) => ({
                 url: `/kkn/postos/${id}/status`,
@@ -445,6 +457,49 @@ export const kknApi = baseApi.injectEndpoints({
             providesTags: ['KknGrades'],
         }),
 
+        getDplKknGrades: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn-grades/dpl-students',
+                params,
+            }),
+            providesTags: ['KknGrades'],
+        }),
+
+        getKknGradeSettings: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn-grades/settings',
+                params,
+            }),
+            providesTags: ['KknGradeSettings'],
+        }),
+
+        saveDplScore: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-grades/dpl-score',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['KknGrades'],
+        }),
+
+        saveArticleScore: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-grades/article-score',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['KknGrades'],
+        }),
+
+        saveKknGradeSettings: builder.mutation({
+            query: (data) => ({
+                url: '/kkn-grades/settings',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['KknGradeSettings'],
+        }),
+
         saveKknGrade: builder.mutation({
             query: (data) => ({
                 url: '/kkn-grades',
@@ -452,6 +507,32 @@ export const kknApi = baseApi.injectEndpoints({
                 body: data,
             }),
             invalidatesTags: ['KknGrades'],
+        }),
+
+        // ============ Field Monitoring ============
+        getFieldMonitorings: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn-field-monitorings',
+                params,
+            }),
+            providesTags: ['FieldMonitorings'],
+        }),
+
+        createFieldMonitoring: builder.mutation({
+            query: (formData) => ({
+                url: '/kkn-field-monitorings',
+                method: 'POST',
+                body: formData,
+            }),
+            invalidatesTags: ['FieldMonitorings'],
+        }),
+
+        deleteFieldMonitoring: builder.mutation({
+            query: (id) => ({
+                url: `/kkn-field-monitorings/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['FieldMonitorings'],
         }),
 
         exportKknGrades: builder.mutation({
@@ -528,6 +609,7 @@ export const {
     useUpdatePostoMutation,
     useDeletePostoMutation,
     useRemovePostoMemberMutation,
+    useUpdatePostoMemberMutation,
     useUpdatePostoStatusMutation,
     useImportPostosMutation,
     useDownloadPostoTemplateMutation,
@@ -536,9 +618,19 @@ export const {
 
     // Assessments/Grades
     useGetKknGradesQuery,
+    useGetDplKknGradesQuery,
+    useGetKknGradeSettingsQuery,
+    useSaveDplScoreMutation,
+    useSaveArticleScoreMutation,
+    useSaveKknGradeSettingsMutation,
     useSaveKknGradeMutation,
     useExportKknGradesMutation,
     useExportKknRegistrationsMutation,
+
+    // Field Monitoring
+    useGetFieldMonitoringsQuery,
+    useCreateFieldMonitoringMutation,
+    useDeleteFieldMonitoringMutation,
 
     // KKN Periods
     useGetKknPeriodsQuery,
