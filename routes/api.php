@@ -296,6 +296,7 @@ Route::middleware(['auth:api'])->group(function () {
         // Admin / Staff
         Route::get('/export', [App\Http\Controllers\KknGradeController::class, 'exportPdf']);
         Route::get('/export-excel', [App\Http\Controllers\KknGradeController::class, 'exportExcel']);
+        Route::post('/import-excel', [App\Http\Controllers\KknGradeController::class, 'importExcel']);
         Route::get('/', [App\Http\Controllers\KknGradeController::class, 'index']);
 
         // Settings (Admin only)

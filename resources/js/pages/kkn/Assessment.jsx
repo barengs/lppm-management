@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown } from 'lucide-react';
+import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown, Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import {
@@ -9,6 +9,7 @@ import {
     useSaveDplScoreMutation,
     useSaveArticleScoreMutation,
     useGetPostosQuery,
+    useImportKknGradesMutation,
 } from '../../store/api/kknApi';
 import { useGetFacultiesQuery } from '../../store/api/masterDataApi';
 
@@ -79,6 +80,12 @@ export default function KknAssessment() {
     // DPL or admin can input field scores
     const canField   = isDpl || isAdmin;
 
+    // Excel Import State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importErrors, setImportErrors] = useState([]);
+    const [importSuccessMessage, setImportSuccessMessage] = useState('');
+
     // Filters
     const [filterPosto, setFilterPosto] = useState('');
     const [filterFaculty, setFilterFaculty] = useState('');
@@ -125,6 +132,46 @@ export default function KknAssessment() {
     // Mutations
     const [saveDplScore] = useSaveDplScoreMutation();
     const [saveArticleScore] = useSaveArticleScoreMutation();
+    const [importKknGrades, { isLoading: isImporting }] = useImportKknGradesMutation();
+
+    const handleCloseImportModal = () => {
+        setIsImportModalOpen(false);
+        setImportFile(null);
+        setImportErrors([]);
+        setImportSuccessMessage('');
+    };
+
+    const handleImportExcel = async (e) => {
+        e.preventDefault();
+        if (!importFile) {
+            toast.error('Silakan pilih file Excel terlebih dahulu.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', importFile);
+
+        setImportErrors([]);
+        setImportSuccessMessage('');
+
+        try {
+            const res = await importKknGrades(formData).unwrap();
+            setImportSuccessMessage(res.message);
+            setImportErrors(res.errors || []);
+            
+            if (res.errors && res.errors.length > 0) {
+                toast.warning('Impor selesai dengan beberapa catatan kesalahan.');
+            } else {
+                toast.success('Semua nilai berhasil diimpor!');
+                handleCloseImportModal();
+            }
+            refetchData();
+        } catch (err) {
+            const errMsg = err.data?.message || err.message || 'Gagal mengimpor file.';
+            setImportErrors(err.data?.errors || [errMsg]);
+            toast.error(errMsg);
+        }
+    };
 
     const gradesData = isDpl ? dplGradesData : adminGradesData;
     const isLoading = isDpl ? isDplLoading : isAdminLoading;
@@ -316,6 +363,13 @@ export default function KknAssessment() {
                     >
                         <Save size={15} />
                         {isSavingAll ? 'Menyimpan...' : `Simpan Semua${changedCount > 0 ? ` (${changedCount})` : ''}`}
+                    </button>
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-sm text-xs font-black hover:bg-blue-700 transition-all shadow-md"
+                    >
+                        <Upload size={15} />
+                        Impor Excel
                     </button>
                     {/* Export Dropdown */}
                     <div className="relative" ref={exportRef}>
@@ -562,6 +616,128 @@ export default function KknAssessment() {
                             className="text-xs text-gray-400 hover:text-white transition-colors">
                             Batalkan
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Impor Excel Modal */}
+            {isImportModalOpen && (
+                <div className="fixed inset-0 bg-black/75 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs">
+                    <div className="bg-white w-full max-w-2xl rounded-sm shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="bg-gray-900 px-6 py-4 text-white flex justify-between items-center shrink-0">
+                            <div>
+                                <h3 className="text-base font-bold flex items-center gap-2">
+                                    <Upload size={18} className="text-blue-400 animate-pulse" />
+                                    Impor Nilai Mahasiswa KKN (Excel)
+                                </h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    Unggah file Excel yang berisi nilai mahasiswa KKN
+                                </p>
+                            </div>
+                            <button 
+                                onClick={handleCloseImportModal}
+                                disabled={isImporting}
+                                className="p-1.5 hover:bg-white/10 rounded-sm transition-colors text-gray-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <form onSubmit={handleImportExcel} className="p-6 space-y-4">
+                            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-xs text-blue-800 space-y-1">
+                                <p className="font-bold uppercase tracking-wider mb-1">Panduan Pengisian Nilai:</p>
+                                <ol className="list-decimal list-inside space-y-1 font-medium text-blue-900">
+                                    <li>Gunakan menu <strong>Export &gt; Export Excel</strong> untuk mengunduh daftar mahasiswa Anda.</li>
+                                    <li>Isi nilai mahasiswa pada kolom <strong>M1 (Mgg 1)</strong>, <strong>M2 (Mgg 2)</strong>, <strong>M3 (Mgg 3)</strong>, <strong>M4 (Mgg 4)</strong>, dan <strong>Nilai Sekunder</strong>.</li>
+                                    <li>Pastikan nilai yang diinput tidak melebihi batas maksimum (M1-M4: {s.w1_max}, Sekunder: {s.secondary_max}{isAdmin ? `, Artikel: ${s.article_max}` : ''}).</li>
+                                    <li>Simpan file Excel tersebut dan unggah kembali pada form di bawah ini.</li>
+                                </ol>
+                            </div>
+
+                            {/* File Upload Selector */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
+                                    Pilih File Excel (.xlsx, .xls, .csv)
+                                </label>
+                                <div className="border-2 border-dashed border-gray-200 rounded-sm p-6 hover:bg-gray-50 hover:border-blue-400 transition-colors flex flex-col items-center justify-center gap-2 relative">
+                                    <input 
+                                        type="file" 
+                                        accept=".xlsx,.xls,.csv" 
+                                        disabled={isImporting}
+                                        onChange={e => setImportFile(e.target.files[0] || null)}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                    />
+                                    <Sheet size={32} className="text-gray-400" />
+                                    {importFile ? (
+                                        <div className="text-center">
+                                            <p className="text-sm font-bold text-gray-800">{importFile.name}</p>
+                                            <p className="text-xs text-gray-400 mt-0.5">{(importFile.size / 1024).toFixed(1)} KB</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <p className="text-sm font-medium text-gray-600">
+                                                Tarik dan lepas file di sini, atau <span className="text-blue-600 font-bold hover:underline">klik untuk mencari</span>
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">Maksimal ukuran file 5 MB</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Success / Error Message Display */}
+                            {importSuccessMessage && (
+                                <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-800 text-xs font-medium">
+                                    {importSuccessMessage}
+                                </div>
+                            )}
+
+                            {importErrors.length > 0 && (
+                                <div className="space-y-1.5">
+                                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">
+                                        Catatan Kesalahan / Baris Gagal:
+                                    </p>
+                                    <div className="p-3 bg-red-50 border border-red-100 rounded-sm text-red-800 text-xs max-h-48 overflow-y-auto font-mono space-y-1 divide-y divide-red-100 font-semibold">
+                                        {importErrors.map((err, i) => (
+                                            <div key={i} className="pt-1 first:pt-0 flex items-start gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1"></span>
+                                                <span>{err}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Modal Footer / Actions */}
+                            <div className="pt-4 border-t border-gray-100 flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseImportModal}
+                                    disabled={isImporting}
+                                    className="px-4 py-2 border border-gray-200 text-gray-700 rounded-sm text-xs font-bold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isImporting || !importFile}
+                                    className="px-5 py-2 bg-blue-600 text-white rounded-sm text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-40 flex items-center gap-1.5 shadow-md"
+                                >
+                                    {isImporting ? (
+                                        <>
+                                            <Loader2 size={13} className="animate-spin" />
+                                            Mengimpor...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload size={13} />
+                                            Mulai Impor
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

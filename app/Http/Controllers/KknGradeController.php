@@ -330,6 +330,48 @@ class KknGradeController extends Controller
         return Excel::download(new KknGradesExport($request), $filename);
     }
 
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        $file = $request->file('file');
+        $user = auth('api')->user();
+
+        $importer = new \App\Imports\KknGradesImport($user);
+
+        try {
+            Excel::import($importer, $file);
+
+            $errors = $importer->getErrors();
+            $importedCount = $importer->getImportedCount();
+
+            if ($importedCount === 0 && count($errors) > 0) {
+                return response()->json([
+                    'message' => 'Gagal mengimpor nilai. Semua data dalam file gagal divalidasi.',
+                    'imported_count' => 0,
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            return response()->json([
+                'message' => count($errors) > 0
+                    ? "Berhasil mengimpor {$importedCount} nilai mahasiswa, namun terdapat beberapa baris yang gagal."
+                    : "Berhasil mengimpor {$importedCount} nilai mahasiswa.",
+                'imported_count' => $importedCount,
+                'errors' => $errors,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal mengimpor file: ' . $e->getMessage(),
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
+    }
+
+
     // ─── Student Endpoints ───────────────────────────────────────────────────
 
     public function myGrade()

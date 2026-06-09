@@ -571,6 +571,35 @@ export const kknApi = baseApi.injectEndpoints({
                 },
             }),
         }),
+
+        downloadKknGradesExcel: builder.mutation({
+            query: (params = {}) => ({
+                url: '/kkn-grades/export-excel',
+                method: 'GET',
+                params,
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Rekap_Nilai_KKN_${new Date().getTime()}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
+        }),
+
+        importKknGrades: builder.mutation({
+            query: (formData) => ({
+                url: '/kkn-grades/import-excel',
+                method: 'POST',
+                body: formData,
+            }),
+            invalidatesTags: ['KknGrades'],
+        }),
     }),
 });
 
@@ -626,6 +655,8 @@ export const {
     useSaveKknGradeMutation,
     useExportKknGradesMutation,
     useExportKknRegistrationsMutation,
+    useImportKknGradesMutation,
+    useDownloadKknGradesExcelMutation,
 
     // Field Monitoring
     useGetFieldMonitoringsQuery,

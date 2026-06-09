@@ -37,6 +37,17 @@ class KknGradesExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             'kknPosto.dpl',
         ])->where('status', 'approved');
 
+        $user = auth('api')->user();
+        if ($user) {
+            $isAdminOrLppm = $user->hasAnyRole(['admin', 'ketua_lppm', 'staff', 'staff_kkn']);
+            if (!$isAdminOrLppm) {
+                $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
+                $registrationIds = \App\Models\KknPostoMember::whereIn('kkn_posto_id', $postoIds)
+                    ->pluck('kkn_registration_id');
+                $query->whereIn('id', $registrationIds);
+            }
+        }
+
         if ($this->request->filled('kkn_period_id')) {
             $query->where('kkn_period_id', $this->request->kkn_period_id);
         }
