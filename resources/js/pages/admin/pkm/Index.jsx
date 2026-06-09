@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminPkmDashboard() {
-    const { token, user } = useAuth();
+    const { token, user, hasAnyRole } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [reviewers, setReviewers] = useState([]);
     const [stats, setStats] = useState(null);
@@ -15,7 +15,7 @@ export default function AdminPkmDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     
     // Role check
-    const isKetuaLppm = user?.roles?.some(r => r.name === 'ketua_lppm' || r.name === 'admin');
+    const isKetuaLppm = hasAnyRole(['ketua_lppm', 'admin']);
 
     // Modal State
     const [selectedProposal, setSelectedProposal] = useState(null);

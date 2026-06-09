@@ -69,11 +69,11 @@ function ScoreInput({ value, max, onChange, disabled }) {
 }
 
 export default function KknAssessment() {
-    const { token, user } = useAuth();
+    const { token, user, hasAnyRole } = useAuth();
 
-    const isAdmin  = user?.roles?.some(r => ['admin', 'ketua_lppm', 'staff'].includes(r.name));
+    const isAdmin  = hasAnyRole(['admin', 'ketua_lppm', 'staff', 'staff_kkn']);
     // DPL = dosen who is NOT admin/staff
-    const isDpl    = !isAdmin && user?.roles?.some(r => ['dpl', 'dosen'].includes(r.name));
+    const isDpl    = !isAdmin && hasAnyRole(['dpl', 'dosen', 'dpl_kkn']);
     // LPPM can input article scores (admin/staff)
     const canArticle = isAdmin;
     // DPL or admin can input field scores
@@ -384,7 +384,7 @@ export default function KknAssessment() {
                         placeholder="Nama / NPM..."
                         className="border border-gray-200 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 w-48" />
                 </div>
-                {postos.length > 0 && (
+                {!isDpl && postos.length > 0 && (
                     <div>
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Posko</label>
                         <select value={filterPosto} onChange={e => setFilterPosto(e.target.value)}
@@ -404,7 +404,7 @@ export default function KknAssessment() {
                         </select>
                     </div>
                 )}
-                <button onClick={fetchData}
+                <button onClick={refetchData}
                     className="flex items-center gap-1 px-3 py-2 border border-gray-200 text-gray-500 rounded-sm text-xs hover:bg-gray-50">
                     <RefreshCw size={14} /> Refresh
                 </button>
