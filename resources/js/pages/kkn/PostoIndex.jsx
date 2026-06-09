@@ -5,8 +5,12 @@ import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
 import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation, useGetKknPeriodsQuery } from '../../store/api/kknApi';
 import { useGetKknLocationsQuery } from '../../store/api/kknApi';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function PostoIndex() {
+    const { hasRole } = useAuth();
+    const canWrite = hasRole('admin') || hasRole('staff_kkn');
+
     const [filters, setFilters] = useState({
         kkn_period_id: '',
         status: '',
@@ -149,25 +153,29 @@ export default function PostoIndex() {
                         >
                             <Eye className="w-4 h-4" />
                         </Link>
-                        <Link
-                            to={`/kkn/postos/${row.original.id}/edit`}
-                            className="text-green-600 hover:text-green-900"
-                            title="Edit"
-                        >
-                            <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                            onClick={() => handleDelete(row.original.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Hapus"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canWrite && (
+                            <>
+                                <Link
+                                    to={`/kkn/postos/${row.original.id}/edit`}
+                                    className="text-green-600 hover:text-green-900"
+                                    title="Edit"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                </Link>
+                                <button
+                                    onClick={() => handleDelete(row.original.id)}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Hapus"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </>
+                        )}
                     </div>
                 ),
             },
         ],
-        []
+        [canWrite]
     );
 
     if (isLoading) {
@@ -189,22 +197,24 @@ export default function PostoIndex() {
                             Kelola posko KKN, anggota, dan struktur kepengurusan
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Link
-                            to="/kkn/postos/create"
-                            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Buat Posko Baru
-                        </Link>
-                        <button
-                            onClick={() => setIsImportModalOpen(true)}
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            <Upload className="w-5 h-5 mr-2" />
-                            Import Excel
-                        </button>
-                    </div>
+                    {canWrite && (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                to="/kkn/postos/create"
+                                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Buat Posko Baru
+                            </Link>
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <Upload className="w-5 h-5 mr-2" />
+                                Import Excel
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Import Modal */}

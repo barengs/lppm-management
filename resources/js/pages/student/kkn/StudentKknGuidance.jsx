@@ -163,10 +163,10 @@ export default function StudentKknGuidance() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-100px)] bg-gray-100 rounded-lg overflow-hidden shadow-sm border">
+        <div className="flex h-[calc(100vh-100px)] bg-gray-100 rounded-sm overflow-hidden shadow-sm border border-gray-200">
             {/* Sidebar List */}
-            <div className="w-1/3 bg-white border-r flex flex-col">
-                <div className="h-20 px-4 border-b bg-gray-50 flex justify-between items-center shrink-0">
+            <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+                <div className="h-20 px-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
                     <h2 className="font-bold text-gray-700 flex items-center">
                         <MessageSquare className="mr-2 text-green-600" size={20} /> Bimbingan
                     </h2>
@@ -184,7 +184,7 @@ export default function StudentKknGuidance() {
                         <div 
                             key={topic.id}
                             onClick={() => setSelectedTopic(topic)}
-                            className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${selectedTopic?.id === topic.id ? 'bg-green-50 border-l-4 border-green-600' : ''}`}
+                            className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${selectedTopic?.id === topic.id ? 'bg-green-50 border-l-4 border-green-600' : ''}`}
                         >
                             <h3 className="font-medium text-gray-800 truncate">{topic.title}</h3>
                             <p className="text-xs text-gray-500 mt-1">
@@ -201,14 +201,14 @@ export default function StudentKknGuidance() {
                 {selectedTopic ? (
                     <>
                         {/* Chat Header */}
-                        <div className="h-20 px-4 bg-white border-b shadow-sm flex justify-between items-center shrink-0">
+                        <div className="h-20 px-4 bg-white border-b border-gray-200 shadow-sm flex justify-between items-center shrink-0">
                             <div>
                                 <h3 className="font-bold text-lg text-gray-800">{selectedTopic.title}</h3>
                                 <p className="text-xs text-gray-500">
                                     Dibuat oleh <span className="font-medium">{selectedTopic.user?.name}</span>
                                 </p>
                             </div>
-                            <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full capitalize">
+                            <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-sm capitalize">
                                 {selectedTopic.status}
                             </span>
                         </div>
@@ -226,7 +226,7 @@ export default function StudentKknGuidance() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <div className={`p-3 rounded-lg text-sm shadow-sm ${
+                                                <div className={`p-3 rounded-sm text-sm shadow-sm ${
                                                     isMe ? 'bg-green-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'
                                                 }`}>
                                                     <p className="whitespace-pre-wrap">{msg.message}</p>
@@ -240,7 +240,7 @@ export default function StudentKknGuidance() {
                                                                     href={`/storage/${att.path}`} 
                                                                     target="_blank" 
                                                                     rel="noopener noreferrer"
-                                                                    className={`flex items-center gap-2 p-2 rounded text-xs ${isMe ? 'bg-green-700/50 hover:bg-green-700' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                                                                    className={`flex items-center gap-2 p-2 rounded-sm text-xs ${isMe ? 'bg-green-700/50 hover:bg-green-700' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
                                                                 >
                                                                     <File size={14} />
                                                                     <span className="truncate max-w-[150px]">{att.name}</span>
@@ -261,12 +261,12 @@ export default function StudentKknGuidance() {
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 bg-white border-t">
+                        <div className="p-4 bg-white border-t border-gray-200">
                              {/* File Preview */}
                              {messageFiles.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 rounded-lg">
+                                <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 rounded-sm">
                                     {Array.from(messageFiles).map((file, i) => (
-                                        <div key={i} className="flex items-center bg-white px-2 py-1 rounded border shadow-sm text-xs">
+                                        <div key={i} className="flex items-center bg-white px-2 py-1 rounded-sm border border-gray-200 shadow-sm text-xs">
                                             <span className="truncate max-w-[100px]">{file.name}</span>
                                             <button 
                                                 onClick={() => {
@@ -284,7 +284,7 @@ export default function StudentKknGuidance() {
                              )}
 
                              <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-                                <label className="cursor-pointer p-2 text-gray-500 hover:text-green-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                <label className="cursor-pointer p-2 text-gray-500 hover:text-green-600 hover:bg-gray-100 rounded-sm transition-colors">
                                     <Paperclip size={20} />
                                     <input 
                                         type="file" multiple 
@@ -294,7 +294,7 @@ export default function StudentKknGuidance() {
                                 </label>
                                 <input
                                     type="text"
-                                    className="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="flex-grow border border-gray-200 rounded-sm px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                                     placeholder="Tulis pesan..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
@@ -321,14 +321,14 @@ export default function StudentKknGuidance() {
             {/* Create Modal */}
             {isCreatingTopic && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+                    <div className="bg-white rounded-sm p-6 w-full max-w-md shadow-xl border border-gray-200">
                         <h3 className="font-bold text-lg mb-4">Buat Topik Bimbingan Baru</h3>
                         <form onSubmit={handleCreateTopic}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium mb-1">Judul Topik</label>
                                 <input 
                                     type="text" 
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-gray-200 rounded-sm p-2 text-sm"
                                     value={newTopicTitle}
                                     onChange={e => setNewTopicTitle(e.target.value)}
                                     required
@@ -338,7 +338,7 @@ export default function StudentKknGuidance() {
                             <div className="mb-4">
                                 <label className="block text-sm font-medium mb-1">Pesan Awal</label>
                                 <textarea 
-                                    className="w-full border rounded p-2 h-24"
+                                    className="w-full border border-gray-200 rounded-sm p-2 h-24 text-sm"
                                     value={newTopicMessage}
                                     onChange={e => setNewTopicMessage(e.target.value)}
                                     required
@@ -349,7 +349,7 @@ export default function StudentKknGuidance() {
                                 <label className="block text-sm font-medium mb-1">Lampiran (Opsional)</label>
                                 <input 
                                     type="file" multiple
-                                    className="w-full border rounded p-2 text-sm"
+                                    className="w-full border border-gray-200 rounded-sm p-2 text-sm"
                                     onChange={e => setNewTopicFiles(e.target.files)}
                                 />
                             </div>
@@ -357,13 +357,13 @@ export default function StudentKknGuidance() {
                                 <button 
                                     type="button" 
                                     onClick={() => setIsCreatingTopic(false)}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-sm text-sm"
                                 >
                                     Batal
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700 text-sm"
                                 >
                                     Buat Topik
                                 </button>

@@ -2,15 +2,17 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
-import { Users, MapPin, Phone, Mail, User, AlertCircle, Calendar, Award, FileText } from 'lucide-react';
+import { Users, MapPin, Phone, Mail, User, AlertCircle, Calendar, Award, FileText, Printer } from 'lucide-react';
 import { toast } from 'react-toastify';
+import KknGroupPreviewModal from '../../../components/pdf/KknGroupPreviewModal';
 
 export default function StudentKknGroup() {
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
     const [posto, setPosto] = useState(null);
     const [members, setMembers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
     useEffect(() => {
         fetchPostoData();
@@ -48,6 +50,7 @@ export default function StudentKknGroup() {
             humas: 'bg-yellow-50 text-yellow-700 border-yellow-200',
             publikasi: 'bg-pink-50 text-pink-700 border-pink-200',
             anggota: 'bg-gray-50 text-gray-600 border-gray-200',
+            dpl: 'bg-teal-50 text-teal-700 border-teal-200',
         };
         return colors[position] || colors.anggota;
     };
@@ -82,10 +85,10 @@ export default function StudentKknGroup() {
         return (
             <div className="space-y-6">
                 <div className="mb-6">
-                    <Link to="/dashboard/kkn" className="text-green-600 hover:text-green-700 text-sm font-medium mb-2 inline-block">
-                        ← Kembali ke Dashboard KKN
+                    <Link to={hasRole('mahasiswa') ? "/dashboard/kkn" : "/dashboard"} className="text-green-600 hover:text-green-700 text-sm font-medium mb-2 inline-block">
+                        ← Kembali ke Dashboard
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900">Posko KKN Saya</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Posko KKN</h1>
                 </div>
 
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-sm p-8 text-center">
@@ -111,20 +114,38 @@ export default function StudentKknGroup() {
         <div className="space-y-6">
             {/* Header */}
                 <div className="mb-6">
-                    <Link to="/dashboard/kkn" className="text-green-600 hover:text-green-700 text-sm font-medium mb-2 inline-block">
-                        ← Kembali ke Dashboard KKN
+                    <Link to={hasRole('mahasiswa') ? "/dashboard/kkn" : "/dashboard"} className="text-green-600 hover:text-green-700 text-sm font-medium mb-2 inline-block">
+                        ← Kembali ke Dashboard
                     </Link>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">{posto?.posto?.name}</h1>
-                            <p className="text-sm text-gray-600 mt-1">{posto?.posto?.fiscal_year?.year}</p>
-                        </div>
-                        {posto?.my_position && (
-                            <div className={`px-4 py-2 rounded-sm border-2 ${getPositionBadge(posto.my_position)}`}>
-                                <div className="text-xs font-medium">Jabatan Saya</div>
-                                <div className="text-sm font-bold">{posto.my_position_name}</div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h1 className="text-3xl font-bold text-gray-900">{posto?.posto?.name}</h1>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold border ${
+                                    posto?.posto?.status === 'active'
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-orange-50 text-orange-700 border-orange-200'
+                                }`}>
+                                    {posto?.posto?.status === 'active' ? 'Aktif' : 'Draft'}
+                                </span>
                             </div>
-                        )}
+                            <p className="text-sm text-gray-600 mt-1">{posto?.posto?.fiscal_year?.year || posto?.posto?.kkn_period?.name}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsPrintModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-sm text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                            >
+                                <Printer size={16} />
+                                Cetak PDF
+                            </button>
+                            {posto?.my_position && (
+                                <div className={`px-4 py-2 rounded-sm border-2 ${getPositionBadge(posto.my_position)}`}>
+                                    <div className="text-xs font-medium">Jabatan Saya</div>
+                                    <div className="text-sm font-bold">{posto.my_position_name}</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -132,6 +153,21 @@ export default function StudentKknGroup() {
                     {/* Left Column - Posto Info (Single Card) */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6 space-y-6">
+                            {/* Status Posko */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center border-b pb-2">
+                                    <Award className="w-5 h-5 mr-2 text-green-600" />
+                                    Status Posko
+                                </h3>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-bold border ${
+                                    posto?.posto?.status === 'active'
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-orange-50 text-orange-700 border-orange-200'
+                                }`}>
+                                    {posto?.posto?.status === 'active' ? 'Aktif (Sudah Lengkap)' : 'Draft (Struktur Belum Lengkap)'}
+                                </span>
+                            </div>
+
                             {/* Location Info */}
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center border-b pb-2">
@@ -257,9 +293,34 @@ export default function StudentKknGroup() {
                                                         <div className="text-[10px] text-gray-400 mt-0.5">{member.student?.mahasiswa_profile?.faculty?.name || member.student?.mahasiswaProfile?.faculty?.name || '-'}</div>
                                                     </td>
                                                     <td className="px-4 py-3 text-center whitespace-nowrap">
-                                                        <span className={`inline-block text-xs font-bold px-2.5 py-1 border rounded-sm ${getPositionBadge(member.position)}`}>
-                                                            {member.position_name}
-                                                        </span>
+                                                        {posto?.my_position === 'dpl' ? (
+                                                            <select
+                                                                value={member.position}
+                                                                onChange={async (e) => {
+                                                                    try {
+                                                                        await api.put(`/kkn/postos/${posto.posto.id}/members/${member.id}`, {
+                                                                            position: e.target.value
+                                                                        });
+                                                                        toast.success('Jabatan berhasil diubah!');
+                                                                        fetchPostoData();
+                                                                    } catch (err) {
+                                                                        toast.error(err.response?.data?.message || 'Gagal mengubah jabatan');
+                                                                    }
+                                                                }}
+                                                                className="text-xs px-2 py-1 border border-gray-300 rounded-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white font-medium text-gray-900"
+                                                            >
+                                                                <option value="kordes">Koordinator Desa (Kordes)</option>
+                                                                <option value="sekretaris">Sekretaris</option>
+                                                                <option value="bendahara">Bendahara</option>
+                                                                <option value="humas">Humas</option>
+                                                                <option value="publikasi">Publikasi</option>
+                                                                <option value="anggota">Anggota</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span className={`inline-block text-xs font-bold px-2.5 py-1 border rounded-sm ${getPositionBadge(member.position)}`}>
+                                                                {member.position_name}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))
@@ -274,6 +335,12 @@ export default function StudentKknGroup() {
                         </div>
                     </div>
                 </div>
+                <KknGroupPreviewModal
+                    isOpen={isPrintModalOpen}
+                    onClose={() => setIsPrintModalOpen(false)}
+                    posto={posto}
+                    members={members}
+                />
             </div>
         );
     }

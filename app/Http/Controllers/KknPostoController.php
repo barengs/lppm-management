@@ -432,6 +432,17 @@ class KknPostoController extends Controller
             $registration->update(['kkn_posto_id' => $posto->id]);
         }
 
+        // Auto-update posto status based on completeness
+        if ($posto->isComplete()) {
+            if ($posto->status === 'draft') {
+                $posto->update(['status' => 'active']);
+            }
+        } else {
+            if ($posto->status === 'active') {
+                $posto->update(['status' => 'draft']);
+            }
+        }
+
         $member->load('student.mahasiswaProfile');
 
         return response()->json($member, 201);
@@ -480,6 +491,18 @@ class KknPostoController extends Controller
         }
 
         $member->update($validated);
+
+        // Auto-update posto status based on completeness
+        if ($posto->isComplete()) {
+            if ($posto->status === 'draft') {
+                $posto->update(['status' => 'active']);
+            }
+        } else {
+            if ($posto->status === 'active') {
+                $posto->update(['status' => 'draft']);
+            }
+        }
+
         $member->load('student.mahasiswaProfile');
 
         return response()->json($member);
@@ -512,6 +535,17 @@ class KknPostoController extends Controller
         }
 
         $member->delete();
+
+        // Auto-update posto status based on completeness
+        if ($posto->isComplete()) {
+            if ($posto->status === 'draft') {
+                $posto->update(['status' => 'active']);
+            }
+        } else {
+            if ($posto->status === 'active') {
+                $posto->update(['status' => 'draft']);
+            }
+        }
 
         return response()->noContent();
     }
@@ -618,6 +652,17 @@ class KknPostoController extends Controller
                 $assigned[] = $member->id;
             }
 
+            // Auto-update posto status based on completeness
+            if ($posto->isComplete()) {
+                if ($posto->status === 'draft') {
+                    $posto->update(['status' => 'active']);
+                }
+            } else {
+                if ($posto->status === 'active') {
+                    $posto->update(['status' => 'draft']);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -646,7 +691,7 @@ class KknPostoController extends Controller
             $membership = KknPostoMember::with([
                 'posto.location',
                 'posto.kknPeriod',
-                'posto.dpl',
+                'posto.dpl.dosenProfile',
             ])->where('student_id', $user->id)
                 ->where('status', 'active')
                 ->first();
@@ -663,7 +708,7 @@ class KknPostoController extends Controller
         } elseif ($user->role === 'dosen') {
              // Find posto managed by DPL
              // DPL should see their posto regardless of status (even draft)
-             $posto = KknPosto::with(['location', 'kknPeriod', 'dpl'])
+             $posto = KknPosto::with(['location', 'kknPeriod', 'dpl.dosenProfile'])
                 ->where('dpl_id', $user->id)
                 // ->where('status', '!=', 'draft') // Removed to allow access to draft postos
                 ->latest()

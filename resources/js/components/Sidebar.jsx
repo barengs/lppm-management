@@ -61,16 +61,21 @@ export default function Sidebar() {
         {
             title: 'KKN (Kuliah Kerja Nyata)',
             items: [
-                // Student Only - Status KKN & Kelompok KKN
+                // Student Only - Status KKN
                 ...(hasRole('mahasiswa') ? [
                     { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
+                ] : []),
+                // Student/Dosen - Kelompok KKN Saya
+                ...(hasRole('mahasiswa') || hasRole('dosen') ? [
                     { name: 'Kelompok KKN Saya', icon: <Users size={20} />, path: '/dashboard/kkn/group', permission: 'kkn_postos.view' },
                 ] : []),
-                { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
-                { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
-                { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
-                { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
-                { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
+                ...(!hasRole('mahasiswa') ? [
+                    { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
+                    { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
+                    { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
+                    { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
+                    { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
+                ] : []),
                 // Student/Dosen Only (Requires My Posto context)
                 ...(!hasRole('admin') ? [
                     { name: 'Bimbingan', icon: <MessageSquare size={20} />, path: '/dashboard/kkn/guidance', permission: 'kkn_guidance.view' },
