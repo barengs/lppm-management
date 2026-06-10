@@ -8,6 +8,8 @@ use App\Models\KknRegistration;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\KknPostosExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KknPostoController extends Controller
 {
@@ -73,6 +75,21 @@ class KknPostoController extends Controller
         });
 
         return response()->json($postos);
+    }
+
+    /**
+     * Export all postos and their members to Excel (Admin/Staff only)
+     */
+    public function exportExcel(Request $request)
+    {
+        $user = auth('api')->user();
+
+        if (!$user || !$user->hasAnyRole(['admin', 'staff_kkn', 'staff', 'ketua_lppm'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $filename = 'Data-Posko-KKN-' . date('Ymd-His') . '.xlsx';
+        return Excel::download(new KknPostosExport($request), $filename);
     }
 
     /**

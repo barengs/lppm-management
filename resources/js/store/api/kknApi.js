@@ -353,6 +353,26 @@ export const kknApi = baseApi.injectEndpoints({
             }),
         }),
 
+        exportPostosExcel: builder.mutation({
+            query: (params = {}) => ({
+                url: '/kkn/postos/export-excel',
+                method: 'GET',
+                params,
+                responseHandler: async (response) => {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Data_Posko_KKN_${new Date().getTime()}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(url);
+                    return { success: true };
+                },
+            }),
+        }),
+
         getAvailableStudents: builder.query({
             query: (params = {}) => ({
                 url: '/kkn/postos/available-students',
@@ -642,6 +662,7 @@ export const {
     useUpdatePostoStatusMutation,
     useImportPostosMutation,
     useDownloadPostoTemplateMutation,
+    useExportPostosExcelMutation,
     useGetAvailableStudentsQuery,
     useAddPostoMemberMutation,
 

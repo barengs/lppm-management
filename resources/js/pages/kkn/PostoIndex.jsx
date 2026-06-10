@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Eye, Edit, Trash2, MapPin, Users, Calendar, CheckCircle, Upload, Download, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
-import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation, useGetKknPeriodsQuery } from '../../store/api/kknApi';
+import { useGetPostosQuery, useDeletePostoMutation, useImportPostosMutation, useDownloadPostoTemplateMutation, useGetKknPeriodsQuery, useExportPostosExcelMutation } from '../../store/api/kknApi';
 import { useGetKknLocationsQuery } from '../../store/api/kknApi';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -28,6 +28,7 @@ export default function PostoIndex() {
     const [deletePosto] = useDeletePostoMutation();
     const [importPostos, { isLoading: isImporting }] = useImportPostosMutation();
     const [downloadTemplate] = useDownloadPostoTemplateMutation();
+    const [exportPostosExcel, { isLoading: isExportingExcel }] = useExportPostosExcelMutation();
 
     // Derived data
     const postos = Array.isArray(postosData) ? postosData : [];
@@ -41,6 +42,16 @@ export default function PostoIndex() {
         } catch (error) {
             console.error('Failed to download template:', error);
             toast.error('Gagal mengunduh template');
+        }
+    };
+
+    const handleExportExcel = async () => {
+        try {
+            await exportPostosExcel(filters).unwrap();
+            toast.success('Ekspor Excel berhasil');
+        } catch (error) {
+            console.error('Failed to export excel:', error);
+            toast.error('Gagal mengekspor data ke Excel');
         }
     };
 
@@ -206,6 +217,14 @@ export default function PostoIndex() {
                                 <Plus className="w-5 h-5 mr-2" />
                                 Buat Posko Baru
                             </Link>
+                            <button
+                                onClick={handleExportExcel}
+                                disabled={isExportingExcel}
+                                className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:bg-emerald-300"
+                            >
+                                <Download className="w-5 h-5 mr-2" />
+                                {isExportingExcel ? 'Mengekspor...' : 'Export Excel'}
+                            </button>
                             <button
                                 onClick={() => setIsImportModalOpen(true)}
                                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
