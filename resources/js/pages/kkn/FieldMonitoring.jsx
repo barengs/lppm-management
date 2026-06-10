@@ -199,7 +199,7 @@ export default function FieldMonitoring() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 bg-gray-50 scrollbar-thin">
-                            {isLoadingMonitorings ? (
+                            {isMonitoringsLoading ? (
                                 <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>
                             ) : monitorings.length === 0 ? (
                                 <div className="text-center py-20 bg-white rounded-lg border-2 border-dashed border-gray-200">
