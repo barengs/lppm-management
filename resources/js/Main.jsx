@@ -51,6 +51,7 @@ import PagePageIndex from './pages/admin/pages/Index';
 import PagePageForm from './pages/admin/pages/Form';
 
 import AdminProposalDashboard from './pages/admin/proposals/Index';
+import AdminPkmTrash from './pages/admin/pkm/Trash';
 import ReviewerDashboard from './pages/reviewer/Index';
 import ReviewerProposalShow from './pages/reviewer/Show';
 
@@ -219,8 +220,9 @@ function App() {
                         <Route path="pkm" element={<PkmIndex />} />
                         <Route path="pkm/create/:id?" element={<PkmCreate />} />
                         <Route path="pkm/:id" element={<PkmShow />} />
-
-                        {/* Admin Proposal Management */}
+                        
+                        {/* Admin Routes */}
+                        <Route path="admin/pkm/trash" element={<AdminPkmTrash />} />
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />
 
                         {/* Reviewer Portal */}

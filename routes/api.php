@@ -114,6 +114,10 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/{id}/assign', [AdminPkmController::class, 'assignReviewer']);
             Route::post('/{id}/approve-lppm', [AdminPkmController::class, 'approveLppm']);
             Route::post('/{id}/finalize', [AdminPkmController::class, 'finalize']);
+            Route::get('/trash', [AdminPkmController::class, 'trash']);
+            Route::post('/{id}/restore', [AdminPkmController::class, 'restore']);
+            Route::delete('/{id}/force-delete', [AdminPkmController::class, 'forceDelete']);
+            Route::delete('/{id}', [AdminPkmController::class, 'destroy']);
             Route::post('/batch-assign', [AdminPkmController::class, 'batchAssign']);
         });
 

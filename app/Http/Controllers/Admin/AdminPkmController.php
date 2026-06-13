@@ -167,4 +167,70 @@ class AdminPkmController extends Controller
             'proposal' => $proposal
         ]);
     }
+
+    /**
+     * Soft Delete a PKM Proposal (Admin)
+     */
+    public function destroy($id)
+    {
+        if (!auth()->user()->can('manage_pkm_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus proposal PKM.');
+        }
+
+        $proposal = PkmProposal::findOrFail($id);
+        $proposal->delete();
+
+        return response()->json(['message' => 'Proposal PKM berhasil dihapus ke tempat sampah.']);
+    }
+
+    /**
+     * List trashed PKM proposals
+     */
+    public function trash(Request $request)
+    {
+        if (!auth()->user()->can('manage_pkm_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat tempat sampah PKM.');
+        }
+
+        $proposals = PkmProposal::onlyTrashed()
+            ->with(['fiscalYear', 'user'])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return response()->json($proposals);
+    }
+
+    /**
+     * Restore a soft-deleted PKM proposal
+     */
+    public function restore($id)
+    {
+        if (!auth()->user()->can('manage_pkm_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk memulihkan proposal PKM.');
+        }
+
+        $proposal = PkmProposal::onlyTrashed()->findOrFail($id);
+        $proposal->restore();
+
+        return response()->json(['message' => 'Proposal PKM berhasil dipulihkan.']);
+    }
+
+    /**
+     * Force delete a PKM proposal
+     */
+    public function forceDelete($id)
+    {
+        if (!auth()->user()->can('manage_pkm_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus permanen proposal PKM.');
+        }
+
+        $proposal = PkmProposal::onlyTrashed()->findOrFail($id);
+        
+        // Optionally, delete related files from storage here if needed
+        // e.g., Storage::disk('public')->deleteDirectory("pkm_documents/{$proposal->id}");
+
+        $proposal->forceDelete();
+
+        return response()->json(['message' => 'Proposal PKM berhasil dihapus secara permanen.']);
+    }
 }

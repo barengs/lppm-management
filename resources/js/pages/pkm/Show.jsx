@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import {
     FileText, Users, BookOpen, Calendar, DollarSign, Target,
     ArrowLeft, CheckCircle, Clock, Printer, AlertCircle,
-    ChevronDown, ChevronUp, MapPin, Briefcase, Info, Award, ShieldCheck, XCircle, MessageSquare
+    ChevronDown, ChevronUp, MapPin, Briefcase, Info, Award, ShieldCheck, XCircle, MessageSquare, Calculator
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
