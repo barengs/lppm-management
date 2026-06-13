@@ -10,6 +10,7 @@ export default function AdminPkmTrash() {
     const { token, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     useEffect(() => {
         // Only fetch if has permission
@@ -62,6 +63,33 @@ export default function AdminPkmTrash() {
         }
     };
 
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedIds(proposals.map(p => p.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelect = (id) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const handleBatchForceDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!window.confirm(`PERINGATAN: Apakah Anda yakin ingin menghapus permanen ${selectedIds.length} proposal PKM terpilih? Data tidak dapat dikembalikan!`)) return;
+        try {
+            await axios.post('/api/admin_pkm/batch-force-delete', { ids: selectedIds }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(`${selectedIds.length} proposal berhasil dihapus permanen.`);
+            setSelectedIds([]);
+            fetchTrash();
+        } catch (error) {
+            toast.error("Gagal menghapus permanen proposal terpilih.");
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white shadow p-6 border-l-4 border-red-600 flex justify-between items-center">
@@ -75,6 +103,16 @@ export default function AdminPkmTrash() {
                         </h1>
                     </div>
                     <p className="text-gray-600 ml-8">Daftar usulan PKM yang telah dihapus (soft delete).</p>
+                </div>
+                <div className="flex items-center">
+                    {selectedIds.length > 0 && (
+                        <button 
+                            onClick={handleBatchForceDelete}
+                            className="px-4 py-2 bg-red-600 text-white rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all shadow-md flex items-center gap-2"
+                        >
+                            <AlertTriangle size={16} /> Hapus Terpilih ({selectedIds.length})
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -92,6 +130,14 @@ export default function AdminPkmTrash() {
                     <table className="min-w-full text-sm text-left">
                         <thead className="bg-red-50 text-red-800 text-xs uppercase font-bold tracking-wider">
                             <tr>
+                                <th className="px-6 py-4 border-b border-red-100 w-12 text-center">
+                                    <input 
+                                        type="checkbox" 
+                                        className="rounded-sm border-red-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                        checked={proposals.length > 0 && selectedIds.length === proposals.length}
+                                        onChange={handleSelectAll}
+                                    />
+                                </th>
                                 <th className="px-6 py-4 border-b border-red-100">ID</th>
                                 <th className="px-6 py-4 border-b border-red-100">Judul PKM</th>
                                 <th className="px-6 py-4 border-b border-red-100">Pengusul</th>
@@ -102,6 +148,14 @@ export default function AdminPkmTrash() {
                         <tbody className="divide-y divide-gray-100">
                             {proposals.map(p => (
                                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 text-center">
+                                        <input 
+                                            type="checkbox" 
+                                            className="rounded-sm border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                            checked={selectedIds.includes(p.id)}
+                                            onChange={() => handleSelect(p.id)}
+                                        />
+                                    </td>
                                     <td className="px-6 py-4 font-bold text-gray-600">#{p.id}</td>
                                     <td className="px-6 py-4">
                                         <p className="font-bold text-gray-800 line-clamp-2">{p.title}</p>

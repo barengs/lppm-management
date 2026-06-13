@@ -233,4 +233,27 @@ class AdminPkmController extends Controller
 
         return response()->json(['message' => 'Proposal PKM berhasil dihapus secara permanen.']);
     }
+
+    /**
+     * Batch Force Delete PKM proposals
+     */
+    public function batchForceDelete(Request $request)
+    {
+        if (!auth()->user()->can('manage_pkm_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus permanen proposal PKM.');
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer'
+        ]);
+
+        $proposals = PkmProposal::onlyTrashed()->whereIn('id', $validated['ids'])->get();
+        
+        foreach ($proposals as $proposal) {
+            $proposal->forceDelete();
+        }
+
+        return response()->json(['message' => count($proposals) . ' proposal PKM berhasil dihapus secara permanen.']);
+    }
 }
