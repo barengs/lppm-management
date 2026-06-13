@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Users, Search, Filter, ShieldCheck, Clock, UserPlus, Info, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminProposalDashboard() {
-    const { token, user, hasAnyRole } = useAuth();
+    const { token, user, hasAnyRole, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [reviewers, setReviewers] = useState([]);
     const [stats, setStats] = useState(null);
@@ -120,6 +121,20 @@ export default function AdminProposalDashboard() {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (!window.confirm("Apakah Anda yakin ingin memindahkan proposal ini ke tempat sampah?")) return;
+        try {
+            await axios.delete(`/api/admin_proposals/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success("Proposal berhasil dipindahkan ke tempat sampah.");
+            fetchData();
+            fetchStats();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Gagal menghapus proposal.");
+        }
+    };
+
     const getStatusBadge = (status) => {
         const styles = {
             submitted: 'bg-blue-100 text-blue-700',
@@ -163,13 +178,23 @@ export default function AdminProposalDashboard() {
                         <ShieldCheck className="mr-3 text-green-700" size={32} />
                         Manajemen Usulan LPPM
                     </h1>
-                    <button 
-                        onClick={handleBatchAssign}
-                        disabled={isLoading}
-                        className="px-4 py-2 bg-green-700 text-white rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-green-800 transition-all shadow-md disabled:opacity-50"
-                    >
-                        ⚡ Plot Otomatis
-                    </button>
+                    <div className="flex gap-2">
+                        {hasPermission && hasPermission('manage_proposal_trash') && (
+                            <Link 
+                                to="/admin/proposals/trash"
+                                className="px-4 py-2 bg-red-100 text-red-700 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-red-200 transition-all shadow-sm flex items-center gap-2"
+                            >
+                                <Trash2 size={16} /> Sampah Proposal
+                            </Link>
+                        )}
+                        <button 
+                            onClick={handleBatchAssign}
+                            disabled={isLoading}
+                            className="px-4 py-2 bg-green-700 text-white rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-green-800 transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
+                        >
+                            ⚡ Plot Otomatis
+                        </button>
+                    </div>
                 </div>
 
             {/* Stats Cards */}
@@ -291,6 +316,16 @@ export default function AdminProposalDashboard() {
                                         >
                                             <UserPlus size={18} />
                                         </button>
+
+                                        {hasPermission && hasPermission('manage_proposal_trash') && (
+                                            <button 
+                                                onClick={() => handleDelete(p.id)}
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-sm transition-all"
+                                                title="Hapus (Soft Delete)"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

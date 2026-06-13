@@ -103,6 +103,11 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/{id}/assign', [AdminProposalController::class, 'assignReviewer']);
             Route::post('/{id}/approve-lppm', [AdminProposalController::class, 'approveLppm']);
             Route::post('/{id}/finalize', [AdminProposalController::class, 'finalize']);
+            Route::get('/trash', [AdminProposalController::class, 'trash']);
+            Route::post('/{id}/restore', [AdminProposalController::class, 'restore']);
+            Route::post('/batch-force-delete', [AdminProposalController::class, 'batchForceDelete']);
+            Route::delete('/{id}/force-delete', [AdminProposalController::class, 'forceDelete']);
+            Route::delete('/{id}', [AdminProposalController::class, 'destroy']);
             Route::post('/batch-assign', [AdminProposalController::class, 'batchAssign']);
         });
 

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import { PlusCircle, FileText, MessageSquare, History, Eye, ClipboardCheck } from 'lucide-react';
+import { PlusCircle, FileText, MessageSquare, History, Eye, ClipboardCheck, Trash2 } from 'lucide-react';
 import RevisionHistory from './components/RevisionHistory';
 import ReportModal from './components/ReportModal';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
 export default function ProposalsIndex() {
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedProposal, setSelectedProposal] = useState(null);
@@ -48,6 +48,19 @@ export default function ProposalsIndex() {
         setIsPreviewOpen(true);
     };
 
+    const handleDelete = async (id) => {
+        if (!window.confirm("Apakah Anda yakin ingin memindahkan proposal ini ke tempat sampah?")) return;
+        try {
+            await axios.delete(`/api/admin_proposals/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Reload page to reflect changes
+            window.location.reload();
+        } catch (err) {
+            console.error("Gagal menghapus proposal.");
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white shadow p-6 flex justify-between items-center border-l-4 border-green-600">
@@ -55,13 +68,24 @@ export default function ProposalsIndex() {
                     <h1 className="text-2xl font-bold text-gray-900">Daftar Proposal</h1>
                     <p className="text-gray-600">Kelola proposal penelitian dan pengabdian masyarakat Anda.</p>
                 </div>
-                <Link 
-                    to="/proposals/create" 
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Buat Proposal Baru
-                </Link>
+                <div className="flex gap-2">
+                    {hasPermission && hasPermission('manage_proposal_trash') && (
+                        <Link 
+                            to="/admin/proposals/trash"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Sampah Proposal
+                        </Link>
+                    )}
+                    <Link 
+                        to="/proposals/create" 
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Buat Proposal Baru
+                    </Link>
+                </div>
             </div>
 
             <div className="bg-white shadow rounded-sm overflow-hidden">
@@ -144,6 +168,15 @@ export default function ProposalsIndex() {
                                                 title="Laporan Kemajuan/Akhir"
                                             >
                                                 <ClipboardCheck size={16} />
+                                            </button>
+                                        )}
+                                        {hasPermission && hasPermission('manage_proposal_trash') && (
+                                            <button 
+                                                onClick={() => handleDelete(proposal.id)}
+                                                className="ml-3 p-1.5 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors border border-red-200"
+                                                title="Hapus (Soft Delete)"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         )}
                                         {proposal.status === 'draft' && (

@@ -96,6 +96,8 @@ class AdminProposalController extends Controller
             'notes' => 'nullable|string'
         ]);
 
+        $proposal = Proposal::findOrFail($id);
+
         $proposal->update([
             'status' => $validated['status'],
         ]);
@@ -176,5 +178,90 @@ class AdminProposalController extends Controller
             'message' => 'Persetujuan Ketua LPPM berhasil disimpan.',
             'proposal' => $proposal
         ]);
+    }
+
+    /**
+     * Soft delete a proposal
+     */
+    public function destroy($id)
+    {
+        if (!auth()->user()->can('manage_proposal_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus proposal.');
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        $proposal->delete();
+
+        return response()->json(['message' => 'Proposal berhasil dipindahkan ke tempat sampah.']);
+    }
+
+    /**
+     * Get trashed proposals
+     */
+    public function trash()
+    {
+        if (!auth()->user()->can('manage_proposal_trash')) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        $proposals = Proposal::onlyTrashed()
+            ->with(['user', 'reviews.reviewer'])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+            
+        return response()->json($proposals);
+    }
+
+    /**
+     * Restore a trashed proposal
+     */
+    public function restore($id)
+    {
+        if (!auth()->user()->can('manage_proposal_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk mengembalikan proposal.');
+        }
+
+        $proposal = Proposal::onlyTrashed()->findOrFail($id);
+        $proposal->restore();
+
+        return response()->json(['message' => 'Proposal berhasil dikembalikan.']);
+    }
+
+    /**
+     * Force delete a trashed proposal
+     */
+    public function forceDelete($id)
+    {
+        if (!auth()->user()->can('manage_proposal_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus permanen proposal.');
+        }
+
+        $proposal = Proposal::onlyTrashed()->findOrFail($id);
+        $proposal->forceDelete();
+
+        return response()->json(['message' => 'Proposal berhasil dihapus secara permanen.']);
+    }
+
+    /**
+     * Batch Force Delete proposals
+     */
+    public function batchForceDelete(Request $request)
+    {
+        if (!auth()->user()->can('manage_proposal_trash')) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus permanen proposal.');
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer'
+        ]);
+
+        $proposals = Proposal::onlyTrashed()->whereIn('id', $validated['ids'])->get();
+        
+        foreach ($proposals as $proposal) {
+            $proposal->forceDelete();
+        }
+
+        return response()->json(['message' => count($proposals) . ' proposal berhasil dihapus secara permanen.']);
     }
 }
