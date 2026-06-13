@@ -81,11 +81,24 @@ class KknPosto extends Model
         return $this->members()->where('status', 'active')->count();
     }
 
+    public function syncStatus()
+    {
+        if ($this->isComplete()) {
+            if ($this->status === 'draft') {
+                $this->update(['status' => 'active']);
+            }
+        } else {
+            if ($this->status === 'active') {
+                $this->update(['status' => 'draft']);
+            }
+        }
+    }
+
     public function isComplete()
     {
-        $hasKordes = $this->members()->where('position', 'kordes')->exists();
-        $hasSekretaris = $this->members()->where('position', 'sekretaris')->exists();
-        $hasBendahara = $this->members()->where('position', 'bendahara')->exists();
+        $hasKordes = $this->members()->where('status', 'active')->where('position', 'kordes')->exists();
+        $hasSekretaris = $this->members()->where('status', 'active')->where('position', 'sekretaris')->exists();
+        $hasBendahara = $this->members()->where('status', 'active')->where('position', 'bendahara')->exists();
         
         return $hasKordes && $hasSekretaris && $hasBendahara;
     }

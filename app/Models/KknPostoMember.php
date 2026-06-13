@@ -20,6 +20,17 @@ class KknPostoMember extends Model
         'joined_at' => 'date',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($member) {
+            $member->posto()->first()?->syncStatus();
+        });
+
+        static::deleted(function ($member) {
+            $member->posto()->first()?->syncStatus();
+        });
+    }
+
     // Relations
     public function posto()
     {

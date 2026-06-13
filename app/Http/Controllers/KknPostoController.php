@@ -211,6 +211,8 @@ class KknPostoController extends Controller
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
 
+        $posto->syncStatus();
+
         return response()->json([
             'id' => $posto->id,
             'name' => $posto->name,
@@ -450,15 +452,7 @@ class KknPostoController extends Controller
         }
 
         // Auto-update posto status based on completeness
-        if ($posto->isComplete()) {
-            if ($posto->status === 'draft') {
-                $posto->update(['status' => 'active']);
-            }
-        } else {
-            if ($posto->status === 'active') {
-                $posto->update(['status' => 'draft']);
-            }
-        }
+        $posto->syncStatus();
 
         $member->load('student.mahasiswaProfile');
 
@@ -510,15 +504,7 @@ class KknPostoController extends Controller
         $member->update($validated);
 
         // Auto-update posto status based on completeness
-        if ($posto->isComplete()) {
-            if ($posto->status === 'draft') {
-                $posto->update(['status' => 'active']);
-            }
-        } else {
-            if ($posto->status === 'active') {
-                $posto->update(['status' => 'draft']);
-            }
-        }
+        $posto->syncStatus();
 
         $member->load('student.mahasiswaProfile');
 
@@ -554,15 +540,7 @@ class KknPostoController extends Controller
         $member->delete();
 
         // Auto-update posto status based on completeness
-        if ($posto->isComplete()) {
-            if ($posto->status === 'draft') {
-                $posto->update(['status' => 'active']);
-            }
-        } else {
-            if ($posto->status === 'active') {
-                $posto->update(['status' => 'draft']);
-            }
-        }
+        $posto->syncStatus();
 
         return response()->noContent();
     }
@@ -670,15 +648,7 @@ class KknPostoController extends Controller
             }
 
             // Auto-update posto status based on completeness
-            if ($posto->isComplete()) {
-                if ($posto->status === 'draft') {
-                    $posto->update(['status' => 'active']);
-                }
-            } else {
-                if ($posto->status === 'active') {
-                    $posto->update(['status' => 'draft']);
-                }
-            }
+            $posto->syncStatus();
 
             DB::commit();
 
@@ -740,6 +710,10 @@ class KknPostoController extends Controller
              $joinedAt = $posto->created_at; 
         } else {
              return response()->json(['message' => 'Role tidak memiliki akses ke endpoint ini'], 403);
+        }
+
+        if (isset($posto)) {
+            $posto->syncStatus();
         }
 
         return response()->json([
