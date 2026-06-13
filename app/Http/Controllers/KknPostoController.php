@@ -201,7 +201,7 @@ class KknPostoController extends Controller
             'location',
             'kknPeriod',
             'fiscalYear',
-            'dpl',
+            'dpl.dosenProfile',
             'members.student.mahasiswaProfile.faculty',
             'members.student.mahasiswaProfile.studyProgram',
         ])->findOrFail($id);
@@ -229,7 +229,12 @@ class KknPostoController extends Controller
                 'name' => $posto->fiscalYear->name,
                 'year' => $posto->fiscalYear->year,
             ] : null,
-            'dpl' => $posto->dpl,
+            'dpl' => $posto->dpl ? [
+                'id' => $posto->dpl->id,
+                'name' => $posto->dpl->name,
+                'email' => $posto->dpl->email,
+                'phone' => $posto->dpl->dosenProfile?->phone,
+            ] : null,
             'status' => $posto->status,
             'start_date' => $posto->start_date,
             'end_date' => $posto->end_date,

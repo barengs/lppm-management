@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Users, MapPin, Calendar, User, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Users, MapPin, Calendar, User, Plus, Trash2, CheckCircle, Phone } from 'lucide-react';
 import { toast } from 'react-toastify';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../hooks/useAuth';
@@ -248,6 +248,12 @@ export default function PostoDetail() {
                                         <div className="text-sm font-medium text-gray-900">
                                             {posto.dpl?.name || 'Belum ditentukan'}
                                         </div>
+                                        {posto.dpl?.phone && (
+                                            <div className="flex items-center gap-1.5 text-gray-500 mt-0.5">
+                                                <Phone size={12} className="flex-shrink-0" />
+                                                <span className="text-xs">{posto.dpl.phone}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
