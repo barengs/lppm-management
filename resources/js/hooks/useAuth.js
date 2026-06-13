@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
+import { useCallback } from 'react';
 import { useLoginMutation, useLogoutMutation, useGetMeMutation, useRefreshTokenMutation } from '../store/api/authApi';
 import { selectCurrentUser, selectToken, selectIsAuthenticated, selectIsLocked } from '../store/slices/authSlice';
 import { lockScreen as lockScreenAction, unlockScreen as unlockScreenAction } from '../store/slices/authSlice';
@@ -98,18 +99,29 @@ export const useAuth = () => {
      * @param {string} roleName
      * @returns {boolean}
      */
-    const hasRole = (roleName) => {
+    const hasRole = useCallback((roleName) => {
         return user?.all_roles?.includes(roleName) || user?.role === roleName;
-    };
+    }, [user]);
 
     /**
      * Check if user has any of the specified roles
      * @param {string[]} roleNames
      * @returns {boolean}
      */
-    const hasAnyRole = (roleNames) => {
+    const hasAnyRole = useCallback((roleNames) => {
         return roleNames.some(role => hasRole(role));
-    };
+    }, [hasRole]);
+
+    /**
+     * Check if user has a specific permission
+     * @param {string} permissionName
+     * @returns {boolean}
+     */
+    const hasPermission = useCallback((permissionName) => {
+        // Also check if admin has it by default if they have the 'admin' role
+        if (hasRole('admin')) return true; // assuming admin has all permissions or we check explicitly
+        return user?.granted_permissions?.includes(permissionName) || false;
+    }, [hasRole, user]);
 
     return {
         // State
@@ -128,5 +140,6 @@ export const useAuth = () => {
         fetchUser,
         hasRole,
         hasAnyRole,
+        hasPermission,
     };
 };

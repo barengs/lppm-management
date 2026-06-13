@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, FileHeart, ChevronRight, Calendar, DollarSign, Clock, Eye, ClipboardCheck } from 'lucide-react';
+import { Plus, FileHeart, ChevronRight, Calendar, DollarSign, Clock, Eye, ClipboardCheck, Trash2 } from 'lucide-react';
 import ReportModal from '../proposals/components/ReportModal';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
 
@@ -20,19 +20,37 @@ const STEP_LABELS = [
 
 export default function PkmIndex() {
     const navigate = useNavigate();
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [loading,   setLoading]   = useState(true);
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    useEffect(() => {
+    const fetchData = () => {
+        setLoading(true);
         axios.get('/api/pkm-proposals', { headers: { Authorization: `Bearer ${token}` } })
             .then(r => setProposals(r.data))
             .catch(() => setProposals([]))
             .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchData();
     }, [token]);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Apakah Anda yakin ingin memindahkan proposal ini ke tempat sampah?")) return;
+        try {
+            await axios.delete(`/api/admin_pkm/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // We don't have toast imported here yet, let's just refetch
+            fetchData();
+        } catch (err) {
+            console.error("Gagal menghapus proposal.");
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -42,10 +60,18 @@ export default function PkmIndex() {
                     <h1 className="text-2xl font-bold text-gray-900">Proposal PKM Saya</h1>
                     <p className="text-gray-600">Program Kemitraan Masyarakat — Daftar usulan yang Anda buat atau ikuti.</p>
                 </div>
-                <Link to="/pkm/create"
-                    className="flex items-center gap-2 px-5 py-2.5 bg-green-700 text-white rounded-md font-bold shadow hover:bg-green-800 transition-all text-sm">
-                    <Plus size={16} /> Ajukan PKM Baru
-                </Link>
+                <div className="flex gap-2">
+                    {hasPermission && hasPermission('manage_pkm_trash') && (
+                        <Link to="/admin/pkm/trash"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-red-100 text-red-700 rounded-md font-bold shadow-sm hover:bg-red-200 transition-all text-sm">
+                            <Trash2 size={16} /> Sampah Proposal
+                        </Link>
+                    )}
+                    <Link to="/pkm/create"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-green-700 text-white rounded-md font-bold shadow hover:bg-green-800 transition-all text-sm">
+                        <Plus size={16} /> Ajukan PKM Baru
+                    </Link>
+                </div>
             </div>
 
             {/* Content */}
@@ -108,6 +134,15 @@ export default function PkmIndex() {
                                                     title="Laporan Kemajuan/Akhir"
                                                 >
                                                     <ClipboardCheck size={18} />
+                                                </button>
+                                            )}
+                                            {hasPermission && hasPermission('manage_pkm_trash') && (
+                                                <button 
+                                                    onClick={() => handleDelete(p.id)}
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm"
+                                                    title="Hapus (Soft Delete)"
+                                                >
+                                                    <Trash2 size={18} />
                                                 </button>
                                             )}
                                         </div>
