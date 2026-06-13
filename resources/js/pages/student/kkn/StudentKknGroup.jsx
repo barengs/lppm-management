@@ -291,6 +291,7 @@ export default function StudentKknGroup() {
                                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest w-12 text-center">#</th>
                                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Nama / NPM</th>
                                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Program Studi / Fakultas</th>
+                                            <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Kontak</th>
                                             <th className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Jabatan</th>
                                         </tr>
                                     </thead>
@@ -306,6 +307,16 @@ export default function StudentKknGroup() {
                                                     <td className="px-4 py-3 text-xs text-gray-600">
                                                         <div>{member.student?.mahasiswa_profile?.study_program?.name || member.student?.mahasiswaProfile?.studyProgram?.name || '-'}</div>
                                                         <div className="text-[10px] text-gray-400 mt-0.5">{member.student?.mahasiswa_profile?.faculty?.name || member.student?.mahasiswaProfile?.faculty?.name || '-'}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                        {member.student?.mahasiswa_profile?.phone || member.student?.mahasiswaProfile?.phone ? (
+                                                            <a href={`https://wa.me/${(member.student?.mahasiswa_profile?.phone || member.student?.mahasiswaProfile?.phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded-full transition-colors font-medium">
+                                                                <Phone className="w-3.5 h-3.5" />
+                                                                {member.student?.mahasiswa_profile?.phone || member.student?.mahasiswaProfile?.phone}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400">-</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 text-center whitespace-nowrap">
                                                         {posto?.my_position === 'dpl' ? (

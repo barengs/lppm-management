@@ -5,7 +5,7 @@ import { FileText, Plus, Trash2, Download, Edit } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 
 export default function DocumentsIndex() {
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
     const [documents, setDocuments] = useState([]);
     
     // Upload/Edit State
@@ -101,54 +101,66 @@ export default function DocumentsIndex() {
     const isImage = (path) => /\.(jpg|jpeg|png|webp)$/i.test(path);
 
     // DataTable Columns
-    const columns = React.useMemo(() => [
-        {
-            accessorKey: 'title',
-            header: 'Judul Dokumen',
-            cell: ({ row }) => (
-                <div>
-                    <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
-                    <div className="flex items-center space-x-3 mt-1">
-                        {row.original.file_path && (
-                            <a href={row.original.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline flex items-center">
-                                <Download size={12} className="mr-1" /> Download
-                            </a>
-                        )}
-                        <button onClick={() => handlePreview(row.original)} className="text-xs text-gray-500 hover:text-green-600 flex items-center">
-                            <FileText size={12} className="mr-1" /> Preview
-                        </button>
+    // DataTable Columns
+    const columns = React.useMemo(() => {
+        const cols = [
+            {
+                accessorKey: 'title',
+                header: 'Judul Dokumen',
+                cell: ({ row }) => (
+                    <div>
+                        <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
+                        <div className="flex items-center space-x-3 mt-1">
+                            {row.original.file_path && (
+                                <a href={row.original.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline flex items-center">
+                                    <Download size={12} className="mr-1" /> Download
+                                </a>
+                            )}
+                            <button onClick={() => handlePreview(row.original)} className="text-xs text-gray-500 hover:text-green-600 flex items-center">
+                                <FileText size={12} className="mr-1" /> Preview
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )
-        },
-        {
-            accessorKey: 'description',
-            header: 'Deskripsi',
-            cell: ({ row }) => <span className="text-sm text-gray-500 truncate block max-w-xs">{row.original.description || '-'}</span>
-        },
-        {
-            accessorKey: 'type',
-            header: 'Tipe',
-            cell: ({ row }) => {
-                const types = { guide: 'Panduan', template: 'Template', sk: 'SK / Legal' };
-                return <span className="text-sm text-gray-500 capitalize">{types[row.original.type] || row.original.type}</span>
+                )
+            },
+            {
+                accessorKey: 'description',
+                header: 'Deskripsi',
+                cell: ({ row }) => <span className="text-sm text-gray-500 truncate block max-w-xs">{row.original.description || '-'}</span>
+            },
+            {
+                accessorKey: 'type',
+                header: 'Tipe',
+                cell: ({ row }) => {
+                    const types = { guide: 'Panduan', template: 'Template', sk: 'SK / Legal' };
+                    return <span className="text-sm text-gray-500 capitalize">{types[row.original.type] || row.original.type}</span>
+                }
             }
-        },
-        {
-            id: 'actions',
-            header: 'Actions',
-            cell: ({ row }) => (
-                <div className="flex justify-end gap-2">
-                    <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-800" title="Edit">
-                        <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-            )
+        ];
+
+        if (hasPermission && (hasPermission('documents.edit') || hasPermission('documents.delete'))) {
+            cols.push({
+                id: 'actions',
+                header: 'Actions',
+                cell: ({ row }) => (
+                    <div className="flex justify-end gap-2">
+                        {hasPermission('documents.edit') && (
+                            <button onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-800" title="Edit">
+                                <Edit size={16} />
+                            </button>
+                        )}
+                        {hasPermission('documents.delete') && (
+                            <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                                <Trash2 size={16} />
+                            </button>
+                        )}
+                    </div>
+                )
+            });
         }
-    ], []);
+
+        return cols;
+    }, [hasPermission]);
 
     return (
         <div className="space-y-6">
@@ -156,9 +168,11 @@ export default function DocumentsIndex() {
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                     <FileText className="mr-2 text-green-700" /> Dokumen & Arsip
                 </h1>
-                <button onClick={() => { resetForm(); setShowModal(true); }} className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center">
-                    <Plus size={18} className="mr-2" /> Upload Dokumen
-                </button>
+                {hasPermission && hasPermission('documents.create') && (
+                    <button onClick={() => { resetForm(); setShowModal(true); }} className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <Plus size={18} className="mr-2" /> Upload Dokumen
+                    </button>
+                )}
             </div>
 
             <div className="bg-white shadow rounded-lg p-4">

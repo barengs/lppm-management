@@ -8,7 +8,7 @@ import { Newspaper, Plus, Edit, Trash2, CheckCircle, XCircle, Eye } from 'lucide
 import DataTable from '../../components/DataTable';
 
 export default function PostsIndex() {
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -101,65 +101,89 @@ export default function PostsIndex() {
     };
 
     // DataTable Columns
-    const columns = React.useMemo(() => [
-        {
-            accessorKey: 'title',
-            header: 'Judul',
-            cell: ({ row }) => (
-                <div>
-                    <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
-                    <div className="text-xs text-gray-400">{new Date(row.original.created_at).toLocaleDateString()}</div>
-                </div>
-            )
-        },
-        {
-            accessorKey: 'category',
-            header: 'Kategori',
-            cell: ({ row }) => <span className="text-gray-500 capitalize">{row.original.category}</span>
-        },
-        {
-            accessorKey: 'is_published',
-            header: 'Status',
-            cell: ({ row }) => (
-                row.original.is_published ? (
-                    <span className="flex items-center text-green-600 text-xs font-semibold"><CheckCircle size={14} className="mr-1" /> Published</span>
-                ) : (
-                    <span className="flex items-center text-gray-500 text-xs font-semibold"><XCircle size={14} className="mr-1" /> Draft</span>
+    // DataTable Columns
+    const columns = React.useMemo(() => {
+        const cols = [
+            {
+                accessorKey: 'title',
+                header: 'Judul',
+                cell: ({ row }) => (
+                    <div>
+                        <div className="text-sm font-medium text-gray-900">{row.original.title}</div>
+                        <div className="text-xs text-gray-400">{new Date(row.original.created_at).toLocaleDateString()}</div>
+                    </div>
                 )
-            )
-        },
-        {
-            id: 'actions',
-            header: 'Action',
-            cell: ({ row }) => (
-                <div className="flex justify-end gap-2">
-                    <button onClick={() => {
-                        setFormData({
-                            title: row.original.title,
-                            category: row.original.category,
-                            content: row.original.content,
-                            is_published: row.original.is_published,
-                            thumbnail: row.original.thumbnail || ''
-                        });
-                        setThumbnailFile(null);
-                        setPreviewUrl(null);
-                        setSelectedId(row.original.id);
-                        setIsEditing(true);
-                        setShowModal(true);
-                    }} className="text-blue-600 hover:text-blue-800" title="Edit">
-                        <Edit size={16} />
-                    </button>
+            },
+            {
+                accessorKey: 'category',
+                header: 'Kategori',
+                cell: ({ row }) => <span className="text-gray-500 capitalize">{row.original.category}</span>
+            },
+            {
+                accessorKey: 'is_published',
+                header: 'Status',
+                cell: ({ row }) => (
+                    row.original.is_published ? (
+                        <span className="flex items-center text-green-600 text-xs font-semibold"><CheckCircle size={14} className="mr-1" /> Published</span>
+                    ) : (
+                        <span className="flex items-center text-gray-500 text-xs font-semibold"><XCircle size={14} className="mr-1" /> Draft</span>
+                    )
+                )
+            }
+        ];
 
-                    <Link to={`/cms/posts/${row.original.id}`} className="text-gray-600 hover:text-green-600 inline-block" title="View">
-                        <Eye size={16} />
-                    </Link>
-                    <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-            )
+        if (hasPermission && (hasPermission('posts.edit') || hasPermission('posts.delete'))) {
+            cols.push({
+                id: 'actions',
+                header: 'Action',
+                cell: ({ row }) => (
+                    <div className="flex justify-end gap-2">
+                        {hasPermission('posts.edit') && (
+                            <button onClick={() => {
+                                setFormData({
+                                    title: row.original.title,
+                                    category: row.original.category,
+                                    content: row.original.content,
+                                    is_published: row.original.is_published,
+                                    thumbnail: row.original.thumbnail || ''
+                                });
+                                setThumbnailFile(null);
+                                setPreviewUrl(null);
+                                setSelectedId(row.original.id);
+                                setIsEditing(true);
+                                setShowModal(true);
+                            }} className="text-blue-600 hover:text-blue-800" title="Edit">
+                                <Edit size={16} />
+                            </button>
+                        )}
+
+                        <Link to={`/cms/posts/${row.original.id}`} className="text-gray-600 hover:text-green-600 inline-block" title="View">
+                            <Eye size={16} />
+                        </Link>
+                        {hasPermission('posts.delete') && (
+                            <button onClick={() => handleDelete(row.original.id)} className="text-red-600 hover:text-red-800" title="Delete">
+                                <Trash2 size={16} />
+                            </button>
+                        )}
+                    </div>
+                )
+            });
+        } else {
+            cols.push({
+                id: 'actions',
+                header: 'Action',
+                cell: ({ row }) => (
+                    <div className="flex justify-end gap-2">
+                        <Link to={`/cms/posts/${row.original.id}`} className="text-gray-600 hover:text-green-600 inline-block" title="View">
+                            <Eye size={16} />
+                        </Link>
+                    </div>
+                )
+            });
         }
-    ], []);
+
+        return cols;
+    }, [hasPermission]);
 
     return (
         <div className="space-y-6">
@@ -167,18 +191,20 @@ export default function PostsIndex() {
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                     <Newspaper className="mr-2 text-green-700" /> Berita & Artikel
                 </h1>
-                <button
-                    onClick={() => {
-                        setFormData({ title: '', category: 'news', content: '', is_published: true });
-                        setThumbnailFile(null);
-                        setPreviewUrl(null);
-                        setIsEditing(false);
-                        setShowModal(true);
-                    }}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
-                >
-                    <Plus size={18} className="mr-2" /> Tambah Post
-                </button>
+                {hasPermission && hasPermission('posts.create') && (
+                    <button
+                        onClick={() => {
+                            setFormData({ title: '', category: 'news', content: '', is_published: true });
+                            setThumbnailFile(null);
+                            setPreviewUrl(null);
+                            setIsEditing(false);
+                            setShowModal(true);
+                        }}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
+                    >
+                        <Plus size={18} className="mr-2" /> Tambah Post
+                    </button>
+                )}
             </div>
 
             <div className="bg-white shadow rounded-lg p-4">

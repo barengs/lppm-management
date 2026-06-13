@@ -714,7 +714,12 @@ class KknPostoController extends Controller
                 'name' => $posto->name,
                 'location' => $posto->location,
                 'kkn_period' => $posto->kknPeriod,
-                'dpl' => $posto->dpl,
+                'dpl' => $posto->dpl ? [
+                    'id' => $posto->dpl->id,
+                    'name' => $posto->dpl->name,
+                    'email' => $posto->dpl->email,
+                    'phone' => $posto->dpl->dosenProfile?->phone,
+                ] : null,
                 'status' => $posto->status,
                 'start_date' => $posto->start_date,
                 'end_date' => $posto->end_date,

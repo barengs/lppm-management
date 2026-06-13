@@ -51,6 +51,7 @@ import PagePageIndex from './pages/admin/pages/Index';
 import PagePageForm from './pages/admin/pages/Form';
 
 import AdminProposalDashboard from './pages/admin/proposals/Index';
+import AdminProposalTrash from './pages/admin/proposals/Trash';
 import AdminPkmTrash from './pages/admin/pkm/Trash';
 import ReviewerDashboard from './pages/reviewer/Index';
 import ReviewerProposalShow from './pages/reviewer/Show';
@@ -224,6 +225,7 @@ function App() {
                         {/* Admin Routes */}
                         <Route path="admin/pkm/trash" element={<AdminPkmTrash />} />
                         <Route path="admin/proposals" element={<AdminProposalDashboard />} />
+                        <Route path="admin/proposals/trash" element={<AdminProposalTrash />} />
 
                         {/* Reviewer Portal */}
                         <Route path="reviewer/dashboard" element={<ReviewerDashboard />} />

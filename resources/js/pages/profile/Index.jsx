@@ -48,7 +48,7 @@ export default function ProfileIndex() {
                 nidn: profile.nidn || '',
                 fakultas: profile.fakultas || '',
                 prodi: profile.prodi || '',
-                phone: profile.phone || '',
+                phone: profile.phone || '+62',
                 address: profile.address || '',
                 gender: profile.gender || '',
                 place_of_birth: profile.place_of_birth || '',
@@ -300,7 +300,7 @@ export default function ProfileIndex() {
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 transition-all"
-                                        placeholder="08xxxxxxxxxx"
+                                        placeholder="+628xxxxxxxxxx"
                                     />
                                 </div>
                                 <div className="space-y-1.5">

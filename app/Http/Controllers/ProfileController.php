@@ -54,11 +54,13 @@ class ProfileController extends Controller
             'sinta_id' => 'nullable|string',
             'google_scholar_id' => 'nullable|string',
             'jacket_size' => 'nullable|string',
-            'phone' => 'nullable|string',
+            'phone' => ['nullable', 'string', 'regex:/^\+62[0-9]{8,15}$/'],
             'address' => 'nullable|string',
             'place_of_birth' => 'nullable|string',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|in:L,P',
+        ], [
+            'phone.regex' => 'Format nomor telepon tidak valid. Harus diawali dengan +62 dan berisi angka saja (total 10-17 karakter termasuk +62).'
         ]);
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $request) {
@@ -115,6 +117,7 @@ class ProfileController extends Controller
                     'scopus_id' => $request->scopus_id,
                     'sinta_id' => $request->sinta_id,
                     'google_scholar_id' => $request->google_scholar_id,
+                    'phone' => $request->phone,
                 ]);
                 
                 $user->dosenProfile()->updateOrCreate(

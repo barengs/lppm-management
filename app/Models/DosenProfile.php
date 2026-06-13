@@ -18,6 +18,7 @@ class DosenProfile extends Model
         'sinta_id',
         'google_scholar_id',
         'avatar',
+        'phone',
     ];
 
     public function user()
