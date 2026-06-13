@@ -12,6 +12,7 @@ class KknRegistration extends Model
     protected $fillable = [
         'student_id',
         'kkn_location_id',
+        'kkn_posto_id',
         'fiscal_year_id',
         'kkn_period_id',
         'registration_type',
@@ -132,13 +133,6 @@ class KknRegistration extends Model
 
     public function kknPosto()
     {
-        return $this->hasOneThrough(
-            KknPosto::class,
-            KknPostoMember::class,
-            'kkn_registration_id', // FK on kkn_posto_members
-            'id',                  // PK on kkn_postos
-            'id',                  // PK on kkn_registrations
-            'kkn_posto_id'         // FK on kkn_posto_members pointing to kkn_postos
-        );
+        return $this->belongsTo(KknPosto::class, 'kkn_posto_id');
     }
 }

@@ -55,6 +55,29 @@ export default function StudentKknGroup() {
         return colors[position] || colors.anggota;
     };
 
+    const getPostoStatusBadge = (status) => {
+        const badges = {
+            draft: 'bg-orange-50 text-orange-700 border-orange-200',
+            active: 'bg-green-50 text-green-700 border-green-200',
+            completed: 'bg-blue-50 text-blue-700 border-blue-200',
+        };
+        const labels = {
+            draft: 'Draft',
+            active: 'Aktif',
+            completed: 'Selesai',
+        };
+        const longLabels = {
+            draft: 'Draft (Struktur Belum Lengkap)',
+            active: 'Aktif (Sudah Lengkap)',
+            completed: 'Selesai KKN',
+        };
+        return {
+            className: badges[status] || badges.draft,
+            label: labels[status] || 'Draft',
+            longLabel: longLabels[status] || 'Draft (Struktur Belum Lengkap)'
+        };
+    };
+
     // Sort members so officers are listed first: Kordes, Sekretaris, Bendahara, Humas, Publikasi, then Anggota
     const sortedMembers = useMemo(() => {
         const order = {
@@ -121,12 +144,8 @@ export default function StudentKknGroup() {
                         <div>
                             <div className="flex items-center gap-3 flex-wrap">
                                 <h1 className="text-3xl font-bold text-gray-900">{posto?.posto?.name}</h1>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold border ${
-                                    posto?.posto?.status === 'active'
-                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                        : 'bg-orange-50 text-orange-700 border-orange-200'
-                                }`}>
-                                    {posto?.posto?.status === 'active' ? 'Aktif' : 'Draft'}
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-bold border ${getPostoStatusBadge(posto?.posto?.status).className}`}>
+                                    {getPostoStatusBadge(posto?.posto?.status).label}
                                 </span>
                             </div>
                             <p className="text-sm text-gray-600 mt-1">{posto?.posto?.fiscal_year?.year || posto?.posto?.kkn_period?.name}</p>
@@ -159,12 +178,8 @@ export default function StudentKknGroup() {
                                     <Award className="w-5 h-5 mr-2 text-green-600" />
                                     Status Posko
                                 </h3>
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-bold border ${
-                                    posto?.posto?.status === 'active'
-                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                        : 'bg-orange-50 text-orange-700 border-orange-200'
-                                }`}>
-                                    {posto?.posto?.status === 'active' ? 'Aktif (Sudah Lengkap)' : 'Draft (Struktur Belum Lengkap)'}
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-bold border ${getPostoStatusBadge(posto?.posto?.status).className}`}>
+                                    {getPostoStatusBadge(posto?.posto?.status).longLabel}
                                 </span>
                             </div>
 

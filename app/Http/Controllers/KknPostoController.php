@@ -374,13 +374,11 @@ class KknPostoController extends Controller
         $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
 
-        if (!$user->can('kkn_postos.manage_members')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $isDpl = ($user->hasRole('dosen') && $posto->dpl_id === $user->id);
+        $hasPermission = $user->can('kkn_postos.manage_members');
 
-        // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        if (!$hasPermission && !$isDpl) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
@@ -467,13 +465,11 @@ class KknPostoController extends Controller
         $user = auth('api')->user();
         $posto = KknPosto::findOrFail($postoId);
 
-        if (!$user->can('kkn_postos.manage_members')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $isDpl = ($user->hasRole('dosen') && $posto->dpl_id === $user->id);
+        $hasPermission = $user->can('kkn_postos.manage_members');
 
-        // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        if (!$hasPermission && !$isDpl) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $member = KknPostoMember::where('kkn_posto_id', $postoId)
@@ -519,13 +515,11 @@ class KknPostoController extends Controller
         $user = auth('api')->user();
         $posto = KknPosto::findOrFail($postoId);
 
-        if (!$user->can('kkn_postos.manage_members')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $isDpl = ($user->hasRole('dosen') && $posto->dpl_id === $user->id);
+        $hasPermission = $user->can('kkn_postos.manage_members');
 
-        // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        if (!$hasPermission && !$isDpl) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $member = KknPostoMember::where('kkn_posto_id', $postoId)
@@ -589,13 +583,11 @@ class KknPostoController extends Controller
         $user = auth('api')->user();
         $posto = KknPosto::findOrFail($id);
 
-        if (!$user->can('kkn_postos.manage_members')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $isDpl = ($user->hasRole('dosen') && $posto->dpl_id === $user->id);
+        $hasPermission = $user->can('kkn_postos.manage_members');
 
-        // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        if (!$hasPermission && !$isDpl) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([

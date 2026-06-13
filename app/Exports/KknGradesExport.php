@@ -42,9 +42,7 @@ class KknGradesExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $isAdminOrLppm = $user->hasAnyRole(['admin', 'ketua_lppm', 'staff', 'staff_kkn']);
             if (!$isAdminOrLppm) {
                 $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
-                $registrationIds = \App\Models\KknPostoMember::whereIn('kkn_posto_id', $postoIds)
-                    ->pluck('kkn_registration_id');
-                $query->whereIn('id', $registrationIds);
+                $query->whereIn('kkn_posto_id', $postoIds);
             }
         }
 
@@ -55,9 +53,7 @@ class KknGradesExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $query->where('kkn_location_id', $this->request->kkn_location_id);
         }
         if ($this->request->filled('kkn_posto_id')) {
-            $ids = KknPostoMember::where('kkn_posto_id', $this->request->kkn_posto_id)
-                ->pluck('kkn_registration_id');
-            $query->whereIn('id', $ids);
+            $query->where('kkn_posto_id', $this->request->kkn_posto_id);
         }
         if ($this->request->filled('faculty_id')) {
             $query->whereHas('student.mahasiswaProfile', fn($q) =>

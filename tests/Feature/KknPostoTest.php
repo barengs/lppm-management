@@ -98,6 +98,7 @@ class KknPostoTest extends TestCase
                 'fiscal_year_id' => $fiscalYear->id,
                 'kkn_period_id' => $period->id,
                 'status' => 'approved',
+                'kkn_posto_id' => $this->posto->id,
             ]);
 
             $member = KknPostoMember::create([
@@ -202,5 +203,86 @@ class KknPostoTest extends TestCase
 
         // DB status should now be active
         $this->assertEquals('active', \Illuminate\Support\Facades\DB::table('kkn_postos')->where('id', $this->posto->id)->value('status'));
+    }
+
+    public function test_dpl_without_global_permission_can_manage_members()
+    {
+        // Create a Dosen user who is the designated DPL, but DOES NOT have dpl_kkn role or manage_members permission
+        $dosenDpl = User::create([
+            'name' => 'Dosen DPL Only',
+            'email' => 'dosen_dpl@test.com',
+            'password' => Hash::make('password'),
+        ]);
+        $dosenDpl->assignRole('dosen'); // Only dosen role
+        $dosenDpl->dosenProfile()->create([
+            'nidn' => '9999999999',
+            'prodi' => 'Test',
+            'fakultas' => 'Test',
+        ]);
+
+        // Assign him as the DPL of this posto
+        $this->posto->update(['dpl_id' => $dosenDpl->id]);
+
+        // He should be able to update member position successfully
+        $response = $this->actingAs($dosenDpl, 'api')
+            ->putJson("/api/kkn/postos/{$this->posto->id}/members/{$this->students[0]->id}", [
+                'position' => 'kordes'
+            ]);
+        $response->assertStatus(200);
+
+        // A different Dosen who is not the DPL of this posto should be unauthorized (403)
+        $otherDosen = User::create([
+            'name' => 'Other Dosen',
+            'email' => 'other_dosen@test.com',
+            'password' => Hash::make('password'),
+        ]);
+        $otherDosen->assignRole('dosen');
+        $otherDosen->dosenProfile()->create([
+            'nidn' => '8888888888',
+            'prodi' => 'Test',
+            'fakultas' => 'Test',
+        ]);
+
+        $response = $this->actingAs($otherDosen, 'api')
+            ->putJson("/api/kkn/postos/{$this->posto->id}/members/{$this->students[0]->id}", [
+                'position' => 'sekretaris'
+            ]);
+        $response->assertStatus(403);
+    }
+
+    public function test_grading_filter_by_posto_id()
+    {
+        $response = $this->actingAs($this->admin, 'api')
+            ->getJson("/api/kkn-grades?kkn_posto_id={$this->posto->id}");
+        $response->assertStatus(200);
+
+        $data = $response->json('data.data');
+        $this->assertCount(3, $data);
+        
+        $registrationIds = array_column($data, 'id');
+        foreach ($this->students as $member) {
+            $this->assertContains($member->kkn_registration_id, $registrationIds);
+        }
+    }
+
+    public function test_dpl_students_filter_by_posto_id()
+    {
+        $dosenDpl = User::create([
+            'name' => 'Dosen DPL Only 2',
+            'email' => 'dosen_dpl2@test.com',
+            'password' => Hash::make('password'),
+        ]);
+        $dosenDpl->assignRole('dosen');
+        $dosenDpl->dosenProfile()->create([
+            'nidn' => '9999999998',
+            'prodi' => 'Test',
+            'fakultas' => 'Test',
+        ]);
+        $this->posto->update(['dpl_id' => $dosenDpl->id]);
+
+        $response = $this->actingAs($dosenDpl, 'api')
+            ->getJson("/api/kkn-grades/dpl-students?kkn_posto_id={$this->posto->id}");
+        $response->assertStatus(200);
+        $this->assertCount(3, $response->json('data'));
     }
 }

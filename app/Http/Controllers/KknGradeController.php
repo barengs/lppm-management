@@ -36,9 +36,7 @@ class KknGradeController extends Controller
             $query->where('kkn_location_id', $request->kkn_location_id);
         }
         if ($request->filled('kkn_posto_id')) {
-            $postoMemberIds = KknPostoMember::where('kkn_posto_id', $request->kkn_posto_id)
-                ->pluck('kkn_registration_id');
-            $query->whereIn('id', $postoMemberIds);
+            $query->where('kkn_posto_id', $request->kkn_posto_id);
         }
         if ($request->filled('faculty_id')) {
             $query->whereHas('student.mahasiswaProfile', fn($q) =>
@@ -81,10 +79,6 @@ class KknGradeController extends Controller
             return response()->json(['data' => [], 'settings' => null, 'message' => 'Tidak ada posko yang Anda bimbing.']);
         }
 
-        // Get registration IDs from those postos
-        $registrationIds = KknPostoMember::whereIn('kkn_posto_id', $postoIds)
-            ->pluck('kkn_registration_id');
-
         $query = KknRegistration::with([
             'student.mahasiswaProfile.faculty',
             'student.mahasiswaProfile.studyProgram',
@@ -93,12 +87,10 @@ class KknGradeController extends Controller
             'kknPosto',
         ])
         ->where('status', 'approved')
-        ->whereIn('id', $registrationIds);
+        ->whereIn('kkn_posto_id', $postoIds);
 
         if ($request->filled('kkn_posto_id')) {
-            $filteredIds = KknPostoMember::where('kkn_posto_id', $request->kkn_posto_id)
-                ->pluck('kkn_registration_id');
-            $query->whereIn('id', $filteredIds);
+            $query->where('kkn_posto_id', $request->kkn_posto_id);
         }
 
         $registrations = $query->get();
