@@ -14,7 +14,7 @@ export default function OrganizationIndex() {
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
-    const [formData, setFormData] = useState({ user_id: '', position: '', order_index: 0 });
+    const [formData, setFormData] = useState({ user_id: '', position: '', order_index: 0, parent_id: '', level: 1 });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchMembers = async () => {
@@ -49,13 +49,19 @@ export default function OrganizationIndex() {
     }, [token]);
 
     const handleAddClick = () => {
-        setFormData({ user_id: '', position: '', order_index: members.length + 1 });
+        setFormData({ user_id: '', position: '', order_index: members.length + 1, parent_id: '', level: 1 });
         setIsEditing(false);
         setShowModal(true);
     };
 
     const handleEditClick = (member) => {
-        setFormData({ user_id: member.user_id || '', position: member.position || '', order_index: member.order_index || 0 });
+        setFormData({ 
+            user_id: member.user_id || '', 
+            position: member.position || '', 
+            order_index: member.order_index || 0,
+            parent_id: member.parent_id || '',
+            level: member.level || 1
+        });
         setSelectedId(member.id);
         setIsEditing(true);
         setShowModal(true);
@@ -77,13 +83,17 @@ export default function OrganizationIndex() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        
+        const payload = { ...formData };
+        if (!payload.parent_id) payload.parent_id = null;
+
         try {
             if (isEditing) {
-                await axios.put(`/api/organization-members/${selectedId}`, formData, {
+                await axios.put(`/api/organization-members/${selectedId}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.post('/api/organization-members', formData, {
+                await axios.post('/api/organization-members', payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
@@ -111,7 +121,12 @@ export default function OrganizationIndex() {
         {
             accessorKey: 'position',
             header: 'Jabatan',
-            cell: ({ row }) => <span className="text-gray-500">{row.original.position}</span>
+            cell: ({ row }) => (
+                <div>
+                    <div className="text-gray-900">{row.original.position}</div>
+                    <div className="text-xs text-gray-500">Level {row.original.level}</div>
+                </div>
+            )
         },
         {
             id: 'actions',
@@ -161,7 +176,7 @@ export default function OrganizationIndex() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">{isEditing ? 'Edit Anggota' : 'Tambah Anggota'}</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
@@ -187,6 +202,35 @@ export default function OrganizationIndex() {
                                     value={formData.position}
                                     onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                                 />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700">Level (1: Ketua, 2: Divisi, 3: Staff)</label>
+                                <select
+                                    required
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2 bg-white"
+                                    value={formData.level}
+                                    onChange={(e) => setFormData({ ...formData, level: Number(e.target.value) })}
+                                >
+                                    <option value={1}>1 - Ketua</option>
+                                    <option value={2}>2 - Kepala Divisi/Koordinator</option>
+                                    <option value={3}>3 - Staff</option>
+                                </select>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700">Atasan (Parent Node)</label>
+                                <select
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 border p-2 bg-white"
+                                    value={formData.parent_id || ''}
+                                    onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+                                >
+                                    <option value="">-- Tidak Ada (Paling Atas) --</option>
+                                    {members
+                                        .filter(m => !isEditing || m.id !== selectedId) // cannot be parent of self
+                                        .map(m => (
+                                            <option key={m.id} value={m.id}>{m.position} ({m.user?.name})</option>
+                                        ))
+                                    }
+                                </select>
                             </div>
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700">Urutan Tampilan</label>

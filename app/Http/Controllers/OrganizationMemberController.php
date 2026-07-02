@@ -22,7 +22,9 @@ class OrganizationMemberController extends Controller
             'user_id' => 'required|exists:users,id',
             'position' => 'required|string',
             'image' => 'nullable|string',
-            'order_index' => 'integer'
+            'order_index' => 'integer',
+            'parent_id' => 'nullable|exists:organization_members,id',
+            'level' => 'required|integer|min:1'
         ]);
 
         $member = OrganizationMember::create($validated);
@@ -34,7 +36,9 @@ class OrganizationMemberController extends Controller
             'user_id' => 'required|exists:users,id',
             'position' => 'required|string',
             'image' => 'nullable|string',
-            'order_index' => 'integer'
+            'order_index' => 'integer',
+            'parent_id' => 'nullable|exists:organization_members,id',
+            'level' => 'required|integer|min:1'
         ]);
 
         $organizationMember->update($validated);
