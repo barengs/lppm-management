@@ -532,8 +532,10 @@ class KknPostoController extends Controller
 
         // Update registration to remove posto_id
         if ($member->kkn_registration_id) {
-            KknRegistration::find($member->kkn_registration_id)
-                ->update(['kkn_posto_id' => null]);
+            $reg = KknRegistration::find($member->kkn_registration_id);
+            if ($reg) {
+                $reg->update(['kkn_posto_id' => null]);
+            }
         }
 
         $member->delete();

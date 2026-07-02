@@ -102,4 +102,11 @@ class KknPosto extends Model
         
         return $hasKordes && $hasSekretaris && $hasBendahara;
     }
+
+    protected static function booted()
+    {
+        static::deleting(function ($posto) {
+            $posto->registrations()->update(['kkn_posto_id' => null]);
+        });
+    }
 }

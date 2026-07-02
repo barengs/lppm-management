@@ -303,6 +303,7 @@ export const kknApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { postoId }) => [
                 { type: 'Posto', id: postoId },
+                'AvailableStudents',
             ],
         }),
 
