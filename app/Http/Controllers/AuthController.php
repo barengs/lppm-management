@@ -41,11 +41,12 @@ class AuthController extends Controller
             }
             
             $response = $http->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => env('RECAPTCHA_SECRET_KEY'),
+                'secret' => config('services.recaptcha.secret'),
                 'response' => $recaptchaToken,
             ]);
 
             if (!$response->successful() || !$response->json()['success']) {
+                 \Illuminate\Support\Facades\Log::error('ReCaptcha verification failed', ['response' => $response->json()]);
                  return response()->json(['error' => 'ReCaptcha verification failed.'], 422);
             }
         } catch (\Exception $e) {
