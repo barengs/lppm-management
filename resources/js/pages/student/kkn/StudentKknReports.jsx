@@ -5,11 +5,14 @@ import { FileText, Calendar, Upload, Clock, CheckCircle, XCircle } from 'lucide-
 import DataTable from '../../../components/DataTable';
 
 export default function StudentKknReports() {
-    const { token } = useAuth();
+    const { token, hasRole, hasAnyRole } = useAuth();
     const [posto, setPosto] = useState(null);
     const [reports, setReports] = useState([]);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('weekly'); // weekly | final
+    
+    const isDosen = hasAnyRole(['dosen', 'dpl_kkn']);
+    const [reporterType, setReporterType] = useState(isDosen ? 'dosen' : 'student');
     
     // Form State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,11 +40,12 @@ export default function StudentKknReports() {
     }, [token]);
 
     // 2. Fetch Reports
+    // 2. Fetch Reports
     useEffect(() => {
         if (posto) {
             fetchReports();
         }
-    }, [posto, activeTab]);
+    }, [posto, activeTab, reporterType]);
 
     const fetchReports = async () => {
         try {
@@ -49,7 +53,7 @@ export default function StudentKknReports() {
                 params: {
                     kkn_posto_id: posto.id,
                     type: activeTab,
-                    // If weekly, maybe filter by week? No, list all.
+                    reporter_type: reporterType
                 },
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -161,32 +165,59 @@ export default function StudentKknReports() {
     return (
          <div className="space-y-6">
             {/* Tabs */}
-            <div className="flex space-x-4 border-b">
-                <button 
-                    className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'weekly' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setActiveTab('weekly')}
-                >
-                    <Calendar className="inline-block mr-2 h-4 w-4" /> Laporan Mingguan
-                </button>
-                <button 
-                    className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'final' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setActiveTab('final')}
-                >
-                    <FileText className="inline-block mr-2 h-4 w-4" /> Laporan Akhir
-                </button>
+            <div className="flex justify-between items-center border-b pb-2 flex-wrap gap-4">
+                <div className="flex space-x-4">
+                    <button 
+                        className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'weekly' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('weekly')}
+                    >
+                        <Calendar className="inline-block mr-2 h-4 w-4" /> Laporan Mingguan
+                    </button>
+                    <button 
+                        className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'final' ? 'border-b-2 border-green-600 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('final')}
+                    >
+                        <FileText className="inline-block mr-2 h-4 w-4" /> Laporan Akhir
+                    </button>
+                </div>
+
+                {isDosen && (
+                    <div className="bg-gray-100 p-1 rounded-lg flex text-sm font-medium border border-gray-200">
+                        <button
+                            onClick={() => setReporterType('dosen')}
+                            className={`px-4 py-2 rounded-md transition-all ${
+                                reporterType === 'dosen' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            Laporan Saya (DPL)
+                        </button>
+                        <button
+                            onClick={() => setReporterType('student')}
+                            className={`px-4 py-2 rounded-md transition-all ${
+                                reporterType === 'student' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            Laporan Mahasiswa
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold text-gray-800">
-                    {activeTab === 'weekly' ? 'Daftar Laporan Mingguan' : 'Laporan Akhir KKN'}
+                    {isDosen 
+                        ? (reporterType === 'dosen' ? 'Laporan Monitoring DPL ke LPPM' : 'Daftar Laporan Mahasiswa')
+                        : (activeTab === 'weekly' ? 'Daftar Laporan Mingguan' : 'Laporan Akhir KKN')}
                 </h2>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center shadow-sm"
-                >
-                    <Upload size={18} className="mr-2" /> 
-                    {activeTab === 'weekly' ? 'Buat Laporan Mingguan' : 'Upload Laporan Akhir'}
-                </button>
+                {(!isDosen || reporterType === 'dosen') && (
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center shadow-sm"
+                    >
+                        <Upload size={18} className="mr-2" /> 
+                        {activeTab === 'weekly' ? 'Buat Laporan Mingguan' : 'Upload Laporan Akhir'}
+                    </button>
+                )}
             </div>
 
             {/* List */}
@@ -197,7 +228,7 @@ export default function StudentKknReports() {
                     options={{
                         enablePagination: true,
                         searchPlaceholder: 'Cari laporan...',
-                        emptyMessage: 'Belum ada laporan yang dikirim.'
+                        emptyMessage: isDosen && reporterType === 'dosen' ? 'Belum ada laporan monitoring yang Anda kirim.' : 'Belum ada laporan yang dikirim.'
                     }}
                  />
             </div>

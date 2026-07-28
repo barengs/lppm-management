@@ -5,10 +5,11 @@ import { FileText, Calendar, CheckCircle, XCircle, AlertCircle, Eye, MessageSqua
 import { toast } from 'react-toastify';
 
 export default function ReportsIndex() {
-    const { token, user, hasRole } = useAuth();
+    const { token, user, hasRole, hasAnyRole, hasPermission } = useAuth();
     
     // UI State
     const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'final'
+    const [reporterType, setReporterType] = useState('student'); // 'student' or 'dosen'
     const [isLoadingPostos, setIsLoadingPostos] = useState(false);
     const [isLoadingReports, setIsLoadingReports] = useState(false);
     
@@ -44,14 +45,14 @@ export default function ReportsIndex() {
         }
     }, [searchTerm, postos]);
 
-    // Fetch Reports when Posto or Tab changes
+    // Fetch Reports when Posto, Tab, or Reporter Type changes
     useEffect(() => {
         if (selectedPosto) {
             fetchReports();
         } else {
             setReports([]);
         }
-    }, [selectedPosto, activeTab]);
+    }, [selectedPosto, activeTab, reporterType]);
 
     const fetchPostos = async () => {
         setIsLoadingPostos(true);
@@ -85,7 +86,8 @@ export default function ReportsIndex() {
             const response = await axios.get('/api/kkn-reports', {
                 params: {
                     kkn_posto_id: selectedPosto.id,
-                    type: activeTab
+                    type: activeTab,
+                    reporter_type: reporterType
                 },
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -124,6 +126,9 @@ export default function ReportsIndex() {
         }
         setIsSubmittingReview(false);
     };
+
+    const canReview = (reporterType === 'student' && hasPermission('kkn_reports.review')) || 
+                      (reporterType === 'dosen' && hasAnyRole(['admin', 'staff_kkn']));
 
     // Components
     const StatusBadge = ({ status }) => {
@@ -203,24 +208,45 @@ export default function ReportsIndex() {
                                 </div>
                             </div>
                             
-                            {/* Tabs */}
-                            <div className="bg-gray-100 p-1 rounded-lg flex text-sm font-medium">
-                                <button
-                                    onClick={() => setActiveTab('weekly')}
-                                    className={`px-4 py-2 rounded-md transition-all ${
-                                        activeTab === 'weekly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    Logbook Mingguan
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('final')}
-                                    className={`px-4 py-2 rounded-md transition-all ${
-                                        activeTab === 'final' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    Laporan Akhir
-                                </button>
+                            {/* Tabs & Reporter Type */}
+                            <div className="flex justify-between items-center w-full gap-4 flex-wrap bg-white p-2 rounded-lg border border-gray-100 shadow-xs">
+                                <div className="bg-gray-100 p-1 rounded-lg flex text-sm font-medium">
+                                    <button
+                                        onClick={() => setActiveTab('weekly')}
+                                        className={`px-4 py-2 rounded-md transition-all ${
+                                            activeTab === 'weekly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Logbook Mingguan
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('final')}
+                                        className={`px-4 py-2 rounded-md transition-all ${
+                                            activeTab === 'final' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Laporan Akhir
+                                    </button>
+                                </div>
+
+                                <div className="bg-gray-100 p-1 rounded-lg flex text-sm font-medium">
+                                    <button
+                                        onClick={() => setReporterType('student')}
+                                        className={`px-4 py-2 rounded-md transition-all ${
+                                            reporterType === 'student' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Laporan Mahasiswa
+                                    </button>
+                                    <button
+                                        onClick={() => setReporterType('dosen')}
+                                        className={`px-4 py-2 rounded-md transition-all ${
+                                            reporterType === 'dosen' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        Laporan DPL (Dosen)
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -234,7 +260,7 @@ export default function ReportsIndex() {
                             ) : reports.length === 0 ? (
                                 <div className="text-center py-10 bg-white rounded-lg border border-gray-200 border-dashed">
                                     <FileText className="mx-auto text-gray-300 mb-3" size={48} />
-                                    <p className="text-gray-500 font-medium">Belum ada {activeTab === 'weekly' ? 'laporan mingguan' : 'laporan akhir'} yang dikumpulkan.</p>
+                                    <p className="text-gray-500 font-medium">Belum ada {activeTab === 'weekly' ? 'laporan mingguan' : 'laporan akhir'} {reporterType === 'dosen' ? 'dari DPL' : 'yang dikumpulkan'}.</p>
                                 </div>
                             ) : activeTab === 'weekly' ? (
                                 // Weekly Reports - Expanded Timeline Style
@@ -308,8 +334,8 @@ export default function ReportsIndex() {
                                                         </div>
                                                     )}
                                                     
-                                                    {/* Review Action (Only for Dosen) */}
-                                                    {hasRole('dosen') && (
+                                                    {/* Review Action (Only for Dosen/Admin) */}
+                                                    {canReview && (
                                                         <div className="mt-6 pt-4 border-t flex justify-end">
                                                             <button 
                                                                 onClick={() => handleOpenReview(report)}
@@ -454,7 +480,7 @@ export default function ReportsIndex() {
                                                 )}
 
                                                 {/* Action Buttons */}
-                                                {hasRole('dosen') && (
+                                                {canReview && (
                                                     <div className="mt-8 pt-6 border-t flex justify-end">
                                                         <button 
                                                             onClick={() => handleOpenReview(report)}

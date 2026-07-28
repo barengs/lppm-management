@@ -21,10 +21,10 @@ const MODULE_LABELS = {
     pkm_master_data: 'Master Data PKM',
     admin_proposals: 'Monitoring Penelitian',
     admin_pkm: 'Monitoring PKM',
-    reports: 'Laporan Hibah',
+    reports: 'Laporan Monitoring',
     kkn_locations: 'Lokasi KKN',
     kkn_registrations: 'Pendaftaran KKN',
-    kkn_reports: 'Laporan KKN',
+    kkn_reports: 'Laporan & Kegiatan',
     kkn_guidance: 'Bimbingan KKN',
     kkn_grades: 'Nilai & Sertifikat',
     kkn_postos: 'Manajemen Posko',
@@ -34,6 +34,7 @@ const MODULE_LABELS = {
     master_research_priorities: 'Prioritas Riset',
     master_selections: 'Master SDGs',
     dashboard: 'Dashboard Stats',
+    kkn_field_monitorings: 'Monitoring Lapangan',
 };
 
 const ACTION_LABELS = {

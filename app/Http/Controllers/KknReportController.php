@@ -39,7 +39,7 @@ class KknReportController extends Controller
              if (!$request->has('all_group')) {
                 $query->where('user_id', $user->id);
             }
-        } elseif ($user->hasRole('dosen')) {
+        } elseif ($user->hasAnyRole(['dosen', 'dpl_kkn'])) {
             // Dosen sees their own reports OR reports from Postos they supervise
             if ($request->target === 'self') {
                 $query->where('user_id', $user->id);
@@ -76,7 +76,7 @@ class KknReportController extends Controller
         $user = Auth::user();
         $params = $request->only(['kkn_posto_id', 'type', 'week', 'title', 'description']);
         $params['user_id'] = $user->id;
-        $params['reporter_type'] = $user->hasRole('dosen') ? 'dosen' : 'student';
+        $params['reporter_type'] = $user->hasAnyRole(['dosen', 'dpl_kkn']) ? 'dosen' : 'student';
         $params['status'] = 'submitted'; // Auto submit? or draft? Let's say submitted for now.
         $params['submitted_at'] = now();
 
