@@ -23,7 +23,7 @@ import {
 } from '../../store/api/kknApi';
 
 export default function FieldMonitoring() {
-    const { user, hasRole } = useAuth();
+    const { user, hasRole, hasAnyRole, hasPermission } = useAuth();
     
     // UI State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -187,7 +187,7 @@ export default function FieldMonitoring() {
                                     <MapPin size={14} className="mr-1" /> {selectedPosto.village || 'Lokasi belum ditentukan'}
                                 </p>
                             </div>
-                            {(hasRole('admin') || hasRole('tendik') || hasRole('staff_kkn')) && (
+                            {(hasAnyRole(['admin', 'tendik', 'staff_kkn', 'dpl_kkn', 'dosen']) || hasPermission('kkn_field_monitorings.create')) && (
                                 <button 
                                     onClick={() => setIsModalOpen(true)}
                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm font-semibold shadow-sm transition-all"
