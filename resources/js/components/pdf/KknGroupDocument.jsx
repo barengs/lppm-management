@@ -315,7 +315,7 @@ export default function KknGroupDocument({ posto, members, systemSettings }) {
         {/* DOCUMENT TITLE */}
         <View style={styles.docTitleContainer}>
           <Text style={styles.docTitle}>LAPORAN DETAIL KELOMPOK KKN</Text>
-          <Text style={styles.docSubTitle}>Posko: {posto?.posto?.name}</Text>
+          <Text style={styles.docSubTitle}>Posko: {posto?.posto?.name || '-'}</Text>
         </View>
 
         {/* SECTION: INFO KELOMPOK */}
@@ -436,7 +436,7 @@ export default function KknGroupDocument({ posto, members, systemSettings }) {
             <View style={styles.signatureCol}>
               <Text style={styles.signatureDate}>Pamekasan, {todayStr}</Text>
               <Text style={styles.signatureRole}>Dosen Pembimbing Lapangan,</Text>
-              <Text style={styles.signatureName}>{posto.posto.dpl.name}</Text>
+              <Text style={styles.signatureName}>{posto?.posto?.dpl?.name || '-'}</Text>
               <Text style={styles.signatureNidn}>
                 NIDN. {posto.posto.dpl.dosen_profile?.nidn || posto.posto.dpl.dosenProfile?.nidn || '-'}
               </Text>

@@ -29,8 +29,9 @@ class KknPostoController extends Controller
         }
         $query = KknPosto::with(['location', 'kknPeriod', 'fiscalYear', 'dpl', 'members']);
 
-        // RESTRICT: Non-admins (e.g. Dosen) only see their supervised Postos
-        if (!$user->hasRole('admin') && $user->hasRole('dosen')) {
+        // RESTRICT: Non-admins (e.g. Dosen) only see their supervised Postos unless they have global monitoring/management permissions
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer && $user->hasRole('dosen')) {
             $query->where('dpl_id', $user->id);
         }
 
@@ -84,7 +85,7 @@ class KknPostoController extends Controller
     {
         $user = auth('api')->user();
 
-        if (!$user || !$user->hasAnyRole(['admin', 'staff_kkn', 'staff', 'ketua_lppm'])) {
+        if (!$user || (!$user->hasRole('admin') && !$user->can('kkn_postos.edit'))) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -207,7 +208,8 @@ class KknPostoController extends Controller
         ])->findOrFail($id);
 
         // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
 
@@ -270,7 +272,8 @@ class KknPostoController extends Controller
         }
 
         // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
 
@@ -309,7 +312,8 @@ class KknPostoController extends Controller
         }
 
         // Authorization for non-admins
-        if (!$user->hasRole('admin') && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
 
@@ -531,11 +535,12 @@ class KknPostoController extends Controller
             ->findOrFail($memberId);
 
         // Update registration to remove posto_id
-        if ($member->kkn_registration_id) {
-            $reg = KknRegistration::find($member->kkn_registration_id);
-            if ($reg) {
-                $reg->update(['kkn_posto_id' => null]);
-            }
+        // Update registration to remove posto_id
+        $reg = KknRegistration::where('student_id', $member->student_id)
+            ->where('kkn_posto_id', $postoId)
+            ->first();
+        if ($reg) {
+            $reg->update(['kkn_posto_id' => null]);
         }
 
         $member->delete();

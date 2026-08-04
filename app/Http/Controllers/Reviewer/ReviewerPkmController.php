@@ -18,7 +18,7 @@ class ReviewerPkmController extends Controller
         $user = auth('api')->user();
         
         // If user is a PKM reviewer, they see all proposals in 'submitted' or 'review' status (Pool)
-        if ($user->hasRole(['admin', 'reviewer_pkm'])) {
+        if ($user->can('pkm_proposals.review') || $user->hasRole('admin')) {
             $proposals = PkmProposal::with(['fiscalYear', 'user', 'pkmReviews' => function($q) use ($user) {
                 $q->where('reviewer_id', $user->id);
             }])

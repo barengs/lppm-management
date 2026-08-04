@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import FullProposalPreviewModal from '../../../components/pdf/FullProposalPreviewModal';
 
 export default function AdminProposalDashboard() {
-    const { token, user, hasAnyRole, hasPermission } = useAuth();
+    const { token, user, hasRole, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
     const [reviewers, setReviewers] = useState([]);
     const [stats, setStats] = useState(null);
@@ -16,7 +16,7 @@ export default function AdminProposalDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     
     // Role check
-    const isKetuaLppm = hasAnyRole(['ketua_lppm', 'admin']);
+    const isKetuaLppm = hasRole('admin') || hasPermission('proposals.approve');
 
     // Modal State
     const [selectedProposal, setSelectedProposal] = useState(null);

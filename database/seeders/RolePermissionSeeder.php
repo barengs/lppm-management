@@ -44,6 +44,10 @@ class RolePermissionSeeder extends Seeder
             'master_research_priorities',
             'master_selections',
             'kkn_field_monitorings',
+            'journal_consultations',
+            'pages',
+            'settings',
+            'kkn_periods',
         ];
 
         // Custom/Extra Actions per module
@@ -56,8 +60,10 @@ class RolePermissionSeeder extends Seeder
             'kkn_reports' => ['review', 'approve', 'reject', 'revise'],
             'kkn_guidance' => ['reply', 'close'],
             'kkn_participants' => ['view', 'manage'],
-            'kkn_grades' => ['download_certificate'], 
+            'kkn_grades' => ['download_certificate', 'settings'], 
             'kkn_postos' => ['view', 'manage_members'],
+            'journal_consultations' => ['manage'],
+            'reports' => ['view_all'],
         ];
 
         // 3. Generate Permissions
@@ -87,6 +93,9 @@ class RolePermissionSeeder extends Seeder
             $manualPermissions = [
                 'kkn.register', // Unique action for students
                 'dashboard.view',
+                'dashboard_kkn.view',
+                'kkn_group.view',
+                'lecturer_stats.view',
             ];
 
             foreach ($manualPermissions as $perm) {

@@ -16,7 +16,7 @@ class JournalConsultationController extends Controller
     {
         $user = auth('api')->user();
 
-        if ($user->hasRole(['admin', 'lppm'])) {
+        if ($user->can('journal_consultations.manage')) {
             $consultations = JournalConsultation::with('user')->orderBy('updated_at', 'desc')->get();
         } else {
             $consultations = JournalConsultation::where('user_id', $user->id)->orderBy('updated_at', 'desc')->get();
@@ -73,7 +73,7 @@ class JournalConsultationController extends Controller
         
         // Authorization check
         $user = auth('api')->user();
-        if ($user->id !== $consultation->user_id && !$user->hasRole(['admin', 'lppm'])) {
+        if ($user->id !== $consultation->user_id && !$user->can('journal_consultations.manage')) {
              return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -118,7 +118,7 @@ class JournalConsultationController extends Controller
         $consultation->touch();
 
         // Send Notifications
-        if ($user->hasRole(['admin', 'lppm'])) {
+        if ($user->can('journal_consultations.manage')) {
             // If Admin/LPPM replied, notify the User/Dosen
             $consultation->user->notify(new \App\Notifications\JournalNotification(
                 $consultation,
@@ -142,7 +142,7 @@ class JournalConsultationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $user = auth('api')->user();
-        if (!$user->hasRole(['admin', 'lppm'])) {
+        if (!$user->can('journal_consultations.manage')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

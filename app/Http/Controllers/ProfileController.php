@@ -26,6 +26,11 @@ class ProfileController extends Controller
             'dosenProfile.studyProgram',
             'scholarStats'
         ]);
+        if ($user->role === 'mahasiswa') {
+            $user->has_active_kkn = \App\Models\KknRegistration::where('student_id', $user->id)
+                ->where('status', 'approved')
+                ->exists();
+        }
         
         return response()->json($user);
     }
@@ -98,13 +103,20 @@ class ProfileController extends Controller
             if ($user->role === 'mahasiswa') {
                 $profileData = array_merge($profileData, [
                     'npm' => $request->npm,
-                    'jacket_size' => $request->jacket_size,
                     'phone' => $request->phone,
                     'address' => $request->address,
                     'place_of_birth' => $request->place_of_birth,
                     'date_of_birth' => $request->date_of_birth,
                     'gender' => $request->gender,
                 ]);
+
+                $hasActiveKkn = \App\Models\KknRegistration::where('student_id', $user->id)
+                    ->where('status', 'approved')
+                    ->exists();
+
+                if (!$hasActiveKkn && $request->has('jacket_size')) {
+                    $profileData['jacket_size'] = $request->jacket_size;
+                }
                 
                 $user->mahasiswaProfile()->updateOrCreate(
                     ['user_id' => $user->id],

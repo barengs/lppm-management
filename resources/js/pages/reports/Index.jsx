@@ -128,7 +128,7 @@ export default function ReportsIndex() {
     };
 
     const canReview = (reporterType === 'student' && hasPermission('kkn_reports.review')) || 
-                      (reporterType === 'dosen' && hasAnyRole(['admin', 'staff_kkn']));
+                      (reporterType === 'dosen' && (hasRole('admin') || hasPermission('reports.view_all')));
 
     // Components
     const StatusBadge = ({ status }) => {
@@ -569,7 +569,7 @@ export default function ReportsIndex() {
                             <hr />
 
                             {/* Review Form - Only for Dosen */}
-                            {hasRole('dosen') ? (
+                            {canReview ? (
                                 <form id="review-form" onSubmit={handleSubmitReview} className="space-y-4">
                                     <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-4">
                                         <h4 className="font-semibold text-yellow-800 flex items-center text-sm mb-2">
@@ -658,7 +658,7 @@ export default function ReportsIndex() {
                             >
                                 Tutup
                             </button>
-                            {hasRole('dosen') && (
+                            {canReview && (
                                 <button 
                                     type="submit"
                                     form="review-form"

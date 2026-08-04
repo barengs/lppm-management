@@ -24,7 +24,7 @@ class KknGradesImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows)
     {
-        $isAdminOrLppm = $this->user->hasAnyRole(['admin', 'ketua_lppm', 'staff', 'staff_kkn']);
+        $isAdminOrLppm = $this->user->hasRole('admin') || $this->user->can('kkn_grades.edit');
         
         // Find DPL postos if not admin
         $postoIds = [];

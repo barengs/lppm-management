@@ -40,4 +40,17 @@ class Post extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function getThumbnailAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            return $value;
+        }
+
+        return url($value);
+    }
 }

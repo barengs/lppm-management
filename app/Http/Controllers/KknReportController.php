@@ -34,24 +34,24 @@ class KknReportController extends Controller
 
         // Access Control
         // Access Control
-        if ($user->hasRole('mahasiswa')) {
+        $isGlobal = $user->hasRole('admin') || $user->can('reports.view') || $user->can('kkn_postos.manage_members');
+        
+        if ($isGlobal) {
+            // Admin or Staff with global permission can view all (filtered by request params)
+            // No additional restriction needed
+        } elseif ($user->can('kkn_reports.review')) {
+            // DPL sees their own reports OR reports from Postos they supervise
+            if ($request->target === 'self') {
+                $query->where('user_id', $user->id);
+            } else {
+                $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
+                $query->whereIn('kkn_posto_id', $postoIds);
+            }
+        } elseif ($user->can('kkn_reports.view')) {
             // Students only see their own reports
              if (!$request->has('all_group')) {
                 $query->where('user_id', $user->id);
             }
-        } elseif ($user->hasAnyRole(['dosen', 'dpl_kkn'])) {
-            // Dosen sees their own reports OR reports from Postos they supervise
-            if ($request->target === 'self') {
-                $query->where('user_id', $user->id);
-            } else {
-                // Fetching student reports for supervised postos
-                // Find IDs of Postos where this user is DPL
-                $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
-                $query->whereIn('kkn_posto_id', $postoIds);
-            }
-        } elseif ($user->hasRole('admin') || $user->can('kkn_reports.view')) {
-            // Admin or Staff with permission can view all (filtered by request params)
-            // No additional restriction needed
         } else {
             // Fallback for others - block or show empty
              $query->whereRaw('0 = 1'); 
@@ -76,7 +76,7 @@ class KknReportController extends Controller
         $user = Auth::user();
         $params = $request->only(['kkn_posto_id', 'type', 'week', 'title', 'description']);
         $params['user_id'] = $user->id;
-        $params['reporter_type'] = $user->hasAnyRole(['dosen', 'dpl_kkn']) ? 'dosen' : 'student';
+        $params['reporter_type'] = $user->can('kkn_reports.review') ? 'dosen' : 'student';
         $params['status'] = 'submitted'; // Auto submit? or draft? Let's say submitted for now.
         $params['submitted_at'] = now();
 

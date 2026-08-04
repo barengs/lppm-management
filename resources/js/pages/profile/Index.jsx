@@ -273,12 +273,16 @@ export default function ProfileIndex() {
                                 </div>
                                 {user.role === 'mahasiswa' && (
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-700 ml-1">Ukuran Jaket</label>
+                                        <label className="text-sm font-semibold text-gray-700 ml-1">
+                                            Ukuran Jaket 
+                                            {user.has_active_kkn && <span className="text-xs text-red-500 ml-2 font-normal">(Tidak dapat diubah saat masa KKN)</span>}
+                                        </label>
                                         <select 
                                             name="jacket_size"
                                             value={formData.jacket_size}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 transition-all"
+                                            disabled={user.has_active_kkn}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <option value="">Pilih Ukuran</option>
                                             {['S', 'M', 'L', 'XL', 'XXL', '3XL'].map(s => <option key={s} value={s}>{s}</option>)}

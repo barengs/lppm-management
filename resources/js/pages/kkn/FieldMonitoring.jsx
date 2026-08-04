@@ -187,7 +187,7 @@ export default function FieldMonitoring() {
                                     <MapPin size={14} className="mr-1" /> {selectedPosto.village || 'Lokasi belum ditentukan'}
                                 </p>
                             </div>
-                            {(hasAnyRole(['admin', 'tendik', 'staff_kkn', 'dpl_kkn', 'dosen']) || hasPermission('kkn_field_monitorings.create')) && (
+                            {hasPermission('kkn_field_monitorings.create') && (
                                 <button 
                                     onClick={() => setIsModalOpen(true)}
                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm font-semibold shadow-sm transition-all"
@@ -223,7 +223,7 @@ export default function FieldMonitoring() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {(item.user_id === user.id || hasRole('admin')) && (
+                                                {(item.user_id === user.id || hasPermission('kkn_field_monitorings.delete')) && (
                                                     <button 
                                                         onClick={() => handleDelete(item.id)}
                                                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"

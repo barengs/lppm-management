@@ -127,8 +127,21 @@ class KknController extends Controller
         }
         
         if (empty($uploadedDocs)) {
+            $debugInfo = [];
+            foreach ($files as $key => $file) {
+                $docId = str_starts_with($key, 'doc_') ? substr($key, 4) : null;
+                $doc = $docId ? \App\Models\KknRegistrationDocument::find($docId) : null;
+                $debugInfo[] = [
+                    'key' => $key,
+                    'docId' => $docId,
+                    'foundDoc' => $doc ? true : false,
+                    'docRegId' => $doc ? $doc->kkn_registration_id : null,
+                    'regId' => $registration->id,
+                ];
+            }
             return response()->json([
-                'message' => 'Tidak ada dokumen valid yang diupdate. Pastikan dokumen yang Anda upload sesuai.'
+                'message' => 'Tidak ada dokumen valid yang diupdate. Pastikan dokumen yang Anda upload sesuai.',
+                'debug' => $debugInfo,
             ], 400);
         }
         

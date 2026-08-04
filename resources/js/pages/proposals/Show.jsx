@@ -43,7 +43,7 @@ const ContentBlock = ({ label, html, borderColor = 'border-gray-200' }) => {
 export default function ProposalShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token, user, hasAnyRole } = useAuth();
+    const { token, user, hasRole, hasPermission } = useAuth();
 
     const [proposal, setProposal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +52,7 @@ export default function ProposalShow() {
     const [approvalNote, setApprovalNote] = useState('');
 
     // Role check
-    const isKetuaLppm = hasAnyRole(['ketua_lppm', 'admin']);
+    const isKetuaLppm = hasRole('admin') || hasPermission('proposals.approve');
 
     // Collapsible section state
     const [openSections, setOpenSections] = useState({

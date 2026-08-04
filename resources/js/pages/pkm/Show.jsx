@@ -49,7 +49,7 @@ const ContentBlock = ({ label, html, text, borderColor = 'border-gray-200' }) =>
 export default function PkmShow() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token, user, hasAnyRole } = useAuth();
+    const { token, user, hasRole, hasPermission } = useAuth();
 
     const [proposal, setProposal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function PkmShow() {
     const [approvalNote, setApprovalNote] = useState('');
 
     // Role check
-    const isKetuaLppm = hasAnyRole(['ketua_lppm', 'admin']);
+    const isKetuaLppm = hasRole('admin') || hasPermission('pkm_proposals.approve');
 
     // Collapsible section state
     const [openSections, setOpenSections] = useState({

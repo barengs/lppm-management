@@ -125,7 +125,7 @@ class KknGradeController extends Controller
         $registration = KknRegistration::findOrFail($validated['kkn_registration_id']);
 
         // ── Authorization: User must be the DPL of this student's posto ──
-        $isAdminOrLppm = $user->hasAnyRole(['admin', 'ketua_lppm', 'staff']);
+        $isAdminOrLppm = $user->hasRole('admin') || $user->can('kkn_grades.edit');
         if (!$isAdminOrLppm) {
             $posto = $registration->kknPosto;
             if (!$posto || $posto->dpl_id !== $user->id) {

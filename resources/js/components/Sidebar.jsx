@@ -14,141 +14,53 @@ import {
     SlidersHorizontal
 } from 'lucide-react';
 
+import api from '../utils/api';
+import * as LucideIcons from 'lucide-react';
+
 export default function Sidebar() {
-    const { logout, user, hasRole } = useAuth();
     const dispatch = useDispatch();
+    const { logout, user, hasRole, can } = useAuth();
+    const [rawMenuGroups, setRawMenuGroups] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSidebar = async () => {
+            try {
+                const response = await api.get('/menus/sidebar');
+                if (response.data && response.data.items) {
+                    setRawMenuGroups(response.data.items);
+                }
+            } catch (error) {
+                console.error("Failed to fetch sidebar menu", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSidebar();
+    }, []);
+
     const isCollapsed = useSelector(selectIsCollapsed);
     const toggleSidebar = () => dispatch(toggleSidebarAction());
     const settings = useSelector(selectSettings);
     const location = useLocation();
 
-    const isActive = (path) => location.pathname.startsWith(path);
-
-    // Helper to check permission
-    const can = (permission) => {
-        if (!permission) return true;
-        if (hasRole('admin')) return true;
-        return user?.granted_permissions?.includes(permission);
-    };
-
-    // Menu Definition
-    const rawMenuGroups = [
-        {
-            title: 'Main',
-            items: [
-                {
-                    name: 'Dashboard',
-                    icon: <LayoutDashboard size={20} />,
-                    path: hasRole('mahasiswa') ? '/dashboard/kkn' : '/dashboard'
-                },
-            ]
-        },
-        ...(!hasRole('mahasiswa') ? [
-            {
-                title: 'Penelitian & Pengabdian',
-                items: [
-                    { name: 'Proposal Penelitian', icon: <FileText size={20} />, path: '/proposals', permission: 'proposals.view' },
-                    { name: 'Proposal PKM', icon: <FileText size={20} />, path: '/pkm', permission: 'proposals.view' },
-                    { name: 'Monitoring Penelitian', icon: <Shield size={20} />, path: '/admin/proposals', permission: 'admin' },
-                    { name: 'Monitoring PKM', icon: <Shield size={20} />, path: '/admin/pkm', permission: 'admin' },
-                    { name: 'Monitoring Laporan', icon: <ClipboardList size={20} />, path: '/admin/reports', permission: 'admin' },
-                    { name: 'Penilaian Penelitian', icon: <Star size={20} />, path: '/reviewer/dashboard', permission: 'proposals.review' },
-                    { name: 'Penilaian PKM', icon: <Star size={20} />, path: '/reviewer/pkm', permission: 'pkm_proposals.review' },
-                    { name: 'Cek Jurnal', icon: <Newspaper size={20} />, path: '/journals' },
-                ]
-            }
-        ] : []),
-        {
-            title: 'KKN (Kuliah Kerja Nyata)',
-            items: [
-                // Student Only - Status KKN
-                ...(hasRole('mahasiswa') ? [
-                    { name: 'Status KKN Saya', icon: <ClipboardList size={20} />, path: '/kkn/status', permission: 'kkn.register' },
-                ] : []),
-                // Student/Dosen - Kelompok KKN Saya
-                ...(hasRole('mahasiswa') || hasRole('dosen') ? [
-                    { name: 'Kelompok KKN Saya', icon: <Users size={20} />, path: '/dashboard/kkn/group', permission: 'kkn_postos.view' },
-                ] : []),
-                ...(!hasRole('mahasiswa') ? [
-                    { name: 'Periode KKN', icon: <Calendar size={20} />, path: '/kkn/periods', permission: 'kkn_periods.view' },
-                    { name: 'Pendaftaran', icon: <Users size={20} />, path: '/kkn/registration', permission: 'kkn_registrations.view' },
-                    { name: 'Lokasi KKN', icon: <MapPin size={20} />, path: '/kkn/locations', permission: 'kkn_locations.view' },
-                    { name: 'Posko KKN', icon: <Home size={20} />, path: '/kkn/postos', permission: 'kkn_locations.view' },
-                    { name: 'Peserta KKN', icon: <Users size={20} />, path: '/kkn/participants', permission: 'kkn_registrations.view' },
-                ] : []),
-                // Student/Dosen Only (Requires My Posto context)
-                ...(!hasRole('admin') ? [
-                    { name: 'Bimbingan', icon: <MessageSquare size={20} />, path: '/dashboard/kkn/guidance', permission: 'kkn_guidance.view' },
-                    { name: 'Laporan & Kegiatan', icon: <FileText size={20} />, path: '/dashboard/kkn/reports', permission: 'kkn_reports.view' },
-                ] : []),
-                // Admin/Dosen Monitoring
-                ...(!hasRole('mahasiswa') ? [
-                    { name: 'Penilaian', icon: <Award size={20} />, path: '/kkn/assessment', permission: 'kkn_grades.view' },
-                    ...(hasRole('admin') || hasRole('ketua_lppm') ? [
-                        { name: 'Pengaturan Penilaian', icon: <SlidersHorizontal size={20} />, path: '/kkn/grading-settings', permission: 'kkn_grades.view' },
-                    ] : []),
-                    { name: 'Monitoring Lapangan', icon: <TrendingUp size={20} />, path: '/kkn/monitoring-lapangan', permission: 'kkn_field_monitorings.view' },
-                    { name: 'Laporan Monitoring', icon: <BarChart2 size={20} />, path: '/reports', permission: 'reports.view' },
-                ] : []),
-            ]
-        },
-        {
-            title: 'Master Data',
-            permission: 'faculties.view',
-            items: [
-                { name: 'Fakultas', icon: <Building size={20} />, path: '/master/faculties', permission: 'faculties.view' },
-                { name: 'Program Studi', icon: <School size={20} />, path: '/master/study-programs', permission: 'study_programs.view' },
-                { name: 'Tahun Akademik', icon: <Calendar size={20} />, path: '/master/fiscal-years', permission: 'fiscal_years.view' },
-                { name: 'Skema Hibah', icon: <Settings size={20} />, path: '/master/schemes', permission: 'schemes.view' },
-                { name: 'Daftar Staff / Dosen', icon: <Users size={20} />, path: '/master/users', permission: 'users.view' },
-                { name: 'Daftar Mahasiswa', icon: <Users size={20} />, path: '/master/students', permission: 'users.view' },
-                { name: 'Rumpun Ilmu', icon: <Shield size={20} />, path: '/master/science-clusters', permission: 'master_science_clusters.view' },
-                { name: 'Prioritas Riset', icon: <Star size={20} />, path: '/master/research-priorities', permission: 'master_research_priorities.view' },
-                { name: 'Target SDGs', icon: <Award size={20} />, path: '/master/sdgs', permission: 'master_selections.view' },
-                { name: 'Master Data PKM', icon: <Settings size={20} />, path: '/master/pkm', permission: 'admin' },
-            ]
-        },
-        ...(!hasRole('mahasiswa') ? [
-            {
-                title: 'Manajemen Sistem',
-                items: [
-                    { name: 'Struktur Organisasi', icon: <Users size={20} />, path: '/admin/organization', permission: 'organization.view' },
-                    { name: 'Hak Akses (Role)', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.view' },
-                    { name: 'Permission', icon: <Shield size={20} />, path: '/admin/permissions', permission: 'permissions.view' },
-                    { name: 'Manajemen Menu', icon: <FolderOpen size={20} />, path: '/admin/menus', permission: 'menus.view' },
-                    { name: 'Halaman Statis', icon: <FileText size={20} />, path: '/admin/pages', permission: 'pages.view' },
-                    { name: 'Sistem Setting', icon: <Settings size={20} />, path: '/admin/settings', permission: 'settings.view' },
-                ]
-            },
-            {
-                title: 'CMS & Informasi',
-                items: [
-                    { name: 'Berita & Artikel', icon: <Newspaper size={20} />, path: '/cms/posts', permission: 'posts.view' },
-                    { name: 'Dokumen', icon: <FileText size={20} />, path: '/cms/documents', permission: 'documents.view' },
-                    { name: 'Galeri', icon: <Image size={20} />, path: '/cms/galleries', permission: 'galleries.view' }
-                ]
-            }
-        ] : []),
-        {
-            title: 'Profil',
-            items: [
-                { name: 'Profil Saya', icon: <User size={20} />, path: '/profile' },
-                // Only show Kinerja Dosen if user is a lecturer
-                ...(hasRole('dosen') ? [
-                    { name: 'Kinerja Dosen', icon: <TrendingUp size={20} />, path: '/profile/stats' }
-                ] : []),
-                { name: 'Organisasi', icon: <Users size={20} />, path: '/organization', permission: 'organization.view' },
-            ]
-        }
-    ];
-
     // Filter Groups and Items
     const menuGroups = rawMenuGroups.map(group => {
-        const filteredItems = group.items.filter(item => can(item.permission));
+        const filteredItems = (group.children || []).filter(item => {
+            if (!item.permission_name) return true;
+            return can(item.permission_name);
+        });
         if (filteredItems.length === 0) return null;
         return { ...group, items: filteredItems };
     }).filter(group => group !== null);
 
+    // Icon renderer helper
+    const renderIcon = (iconName) => {
+        if (!iconName) return <LucideIcons.Circle size={8} />;
+        const IconComponent = LucideIcons[iconName];
+        return IconComponent ? <IconComponent size={20} /> : <LucideIcons.Circle size={8} />;
+    };
 
     return (
         <div className={`${isCollapsed ? 'w-20' : 'w-64'} text-white h-full flex flex-col shadow-xl transition-all duration-300`} style={{ backgroundColor: 'var(--primary-color)' }}>
@@ -164,34 +76,55 @@ export default function Sidebar() {
 
             {/* Menu */}
             <div className="flex-grow py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-800 hover:scrollbar-thumb-green-700">
-                {menuGroups.map((group, groupIdx) => (
-                    <div key={groupIdx} className="mb-6">
-                        {!isCollapsed && (
-                            <h3 className="px-6 text-xs font-semibold text-green-200 uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden">
-                                {group.title}
-                            </h3>
-                        )}
-                        {/* Divider for collapsed mode to separate groups visually */}
-                        {isCollapsed && groupIdx > 0 && <div className="mx-4 border-t border-green-800 my-2"></div>}
-
-                        <ul>
-                            {group.items.map((item, itemIdx) => (
-                                <li key={itemIdx} title={isCollapsed ? item.name : ''}>
-                                    <Link
-                                        to={item.path}
-                                        className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-6'} py-2.5 text-sm font-medium transition-colors ${isActive(item.path)
-                                            ? 'bg-green-700 text-white ' + (!isCollapsed ? 'border-r-4 border-yellow-400' : 'bg-opacity-100 rounded-lg mx-2')
-                                            : 'text-gray-300 hover:bg-green-800 hover:text-white'
-                                            }`}
-                                    >
-                                        <span className={`${!isCollapsed ? 'mr-3' : ''}`}>{item.icon}</span>
-                                        {!isCollapsed && <span>{item.name}</span>}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                {isLoading ? (
+                    <div className="p-4 text-center text-green-200 opacity-70">
+                        Memuat menu...
                     </div>
-                ))}
+                ) : (
+                    menuGroups.map((group, index) => (
+                        <div key={index} className="mb-6">
+                            {!isCollapsed && (
+                                <h3 className="px-6 text-xs font-semibold text-green-200 uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden">
+                                    {group.title}
+                                </h3>
+                            )}
+                            {/* Divider for collapsed mode to separate groups visually */}
+                            {isCollapsed && index > 0 && <div className="mx-4 border-t border-green-800 my-2"></div>}
+
+                            <div className="space-y-1">
+                                {group.items.map((item, itemIndex) => {
+                                    const isActive = (path) => {
+                                        if (path === '/dashboard') return location.pathname === '/dashboard';
+                                        return location.pathname.startsWith(path);
+                                    };
+                                    const active = isActive(item.url);
+                                    
+                                    return (
+                                        <Link
+                                            key={itemIndex}
+                                            to={item.url}
+                                            className={`group flex items-center h-10 transition-colors mx-3 rounded-lg overflow-hidden relative ${
+                                                active
+                                                    ? 'bg-white/20 text-white'
+                                                    : 'text-green-100 hover:bg-white/10 hover:text-white'
+                                            }`}
+                                        >
+                                            {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full" />}
+                                            <div className="flex items-center justify-center w-12 h-full">
+                                                {renderIcon(item.icon)}
+                                            </div>
+                                            {!isCollapsed && (
+                                                <span className="text-sm font-medium tracking-wide">
+                                                    {item.title}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Logout */}

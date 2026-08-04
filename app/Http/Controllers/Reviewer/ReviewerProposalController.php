@@ -20,7 +20,7 @@ class ReviewerProposalController extends Controller
         $user = auth('api')->user();
         
         // If user is a research reviewer, they see all proposals in 'review' status (Pool)
-        if ($user->hasRole(['admin', 'reviewer_penelitian'])) {
+        if ($user->can('proposals.review') || $user->hasRole('admin')) {
             $proposals = Proposal::with(['scheme', 'user', 'reviews' => function($q) use ($user) {
                 $q->where('reviewer_id', $user->id);
             }])

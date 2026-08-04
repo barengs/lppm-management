@@ -70,11 +70,11 @@ function ScoreInput({ value, max, onChange, disabled }) {
 }
 
 export default function KknAssessment() {
-    const { token, user, hasAnyRole } = useAuth();
+    const { token, user, hasRole, hasPermission } = useAuth();
 
-    const isAdmin  = hasAnyRole(['admin', 'ketua_lppm', 'staff', 'staff_kkn']);
-    // DPL = dosen who is NOT admin/staff
-    const isDpl    = !isAdmin && hasAnyRole(['dpl', 'dosen', 'dpl_kkn']);
+    const isAdmin  = hasRole('admin') || hasPermission('kkn_grades.edit');
+    // DPL = anyone who is NOT admin/staff (they only see their assigned postos)
+    const isDpl    = !isAdmin;
     // LPPM can input article scores (admin/staff)
     const canArticle = isAdmin;
     // DPL or admin can input field scores

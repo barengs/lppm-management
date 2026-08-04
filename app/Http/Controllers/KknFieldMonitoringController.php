@@ -20,7 +20,7 @@ class KknFieldMonitoringController extends Controller
 
         // Limit access: Staff/Admin can see all, DPL can see for their postos
         $user = Auth::user();
-        if ($user->hasRole('dpl_kkn') && !$user->hasRole('admin')) {
+        if (!$user->can('kkn_field_monitorings.view') && !$user->hasRole('admin')) {
             $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
             $query->whereIn('kkn_posto_id', $postoIds);
         }
@@ -74,7 +74,7 @@ class KknFieldMonitoringController extends Controller
         $monitoring = KknFieldMonitoring::findOrFail($id);
         
         // Only owner or admin can delete
-        if ($monitoring->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+        if ($monitoring->user_id !== Auth::id() && !Auth::user()->can('kkn_field_monitorings.delete') && !Auth::user()->hasRole('admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
