@@ -63,6 +63,61 @@ export default function StudentKknReports() {
         }
     };
 
+    const handleFileChange = async (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
+
+        const convertToWebP = (file) => {
+            return new Promise((resolve) => {
+                if (!file.type.startsWith('image/') || file.type === 'image/webp') {
+                    return resolve(file);
+                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                                resolve(new File([blob], newFileName, { type: 'image/webp' }));
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/webp', 0.8);
+                    };
+                    img.onerror = () => resolve(file);
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => resolve(file);
+                reader.readAsDataURL(file);
+            });
+        };
+
+        try {
+            const processedFiles = await Promise.all(selectedFiles.map(convertToWebP));
+            const finalSize = processedFiles.reduce((acc, file) => acc + file.size, 0);
+
+            if (finalSize > MAX_TOTAL_SIZE) {
+                alert(`Total ukuran file melebihi batas 10MB (${(finalSize/1024/1024).toFixed(2)}MB).`);
+                e.target.value = null;
+                setFiles([]);
+                return;
+            }
+            
+            setFiles(processedFiles);
+        } catch (error) {
+            console.error("Error processing files:", error);
+            alert("Terjadi kesalahan saat memproses file.");
+            e.target.value = null;
+            setFiles([]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -276,7 +331,7 @@ export default function StudentKknReports() {
                                 <input 
                                     type="file" multiple
                                     className="w-full border rounded p-2 text-sm"
-                                    onChange={(e) => setFiles(e.target.files)}
+                                    onChange={handleFileChange}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Dapat upload multiple file (Foto/PDF). Max 10MB.</p>
                             </div>
