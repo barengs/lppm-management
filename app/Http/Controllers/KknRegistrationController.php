@@ -297,6 +297,10 @@ class KknRegistrationController extends Controller
             return response()->json(['message' => 'Hanya pendaftaran dengan status Pending atau Perlu Revisi yang dapat diedit.'], 403);
         }
 
+        if ($kknRegistration->kknPeriod && $kknRegistration->kknPeriod->departure_date && now()->startOfDay()->gte($kknRegistration->kknPeriod->departure_date)) {
+            return response()->json(['message' => 'Masa keberangkatan KKN telah dimulai. Data pendaftaran tidak dapat diubah lagi.'], 403);
+        }
+
         $rules = [
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'registration_type' => 'required|in:reguler,program_khusus,santri',

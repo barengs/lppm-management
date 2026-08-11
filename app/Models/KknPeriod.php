@@ -14,6 +14,8 @@ class KknPeriod extends Model
         'year',
         'start_date',
         'end_date',
+        'departure_date',
+        'report_deadline',
         'is_active',
         'description',
     ];
@@ -21,6 +23,8 @@ class KknPeriod extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'departure_date' => 'date',
+        'report_deadline' => 'date',
         'is_active' => 'boolean',
         'year' => 'integer',
     ];

@@ -23,7 +23,6 @@ export const authApi = baseApi.injectEndpoints({
                 } catch (error) {
                     const errorMessage = error.error?.data?.error || 'Login gagal. Periksa email dan password Anda.';
                     toast.error(errorMessage);
-                    throw error;
                 }
             },
             invalidatesTags: ['User'],
@@ -82,7 +81,6 @@ export const authApi = baseApi.injectEndpoints({
                 } catch (error) {
                     // Token refresh failed, logout
                     dispatch(logoutAction());
-                    throw error;
                 }
             },
         }),

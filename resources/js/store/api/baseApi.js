@@ -23,9 +23,14 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     let result = await baseQuery(args, api, extraOptions);
 
     if (result.error && result.error.status === 401) {
-        // Token expired, logout user
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        // Do not redirect if it's a login attempt
+        const isLogin = args === '/auth/login' || args?.url === '/auth/login';
+        
+        if (!isLogin) {
+            // Token expired or invalid, logout user
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
     }
 
     return result;

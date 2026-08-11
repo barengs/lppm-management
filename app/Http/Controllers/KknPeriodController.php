@@ -45,6 +45,8 @@ class KknPeriodController extends Controller
             'year' => 'required|integer|min:2020|max:2099',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'departure_date' => 'nullable|date|after_or_equal:end_date',
+            'report_deadline' => 'nullable|date|after_or_equal:departure_date',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -85,6 +87,8 @@ class KknPeriodController extends Controller
             'year' => 'sometimes|required|integer|min:2020|max:2099',
             'start_date' => 'sometimes|required|date',
             'end_date' => 'sometimes|required|date|after_or_equal:start_date',
+            'departure_date' => 'nullable|date',
+            'report_deadline' => 'nullable|date',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);

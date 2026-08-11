@@ -115,7 +115,7 @@ export default function Sidebar() {
                                             </div>
                                             {!isCollapsed && (
                                                 <span className="text-sm font-medium tracking-wide">
-                                                    {item.title}
+                                                    {item.title === 'Posko KKN' && hasPermission('kkn_postos.view') && !hasPermission('kkn_postos.manage_members') && !hasPermission('kkn_postos.edit') ? 'Posko Saya' : item.title}
                                                 </span>
                                             )}
                                         </Link>

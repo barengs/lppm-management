@@ -110,9 +110,16 @@ class ProfileController extends Controller
                     'gender' => $request->gender,
                 ]);
 
-                $hasActiveKkn = \App\Models\KknRegistration::where('student_id', $user->id)
+                $activeKkn = \App\Models\KknRegistration::where('student_id', $user->id)
                     ->where('status', 'approved')
-                    ->exists();
+                    ->with('kknPeriod')
+                    ->first();
+
+                if ($activeKkn && $activeKkn->kknPeriod && $activeKkn->kknPeriod->departure_date && now()->startOfDay()->gte($activeKkn->kknPeriod->departure_date)) {
+                    return response()->json(['message' => 'Anda tidak dapat mengubah profil karena masa keberangkatan KKN telah dimulai.'], 403);
+                }
+
+                $hasActiveKkn = $activeKkn ? true : false;
 
                 if (!$hasActiveKkn && $request->has('jacket_size')) {
                     $profileData['jacket_size'] = $request->jacket_size;

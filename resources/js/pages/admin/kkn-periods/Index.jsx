@@ -28,6 +28,8 @@ export default function KknPeriodsIndex() {
         year: new Date().getFullYear(),
         start_date: '',
         end_date: '',
+        departure_date: '',
+        report_deadline: '',
         description: '',
         is_active: false
     });
@@ -44,6 +46,8 @@ export default function KknPeriodsIndex() {
             year: new Date().getFullYear(),
             start_date: '',
             end_date: '',
+            departure_date: '',
+            report_deadline: '',
             description: '',
             is_active: false
         });
@@ -57,6 +61,8 @@ export default function KknPeriodsIndex() {
             year: period.year,
             start_date: period.start_date ? period.start_date.split('T')[0] : '',
             end_date: period.end_date ? period.end_date.split('T')[0] : '',
+            departure_date: period.departure_date ? period.departure_date.split('T')[0] : '',
+            report_deadline: period.report_deadline ? period.report_deadline.split('T')[0] : '',
             description: period.description || '',
             is_active: period.is_active
         });
@@ -113,6 +119,14 @@ export default function KknPeriodsIndex() {
                 const start = new Date(row.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 const end = new Date(row.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 return `${start} - ${end}`;
+            },
+        },
+        {
+            header: 'Keberangkatan & Laporan',
+            accessorFn: row => {
+                const dep = row.departure_date ? new Date(row.departure_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
+                const rep = row.report_deadline ? new Date(row.report_deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
+                return `Berangkat: ${dep} | Laporan: ${rep}`;
             },
         },
         {
@@ -235,6 +249,24 @@ export default function KknPeriodsIndex() {
                                         value={periodFormData.end_date}
                                         onChange={e => setPeriodFormData({ ...periodFormData, end_date: e.target.value })}
                                         required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Keberangkatan</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
+                                        value={periodFormData.departure_date}
+                                        onChange={e => setPeriodFormData({ ...periodFormData, departure_date: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Batas Laporan</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500"
+                                        value={periodFormData.report_deadline}
+                                        onChange={e => setPeriodFormData({ ...periodFormData, report_deadline: e.target.value })}
                                     />
                                 </div>
                             </div>
