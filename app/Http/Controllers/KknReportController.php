@@ -57,7 +57,12 @@ class KknReportController extends Controller
              $query->whereRaw('0 = 1'); 
         }
 
-        return response()->json($query->latest()->paginate(10));
+        if ($request->has('no_pagination') && $request->no_pagination) {
+            return response()->json(['data' => $query->latest()->get()]);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        return response()->json($query->latest()->paginate($perPage));
     }
 
     /**

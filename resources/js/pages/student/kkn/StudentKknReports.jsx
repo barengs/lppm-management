@@ -56,7 +56,8 @@ export default function StudentKknReports() {
                 params: {
                     kkn_posto_id: posto.id,
                     type: activeTab,
-                    reporter_type: reporterType
+                    reporter_type: reporterType,
+                    no_pagination: true
                 },
                 headers: { Authorization: `Bearer ${token}` }
             });

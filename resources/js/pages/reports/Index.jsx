@@ -87,7 +87,8 @@ export default function ReportsIndex() {
                 params: {
                     kkn_posto_id: selectedPosto.id,
                     type: activeTab,
-                    reporter_type: reporterType
+                    reporter_type: reporterType,
+                    no_pagination: true
                 },
                 headers: { Authorization: `Bearer ${token}` }
             });
