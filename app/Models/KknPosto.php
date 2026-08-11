@@ -54,6 +54,11 @@ class KknPosto extends Model
         return $this->hasMany(KknRegistration::class);
     }
 
+    public function fieldMonitors()
+    {
+        return $this->belongsToMany(User::class, 'kkn_field_monitor_assignments', 'kkn_posto_id', 'user_id');
+    }
+
     // Helper methods
     public function getKordes()
     {

@@ -48,6 +48,7 @@ class RolePermissionSeeder extends Seeder
             'pages',
             'settings',
             'kkn_periods',
+            'kkn_monitor_team', // Tim Monitoring: assign evaluators to postos
         ];
 
         // Custom/Extra Actions per module
@@ -198,6 +199,7 @@ class RolePermissionSeeder extends Seeder
                 // KKN Poskos
                 'kkn_postos.view', 'kkn_postos.create', 'kkn_postos.edit', 'kkn_postos.delete', 'kkn_postos.manage_members',
                 'kkn_field_monitorings.view', 'kkn_field_monitorings.create', 'kkn_field_monitorings.edit', 'kkn_field_monitorings.delete',
+                'kkn_monitor_team.view', // Tim Monitoring management page
                 // KKN Guidance
                 'kkn_guidance.view'
             ]);

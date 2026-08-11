@@ -31,11 +31,11 @@ export const masterDataApi = baseApi.injectEndpoints({
 
         // ============ Users ============
         getUsersByRole: builder.query({
-            query: (role) => ({
+            query: (params) => ({
                 url: '/users',
-                params: { role },
+                params: typeof params === 'string' ? { role: params } : params,
             }),
-            providesTags: (result, error, role) => [{ type: 'Users', id: role }],
+            providesTags: (result, error, params) => [{ type: 'Users', id: typeof params === 'string' ? params : JSON.stringify(params) }],
             keepUnusedDataFor: 300, // 5 minutes
         }),
     }),

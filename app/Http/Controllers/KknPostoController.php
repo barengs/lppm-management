@@ -29,10 +29,19 @@ class KknPostoController extends Controller
         }
         $query = KknPosto::with(['location', 'kknPeriod', 'fiscalYear', 'dpl', 'members']);
 
-        // RESTRICT: Non-admins (e.g. Dosen) only see their supervised Postos unless they have global monitoring/management permissions
-        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
-        if (!$isGlobalViewer && $user->hasRole('dosen')) {
-            $query->where('dpl_id', $user->id);
+        // RESTRICT: Non-admins (e.g. Dosen) only see their supervised Postos or assigned Postos
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer) {
+            $query->where(function($q) use ($user) {
+                if ($user->hasRole('dosen')) {
+                    $q->where('dpl_id', $user->id);
+                }
+                if ($user->can('kkn_field_monitorings.view')) {
+                    $q->orWhereHas('fieldMonitors', function($q2) use ($user) {
+                        $q2->where('users.id', $user->id);
+                    });
+                }
+            });
         }
 
         // Filters - use filled() to ignore empty strings
@@ -203,14 +212,19 @@ class KknPostoController extends Controller
             'kknPeriod',
             'fiscalYear',
             'dpl.dosenProfile',
+            'fieldMonitors.dosenProfile',
             'members.student.mahasiswaProfile.faculty',
             'members.student.mahasiswaProfile.studyProgram',
         ])->findOrFail($id);
 
         // Authorization for non-admins
-        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
-        if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        if (!$isGlobalViewer) {
+            $isDpl = $user->hasRole('dosen') && $posto->dpl_id === $user->id;
+            $isEvaluator = $user->can('kkn_field_monitorings.view') && $posto->fieldMonitors()->where('users.id', $user->id)->exists();
+            if (!$isDpl && !$isEvaluator) {
+                return response()->json(['message' => 'Unauthorized access to this posto'], 403);
+            }
         }
 
         $posto->syncStatus();
@@ -237,6 +251,14 @@ class KknPostoController extends Controller
                 'email' => $posto->dpl->email,
                 'phone' => $posto->dpl->dosenProfile?->phone,
             ] : null,
+            'field_monitors' => $posto->fieldMonitors->map(function ($monitor) {
+                return [
+                    'id' => $monitor->id,
+                    'name' => $monitor->name,
+                    'email' => $monitor->email,
+                    'phone' => $monitor->dosenProfile?->phone,
+                ];
+            }),
             'status' => $posto->status,
             'start_date' => $posto->start_date,
             'end_date' => $posto->end_date,
@@ -272,7 +294,7 @@ class KknPostoController extends Controller
         }
 
         // Authorization for non-admins
-        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('reports.view') || $user->can('kkn_postos.edit');
         if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
@@ -312,7 +334,7 @@ class KknPostoController extends Controller
         }
 
         // Authorization for non-admins
-        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('kkn_field_monitorings.view') || $user->can('reports.view') || $user->can('kkn_postos.edit');
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('reports.view') || $user->can('kkn_postos.edit');
         if (!$isGlobalViewer && $user->hasRole('dosen') && $posto->dpl_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized access to this posto'], 403);
         }
@@ -796,5 +818,157 @@ class KknPostoController extends Controller
             });
 
         return response()->json($members);
+    }
+
+    /**
+     * Assign evaluator to posto
+     */
+    public function assignMonitor(Request $request, $id)
+    {
+        $user = auth('api')->user();
+        if (!$user->hasRole('admin') && !$user->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $evaluator = User::findOrFail($validated['user_id']);
+        if (!$evaluator->can('kkn_field_monitorings.view') && !$evaluator->hasRole('admin')) {
+            return response()->json(['message' => 'User tidak memiliki izin Evaluator (kkn_field_monitorings.view)'], 422);
+        }
+
+        $posto = KknPosto::findOrFail($id);
+        $posto->fieldMonitors()->syncWithoutDetaching([$validated['user_id']]);
+
+        return response()->json([
+            'message' => 'Evaluator berhasil ditugaskan',
+            'evaluator' => [
+                'id' => $evaluator->id,
+                'name' => $evaluator->name,
+                'email' => $evaluator->email,
+                'phone' => $evaluator->dosenProfile?->phone,
+            ]
+        ]);
+    }
+
+    /**
+     * Remove evaluator from posto
+     */
+    public function removeMonitor($id, $userId)
+    {
+        $user = auth('api')->user();
+        if (!$user->hasRole('admin') && !$user->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $posto = KknPosto::findOrFail($id);
+        $posto->fieldMonitors()->detach($userId);
+
+        return response()->noContent();
+    }
+
+    /**
+     * List all evaluator dosen with their assigned postos.
+     * Used by the Tim Monitoring management page.
+     * GET /api/kkn/monitors
+     */
+    public function monitorIndex(Request $request)
+    {
+        $authUser = auth('api')->user();
+        if (!$authUser->hasRole('admin') && !$authUser->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // All users who have the evaluator permission (directly or via role)
+        $evaluators = User::where(function ($q) {
+                $q->whereHas('permissions', fn($q2) => $q2->where('name', 'kkn_field_monitorings.view'))
+                  ->orWhereHas('roles.permissions', fn($q2) => $q2->where('name', 'kkn_field_monitorings.view'));
+            })
+            ->with(['dosenProfile'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($evaluator) use ($request) {
+                // Get postos assigned to this evaluator, optionally filtered by period
+                $postoQuery = KknPosto::whereHas('fieldMonitors', fn($q) => $q->where('users.id', $evaluator->id))
+                    ->with(['location', 'kknPeriod', 'members']);
+
+                if ($request->has('kkn_period_id') && $request->kkn_period_id) {
+                    $postoQuery->where('kkn_period_id', $request->kkn_period_id);
+                }
+
+                $postos = $postoQuery->get()->map(fn($p) => [
+                    'id'         => $p->id,
+                    'name'       => $p->name,
+                    'location'   => $p->location?->name,
+                    'period'     => $p->kknPeriod?->name,
+                    'status'     => $p->status,
+                    'member_count' => $p->members->count(),
+                ]);
+
+                return [
+                    'id'          => $evaluator->id,
+                    'name'        => $evaluator->name,
+                    'email'       => $evaluator->email,
+                    'phone'       => $evaluator->dosenProfile?->phone,
+                    'nidn'        => $evaluator->dosenProfile?->nidn,
+                    'posto_count' => $postos->count(),
+                    'postos'      => $postos,
+                ];
+            });
+
+        return response()->json($evaluators);
+    }
+
+    /**
+     * Bulk-assign one evaluator to multiple postos (append, not replace).
+     * POST /api/kkn/monitors/bulk-assign
+     * Body: { user_id: int, posto_ids: int[] }
+     */
+    public function bulkAssignMonitor(Request $request)
+    {
+        $authUser = auth('api')->user();
+        if (!$authUser->hasRole('admin') && !$authUser->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'user_id'    => 'required|exists:users,id',
+            'posto_ids'  => 'required|array|min:1',
+            'posto_ids.*' => 'exists:kkn_postos,id',
+        ]);
+
+        $evaluator = User::findOrFail($validated['user_id']);
+        if (!$evaluator->can('kkn_field_monitorings.view') && !$evaluator->hasRole('admin')) {
+            return response()->json(['message' => 'User tidak memiliki izin Evaluator (kkn_field_monitorings.view)'], 422);
+        }
+
+        $postos = KknPosto::whereIn('id', $validated['posto_ids'])->get();
+        foreach ($postos as $posto) {
+            $posto->fieldMonitors()->syncWithoutDetaching([$validated['user_id']]);
+        }
+
+        return response()->json([
+            'message'      => 'Evaluator berhasil ditugaskan ke ' . $postos->count() . ' posko',
+            'assigned_count' => $postos->count(),
+        ]);
+    }
+
+    /**
+     * Remove an evaluator from a specific posto via the Tim Monitoring page.
+     * DELETE /api/kkn/monitors/{postoId}/evaluators/{userId}
+     */
+    public function removeMonitorFromPosto($postoId, $userId)
+    {
+        $authUser = auth('api')->user();
+        if (!$authUser->hasRole('admin') && !$authUser->can('kkn_postos.edit')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $posto = KknPosto::findOrFail($postoId);
+        $posto->fieldMonitors()->detach($userId);
+
+        return response()->noContent();
     }
 }

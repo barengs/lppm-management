@@ -394,7 +394,54 @@ export const kknApi = baseApi.injectEndpoints({
             ],
         }),
 
-        // ============ KKN Periods & Waves ============
+        assignFieldMonitor: builder.mutation({
+            query: ({ postoId, user_id }) => ({
+                url: `/kkn/postos/${postoId}/monitors`,
+                method: 'POST',
+                body: { user_id },
+            }),
+            invalidatesTags: (result, error, { postoId }) => [
+                { type: 'Posto', id: postoId },
+            ],
+        }),
+
+        removeFieldMonitor: builder.mutation({
+            query: ({ postoId, userId }) => ({
+                url: `/kkn/postos/${postoId}/monitors/${userId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: (result, error, { postoId }) => [
+                { type: 'Posto', id: postoId },
+            ],
+        }),
+
+        // ============ Tim Monitoring (Evaluator Management) ============
+
+        getMonitorTeam: builder.query({
+            query: (params = {}) => ({
+                url: '/kkn/monitors',
+                params,
+            }),
+            providesTags: ['MonitorTeam'],
+        }),
+
+        bulkAssignMonitor: builder.mutation({
+            query: ({ user_id, posto_ids }) => ({
+                url: '/kkn/monitors/bulk-assign',
+                method: 'POST',
+                body: { user_id, posto_ids },
+            }),
+            invalidatesTags: ['MonitorTeam', 'Postos'],
+        }),
+
+        removeMonitorFromPosto: builder.mutation({
+            query: ({ postoId, userId }) => ({
+                url: `/kkn/monitors/${postoId}/evaluators/${userId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['MonitorTeam', 'Postos'],
+        }),
+
         getKknPeriods: builder.query({
             query: (params = {}) => ({
                 url: '/kkn-periods',
@@ -666,6 +713,13 @@ export const {
     useExportPostosExcelMutation,
     useGetAvailableStudentsQuery,
     useAddPostoMemberMutation,
+    useAssignFieldMonitorMutation,
+    useRemoveFieldMonitorMutation,
+
+    // Tim Monitoring (Evaluator Management)
+    useGetMonitorTeamQuery,
+    useBulkAssignMonitorMutation,
+    useRemoveMonitorFromPostoMutation,
 
     // Assessments/Grades
     useGetKknGradesQuery,

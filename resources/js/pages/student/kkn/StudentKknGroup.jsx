@@ -133,6 +133,29 @@ export default function StudentKknGroup() {
         );
     }
 
+    if (error === 'fetch_failed') {
+        return (
+            <div className="space-y-6">
+                <div className="mb-6">
+                    <Link to={hasRole('mahasiswa') ? "/dashboard/kkn" : "/dashboard"} className="text-green-600 hover:text-green-700 text-sm font-medium mb-2 inline-block">
+                        ← Kembali ke Dashboard
+                    </Link>
+                    <h1 className="text-3xl font-bold text-gray-900">Posko KKN</h1>
+                </div>
+
+                <div className="bg-red-50 border-2 border-red-200 rounded-sm p-8 text-center">
+                    <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-red-900 mb-2">
+                        Akses Ditolak / Gagal Memuat Data
+                    </h2>
+                    <p className="text-red-800 mb-4">
+                        Anda tidak memiliki akses ke halaman ini, atau terjadi kesalahan pada server.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}

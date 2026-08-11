@@ -130,4 +130,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(OrganizationMember::class);
     }
+
+    public function assignedFieldMonitorPostos()
+    {
+        return $this->belongsToMany(KknPosto::class, 'kkn_field_monitor_assignments', 'user_id', 'kkn_posto_id');
+    }
 }

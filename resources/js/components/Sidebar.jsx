@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSelector, useDispatch } from 'react-redux';
@@ -19,7 +19,7 @@ import * as LucideIcons from 'lucide-react';
 
 export default function Sidebar() {
     const dispatch = useDispatch();
-    const { logout, user, hasRole, can } = useAuth();
+    const { logout, user, hasRole, hasPermission } = useAuth();
     const [rawMenuGroups, setRawMenuGroups] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +49,7 @@ export default function Sidebar() {
     const menuGroups = rawMenuGroups.map(group => {
         const filteredItems = (group.children || []).filter(item => {
             if (!item.permission_name) return true;
-            return can(item.permission_name);
+            return hasPermission ? hasPermission(item.permission_name) : true;
         });
         if (filteredItems.length === 0) return null;
         return { ...group, items: filteredItems };

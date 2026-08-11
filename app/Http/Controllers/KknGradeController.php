@@ -36,7 +36,13 @@ class KknGradeController extends Controller
             $query->where('kkn_location_id', $request->kkn_location_id);
         }
         if ($request->filled('kkn_posto_id')) {
-            $query->where('kkn_posto_id', $request->kkn_posto_id);
+            $postoId = $request->kkn_posto_id;
+            $query->where(function($q) use ($postoId) {
+                $q->where('kkn_posto_id', $postoId)
+                  ->orWhereHas('student.kknPostoMembers', function($q2) use ($postoId) {
+                      $q2->where('kkn_posto_id', $postoId)->where('status', 'active');
+                  });
+            });
         }
         if ($request->filled('faculty_id')) {
             $query->whereHas('student.mahasiswaProfile', fn($q) =>
@@ -87,10 +93,21 @@ class KknGradeController extends Controller
             'kknPosto',
         ])
         ->where('status', 'approved')
-        ->whereIn('kkn_posto_id', $postoIds);
+        ->where(function($q) use ($postoIds) {
+            $q->whereIn('kkn_posto_id', $postoIds)
+              ->orWhereHas('student.kknPostoMembers', function($q2) use ($postoIds) {
+                  $q2->whereIn('kkn_posto_id', $postoIds)->where('status', 'active');
+              });
+        });
 
         if ($request->filled('kkn_posto_id')) {
-            $query->where('kkn_posto_id', $request->kkn_posto_id);
+            $postoId = $request->kkn_posto_id;
+            $query->where(function($q) use ($postoId) {
+                $q->where('kkn_posto_id', $postoId)
+                  ->orWhereHas('student.kknPostoMembers', function($q2) use ($postoId) {
+                      $q2->where('kkn_posto_id', $postoId)->where('status', 'active');
+                  });
+            });
         }
 
         $registrations = $query->get();

@@ -9,7 +9,10 @@ import {
     useRemovePostoMemberMutation,
     useUpdatePostoStatusMutation,
     useUpdatePostoMemberMutation,
+    useAssignFieldMonitorMutation,
+    useRemoveFieldMonitorMutation,
 } from '../../store/api/kknApi';
+import { useGetUsersByRoleQuery } from '../../store/api/masterDataApi';
 
 export default function PostoDetail() {
     const { id } = useParams();
@@ -23,8 +26,22 @@ export default function PostoDetail() {
     const [removePostoMember] = useRemovePostoMemberMutation();
     const [updatePostoStatus] = useUpdatePostoStatusMutation();
     const [updatePostoMember] = useUpdatePostoMemberMutation();
+    const [assignEvaluator, { isLoading: isAssigning }] = useAssignFieldMonitorMutation();
+    const [removeEvaluator] = useRemoveFieldMonitorMutation();
 
     const canManage = hasRole('admin') || (hasRole('dosen') && posto?.dpl?.id === user?.id) || hasRole('staff_kkn');
+    const canManageEvaluator = hasRole('admin') || hasRole('staff_kkn');
+
+    // Evaluator Modal State
+    const [showEvaluatorModal, setShowEvaluatorModal] = React.useState(false);
+    const [selectedEvaluator, setSelectedEvaluator] = React.useState('');
+    const { data: dosenData } = useGetUsersByRoleQuery(
+        { role: 'dosen', permission: 'kkn_field_monitorings.view' },
+        { skip: !showEvaluatorModal }
+    );
+    
+    // Fallback if pagination is returned
+    const dosenList = dosenData?.data || dosenData || [];
 
 
     const handleRemoveMember = async (memberId) => {
@@ -48,6 +65,28 @@ export default function PostoDetail() {
         } catch (error) {
             console.error('Failed to update status:', error);
             toast.error(error.data?.message || 'Gagal update status');
+        }
+    };
+
+    const handleAssignEvaluator = async () => {
+        if (!selectedEvaluator) return toast.warning('Pilih evaluator terlebih dahulu');
+        try {
+            await assignEvaluator({ postoId: id, user_id: selectedEvaluator }).unwrap();
+            toast.success('Evaluator berhasil ditambahkan');
+            setShowEvaluatorModal(false);
+            setSelectedEvaluator('');
+        } catch (err) {
+            toast.error(err.data?.message || 'Gagal menambahkan evaluator');
+        }
+    };
+
+    const handleRemoveEvaluator = async (userId) => {
+        if (!confirm('Hapus evaluator ini?')) return;
+        try {
+            await removeEvaluator({ postoId: id, userId }).unwrap();
+            toast.success('Evaluator berhasil dihapus');
+        } catch (err) {
+            toast.error('Gagal menghapus evaluator');
         }
     };
 
@@ -197,8 +236,7 @@ export default function PostoDetail() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
                 {/* Header */}
                 <div className="mb-4">
                     <button
@@ -304,6 +342,52 @@ export default function PostoDetail() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Tim Monitoring / Evaluator */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                            <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center justify-between">
+                                Evaluator Lapangan
+                                {canManageEvaluator && (
+                                    <button 
+                                        onClick={() => setShowEvaluatorModal(true)}
+                                        className="text-xs text-green-600 hover:text-green-700 font-medium"
+                                    >
+                                        + Tambah
+                                    </button>
+                                )}
+                            </h2>
+                            {posto.field_monitors && posto.field_monitors.length > 0 ? (
+                                <div className="space-y-3">
+                                    {posto.field_monitors.map(monitor => (
+                                        <div key={monitor.id} className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                                            <div className="flex items-start">
+                                                <User className="w-4 h-4 text-gray-400 mr-2 mt-0.5" />
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">{monitor.name}</div>
+                                                    {monitor.phone && (
+                                                        <div className="flex items-center gap-1.5 text-gray-500 mt-0.5">
+                                                            <Phone size={12} className="flex-shrink-0" />
+                                                            <span className="text-xs">{monitor.phone}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {canManageEvaluator && (
+                                                <button 
+                                                    onClick={() => handleRemoveEvaluator(monitor.id)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                    title="Hapus Evaluator"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic">Belum ada evaluator ditugaskan.</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Right Column - Members */}
@@ -350,7 +434,60 @@ export default function PostoDetail() {
                         </div>
                     </div>
                 </div>
-            </div>
+
+            {/* Modal Tambah Evaluator */}
+            {showEvaluatorModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black bg-opacity-50"
+                        onClick={() => setShowEvaluatorModal(false)}
+                    />
+                    {/* Dialog */}
+                    <div className="relative z-10 bg-white rounded-lg shadow-xl w-full max-w-lg">
+                        <div className="px-6 pt-6 pb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                Tambah Evaluator Lapangan
+                            </h3>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Pilih Dosen Evaluator
+                                </label>
+                                <select
+                                    value={selectedEvaluator}
+                                    onChange={(e) => setSelectedEvaluator(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                >
+                                    <option value="">-- Pilih Dosen --</option>
+                                    {Array.isArray(dosenList) && dosenList.map(dosen => (
+                                        <option key={dosen.id} value={dosen.id}>
+                                            {dosen.name} {dosen.email ? `(${dosen.email})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Catatan: Dosen yang dipilih harus memiliki hak akses 'Evaluator / Tim Monitoring Lapangan'.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowEvaluatorModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleAssignEvaluator}
+                                disabled={isAssigning}
+                                className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                            >
+                                {isAssigning ? 'Menyimpan...' : 'Simpan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

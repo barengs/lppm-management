@@ -15,6 +15,7 @@ import {
     Trash2
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
 import {
     useGetPostosQuery,
     useGetFieldMonitoringsQuery,
@@ -71,12 +72,28 @@ export default function FieldMonitoring() {
         );
     }, [searchTerm, postos]);
 
-    const handleImageChange = (e) => {
+    const handleImageChange = async (e) => {
         const files = Array.from(e.target.files);
-        setSelectedImages(prev => [...prev, ...files]);
-        
-        const newPreviews = files.map(file => URL.createObjectURL(file));
-        setImagePreviews(prev => [...prev, ...newPreviews]);
+        const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            fileType: 'image/webp'
+        };
+
+        try {
+            const compressedFiles = await Promise.all(
+                files.map(file => imageCompression(file, options))
+            );
+            
+            setSelectedImages(prev => [...prev, ...compressedFiles]);
+            
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+        } catch (error) {
+            console.error("Error compressing image", error);
+            toast.error("Gagal mengkompresi gambar.");
+        }
     };
 
     const removeImage = (index) => {

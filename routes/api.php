@@ -234,8 +234,19 @@ Route::middleware(['auth:api'])->group(function () {
         Route::put('/{id}/members/{memberId}', [App\Http\Controllers\KknPostoController::class, 'updateMember']);
         Route::delete('/{id}/members/{memberId}', [App\Http\Controllers\KknPostoController::class, 'removeMember']);
         
+        // Monitor Management (per-posto)
+        Route::post('/{id}/monitors', [App\Http\Controllers\KknPostoController::class, 'assignMonitor']);
+        Route::delete('/{id}/monitors/{userId}', [App\Http\Controllers\KknPostoController::class, 'removeMonitor']);
+        
         // Bulk Operations
         Route::post('/{id}/assign-students', [App\Http\Controllers\KknPostoController::class, 'bulkAssignStudents']);
+    });
+
+    // Tim Monitoring (Evaluator Management)
+    Route::prefix('kkn/monitors')->group(function () {
+        Route::get('/', [App\Http\Controllers\KknPostoController::class, 'monitorIndex']);
+        Route::post('/bulk-assign', [App\Http\Controllers\KknPostoController::class, 'bulkAssignMonitor']);
+        Route::delete('/{postoId}/evaluators/{userId}', [App\Http\Controllers\KknPostoController::class, 'removeMonitorFromPosto']);
     });
     
     // Journal Consultation (Cek Jurnal)

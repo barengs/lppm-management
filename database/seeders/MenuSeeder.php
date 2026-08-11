@@ -78,6 +78,7 @@ class MenuSeeder extends Seeder
                 ['title' => 'Penilaian', 'url' => '/kkn/assessment', 'icon' => 'Award', 'permission_name' => 'kkn_grades.view'],
                 ['title' => 'Pengaturan Penilaian', 'url' => '/kkn/grading-settings', 'icon' => 'SlidersHorizontal', 'permission_name' => 'kkn_grades.settings'],
                 ['title' => 'Monitoring Lapangan', 'url' => '/kkn/monitoring-lapangan', 'icon' => 'TrendingUp', 'permission_name' => 'kkn_field_monitorings.view'],
+                ['title' => 'Tim Monitoring', 'url' => '/kkn/tim-monitoring', 'icon' => 'ShieldCheck', 'permission_name' => 'kkn_monitor_team.view'],
                 ['title' => 'Laporan Monitoring', 'url' => '/reports', 'icon' => 'BarChart2', 'permission_name' => 'reports.view_all'],
             ],
             'Master Data' => [

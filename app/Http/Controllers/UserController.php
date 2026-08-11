@@ -31,6 +31,19 @@ class UserController extends Controller
             });
         }
 
+        // Filter by permission if provided (e.g. ?permission=kkn_field_monitorings.view)
+        // Checks both direct user permissions AND permissions inherited via roles
+        if ($request->has('permission')) {
+            $permission = $request->permission;
+            $query->where(function ($q) use ($permission) {
+                $q->whereHas('permissions', function ($q2) use ($permission) {
+                    $q2->where('name', $permission);
+                })->orWhereHas('roles.permissions', function ($q2) use ($permission) {
+                    $q2->where('name', $permission);
+                });
+            });
+        }
+
         return response()->json($query->get());
     }
 

@@ -97,6 +97,7 @@ import JournalShow from './pages/journal/Show';
 import KknAssessment from './pages/kkn/Assessment';
 import KknGradingSettings from './pages/kkn/GradingSettings';
 import FieldMonitoring from './pages/kkn/FieldMonitoring';
+import MonitoringTeam from './pages/kkn/MonitoringTeam';
 
 import PrivateRoute from './components/PrivateRoute';
 import { Provider, useSelector, useDispatch } from 'react-redux';
@@ -272,6 +273,7 @@ function App() {
                         <Route path="kkn/assessment" element={<KknAssessment />} />
                         <Route path="kkn/grading-settings" element={<KknGradingSettings />} />
                         <Route path="kkn/monitoring-lapangan" element={<FieldMonitoring />} />
+                        <Route path="kkn/tim-monitoring" element={<MonitoringTeam />} />
                         <Route path="kkn/document-templates" element={<KknDocumentTemplates />} />
 
                         {/* CMS */}

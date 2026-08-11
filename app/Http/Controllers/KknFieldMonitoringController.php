@@ -18,11 +18,23 @@ class KknFieldMonitoringController extends Controller
             $query->where('kkn_posto_id', $request->kkn_posto_id);
         }
 
-        // Limit access: Staff/Admin can see all, DPL can see for their postos
+        // Limit access: Admin/Staff can see all.
         $user = Auth::user();
-        if (!$user->can('kkn_field_monitorings.view') && !$user->hasRole('admin')) {
-            $postoIds = \App\Models\KknPosto::where('dpl_id', $user->id)->pluck('id');
-            $query->whereIn('kkn_posto_id', $postoIds);
+        $isGlobalViewer = $user->hasRole('admin') || $user->can('kkn_postos.manage_members') || $user->can('reports.view');
+        
+        if (!$isGlobalViewer) {
+            $query->where(function($q) use ($user) {
+                if ($user->hasRole('dosen')) {
+                    $q->whereHas('posto', function($q2) use ($user) {
+                        $q2->where('dpl_id', $user->id);
+                    });
+                }
+                if ($user->can('kkn_field_monitorings.view')) {
+                    $q->orWhereHas('posto.fieldMonitors', function($q2) use ($user) {
+                        $q2->where('users.id', $user->id);
+                    });
+                }
+            });
         }
 
         return response()->json($query->latest()->paginate(10));

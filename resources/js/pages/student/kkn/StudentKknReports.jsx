@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
 import { useAuth } from '../../../hooks/useAuth';
 import { FileText, Calendar, Upload, Clock, CheckCircle, XCircle } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
@@ -21,6 +23,7 @@ export default function StudentKknReports() {
     const [week, setWeek] = useState(1);
     const [files, setFiles] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editReportId, setEditReportId] = useState(null);
 
     // 1. Fetch Posto
     useEffect(() => {
@@ -67,39 +70,26 @@ export default function StudentKknReports() {
         const selectedFiles = Array.from(e.target.files);
         const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB
 
-        const convertToWebP = (file) => {
-            return new Promise((resolve) => {
-                if (!file.type.startsWith('image/') || file.type === 'image/webp') {
-                    return resolve(file);
-                }
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-                                resolve(new File([blob], newFileName, { type: 'image/webp' }));
-                            } else {
-                                resolve(file);
-                            }
-                        }, 'image/webp', 0.8);
-                    };
-                    img.onerror = () => resolve(file);
-                    img.src = event.target.result;
-                };
-                reader.onerror = () => resolve(file);
-                reader.readAsDataURL(file);
-            });
+        const compressFile = async (file) => {
+            if (!file.type.startsWith('image/') || file.type === 'image/webp') {
+                return file;
+            }
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+                fileType: 'image/webp'
+            };
+            try {
+                return await imageCompression(file, options);
+            } catch (error) {
+                console.error("Compression error", error);
+                return file;
+            }
         };
 
         try {
-            const processedFiles = await Promise.all(selectedFiles.map(convertToWebP));
+            const processedFiles = await Promise.all(selectedFiles.map(compressFile));
             const finalSize = processedFiles.reduce((acc, file) => acc + file.size, 0);
 
             if (finalSize > MAX_TOTAL_SIZE) {
@@ -135,20 +125,31 @@ export default function StudentKknReports() {
                 formData.append('attachments[]', files[i]);
             }
 
-            await axios.post('/api/kkn-reports', formData, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            if (editReportId) {
+                // For update, we might need to send _method=PUT or use axios.post with _method
+                formData.append('_method', 'PUT');
+                await axios.post(`/api/kkn-reports/${editReportId}`, formData, {
+                    headers: { 
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            } else {
+                await axios.post('/api/kkn-reports', formData, {
+                    headers: { 
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            }
 
             setIsModalOpen(false);
             resetForm();
             fetchReports();
-            alert("Laporan berhasil dikirim!");
+            alert(`Laporan berhasil ${editReportId ? 'diperbarui' : 'dikirim'}!`);
         } catch (error) {
             console.error(error);
-            alert("Gagal mengirim laporan.");
+            alert(`Gagal ${editReportId ? 'memperbarui' : 'mengirim'} laporan.`);
         }
         setIsSubmitting(false);
     };
@@ -158,6 +159,16 @@ export default function StudentKknReports() {
         setDescription('');
         setWeek(1);
         setFiles([]);
+        setEditReportId(null);
+    };
+
+    const handleEdit = (report) => {
+        setEditReportId(report.id);
+        setTitle(report.title);
+        setDescription(report.description);
+        setWeek(report.week || 1);
+        setFiles([]); // For simplicity, they need to reupload or we just don't touch files if empty
+        setIsModalOpen(true);
     };
 
     // Detail State
@@ -197,12 +208,22 @@ export default function StudentKknReports() {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => (
-                <button 
-                    onClick={() => setSelectedReport(row.original)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                    Lihat Detail
-                </button>
+                <div className="flex space-x-3 items-center">
+                    <button 
+                        onClick={() => setSelectedReport(row.original)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                        Lihat Detail
+                    </button>
+                    {!isDosen && (row.original.status === 'revised' || row.original.status === 'rejected') && (
+                        <button 
+                            onClick={() => handleEdit(row.original)}
+                            className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
+                        >
+                            Revisi
+                        </button>
+                    )}
+                </div>
             )
         }
     ], [activeTab]);
@@ -266,7 +287,7 @@ export default function StudentKknReports() {
                 </h2>
                 {(!isDosen || reporterType === 'dosen') && (
                     <button 
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => { resetForm(); setIsModalOpen(true); }}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center shadow-sm"
                     >
                         <Upload size={18} className="mr-2" /> 
@@ -337,13 +358,13 @@ export default function StudentKknReports() {
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4 border-t">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded">Batal</button>
+                                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-4 py-2 border rounded">Batal</button>
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
                                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
                                 >
-                                    {isSubmitting ? 'Mengirim...' : 'Kirim Laporan'}
+                                    {isSubmitting ? 'Mengirim...' : (editReportId ? 'Simpan Perubahan' : 'Kirim Laporan')}
                                 </button>
                             </div>
                         </form>

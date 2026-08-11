@@ -4,6 +4,7 @@ import api from '../../../utils/api';
 import { useAuth } from '../../../hooks/useAuth';
 import { CheckCircle, Upload, Save, User as UserIcon, FileText, Camera } from 'lucide-react';
 import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
 
 export default function KknStudentRegistration() {
     const { token, user, hasRole } = useAuth();
@@ -168,8 +169,25 @@ export default function KknStudentRegistration() {
         }
     };
 
-    const handlePhotoChange = (e) => {
-        setFiles({ ...files, photo: e.target.files[0] });
+    const handlePhotoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 800,
+            useWebWorker: true,
+            fileType: 'image/webp'
+        };
+
+        try {
+            const compressedFile = await imageCompression(file, options);
+            setFiles({ ...files, photo: compressedFile });
+        } catch (error) {
+            console.error("Error compressing image", error);
+            toast.error("Gagal mengkompresi foto.");
+            setFiles({ ...files, photo: file });
+        }
     };
 
     const handleDocumentFileChange = (index, file) => {
