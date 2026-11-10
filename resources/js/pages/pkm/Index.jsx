@@ -1,28 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, FileHeart, ChevronRight, Calendar, DollarSign, Clock, Eye, ClipboardCheck, Trash2 } from 'lucide-react';
+import { Plus, FileHeart, Eye, ClipboardCheck, Trash2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import ReportModal from '../proposals/components/ReportModal';
 import FullProposalPreviewModal from '../../components/pdf/FullProposalPreviewModal';
+import DataTable from '../../components/DataTable';
 
 const STATUS_MAP = {
-    draft:     { label: 'Draft',       bg: 'bg-gray-100',   text: 'text-gray-700' },
-    submitted: { label: 'Terkirim',    bg: 'bg-blue-100',   text: 'text-blue-700' },
-    review:    { label: 'Direview',    bg: 'bg-yellow-100', text: 'text-yellow-700' },
-    accepted:  { label: 'Diterima',   bg: 'bg-green-100',  text: 'text-green-700' },
-    rejected:  { label: 'Ditolak',    bg: 'bg-red-100',    text: 'text-red-700' },
+    draft:     { label: 'Draft',    bg: 'bg-gray-100',   text: 'text-gray-700' },
+    submitted: { label: 'Terkirim', bg: 'bg-blue-100',   text: 'text-blue-700' },
+    review:    { label: 'Direview', bg: 'bg-yellow-100', text: 'text-yellow-700' },
+    accepted:  { label: 'Diterima', bg: 'bg-green-100',  text: 'text-green-700' },
+    rejected:  { label: 'Ditolak',  bg: 'bg-red-100',    text: 'text-red-700' },
 };
 
-const STEP_LABELS = [
-    'Identitas', 'Substansi', 'Tim Pengusul', 'Mitra', 'Jadwal', 'SDGs', 'Bidang', 'Luaran', 'RAB', 'Dokumen',
-];
+const TOTAL_STEPS = 10;
 
 export default function PkmIndex() {
-    const navigate = useNavigate();
     const { token, hasPermission } = useAuth();
     const [proposals, setProposals] = useState([]);
-    const [loading,   setLoading]   = useState(true);
+    const [loading, setLoading] = useState(true);
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -36,160 +35,216 @@ export default function PkmIndex() {
     };
 
     useEffect(() => {
-        fetchData();
+        if (token) fetchData();
     }, [token]);
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Apakah Anda yakin ingin memindahkan proposal ini ke tempat sampah?")) return;
+        if (!window.confirm('Apakah Anda yakin ingin memindahkan proposal ini ke tempat sampah?')) return;
         try {
             await axios.delete(`/api/admin_pkm/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            // We don't have toast imported here yet, let's just refetch
+            toast.success('Proposal PKM berhasil dipindahkan ke tempat sampah.');
             fetchData();
         } catch (err) {
-            console.error("Gagal menghapus proposal.");
+            toast.error(err.response?.data?.message || 'Gagal menghapus proposal.');
         }
     };
+
+    const canManageTrash = Boolean(hasPermission && hasPermission('manage_pkm_trash'));
+
+    const columns = useMemo(() => [
+        {
+            accessorKey: 'id',
+            header: 'ID',
+            cell: ({ row }) => (
+                <span className="text-xs font-semibold text-gray-500">#{row.original.id}</span>
+            ),
+        },
+        {
+            id: 'title',
+            accessorFn: (row) => `${row.title || ''} ${row.scheme_group || ''} ${row.user?.name || ''}`,
+            header: 'Judul Proposal',
+            cell: ({ row }) => {
+                const p = row.original;
+                return (
+                    <div className="max-w-md">
+                        <Link
+                            to={p.status === 'draft' ? `/pkm/create/${p.id}` : `/pkm/${p.id}`}
+                            className="font-semibold text-gray-800 hover:text-green-700 line-clamp-2 transition-colors"
+                        >
+                            {p.title}
+                        </Link>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                            {p.scheme_group && <span>{p.scheme_group}</span>}
+                            {p.scheme_group && p.user?.name && <span>•</span>}
+                            {p.user?.name && <span>{p.user.name}</span>}
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            id: 'fiscal_year',
+            accessorFn: (row) => row.fiscal_year?.year || '-',
+            header: 'Tahun',
+            cell: ({ row }) => (
+                <span className="text-gray-700 whitespace-nowrap">{row.original.fiscal_year?.year || '-'}</span>
+            ),
+        },
+        {
+            accessorKey: 'budget',
+            header: 'Anggaran',
+            cell: ({ row }) => (
+                <span className="font-medium text-gray-800 whitespace-nowrap">
+                    Rp {Number(row.original.budget || 0).toLocaleString('id-ID')}
+                </span>
+            ),
+        },
+        {
+            accessorKey: 'status',
+            header: 'Status',
+            cell: ({ row }) => {
+                const p = row.original;
+                const status = STATUS_MAP[p.status] || STATUS_MAP.draft;
+                const step = Math.min(p.current_step || 0, TOTAL_STEPS);
+                const stepPct = Math.min(100, Math.round((step / TOTAL_STEPS) * 100));
+
+                return (
+                    <div className="space-y-1 min-w-[110px]">
+                        <span className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${status.bg} ${status.text}`}>
+                            {status.label}
+                        </span>
+                        {p.status === 'draft' && (
+                            <div>
+                                <div className="text-[11px] text-gray-500">
+                                    Tahap {step}/{TOTAL_STEPS} ({stepPct}%)
+                                </div>
+                                <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden mt-0.5">
+                                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${stepPct}%` }} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: 'created_at',
+            header: 'Tanggal',
+            cell: ({ row }) => (
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {new Date(row.original.created_at).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                    })}
+                </span>
+            ),
+        },
+        {
+            id: 'actions',
+            header: 'Aksi',
+            enableSorting: false,
+            cell: ({ row }) => {
+                const p = row.original;
+                return (
+                    <div className="flex items-center gap-1">
+                        <Link
+                            to={p.status === 'draft' ? `/pkm/create/${p.id}` : `/pkm/${p.id}`}
+                            className="p-1.5 text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-sm"
+                            title={p.status === 'draft' ? 'Lanjutkan Pengisian' : 'Lihat Detail'}
+                        >
+                            <Eye size={17} />
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedProposal(p);
+                                setIsPreviewOpen(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
+                            title="Pratinjau PDF"
+                        >
+                            <FileHeart size={17} />
+                        </button>
+                        {p.status === 'accepted' && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedProposal(p);
+                                    setIsReportOpen(true);
+                                }}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
+                                title="Laporan Kemajuan/Akhir"
+                            >
+                                <ClipboardCheck size={17} />
+                            </button>
+                        )}
+                        {canManageTrash && (
+                            <button
+                                type="button"
+                                onClick={() => handleDelete(p.id)}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm"
+                                title="Hapus (Soft Delete)"
+                            >
+                                <Trash2 size={17} />
+                            </button>
+                        )}
+                    </div>
+                );
+            },
+        },
+    ], [canManageTrash]);
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white shadow p-6 flex justify-between items-center border-l-4 border-green-600">
+            <div className="bg-white shadow p-6 flex flex-wrap justify-between items-center gap-4 border-l-4 border-green-600">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Proposal PKM Saya</h1>
                     <p className="text-gray-600">Program Kemitraan Masyarakat — Daftar usulan yang Anda buat atau ikuti.</p>
                 </div>
                 <div className="flex gap-2">
-                    {hasPermission && hasPermission('manage_pkm_trash') && (
-                        <Link to="/admin/pkm/trash"
-                            className="flex items-center gap-2 px-5 py-2.5 bg-red-100 text-red-700 rounded-md font-bold shadow-sm hover:bg-red-200 transition-all text-sm">
+                    {canManageTrash && (
+                        <Link
+                            to="/admin/pkm/trash"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-red-100 text-red-700 rounded-md font-bold shadow-sm hover:bg-red-200 transition-all text-sm"
+                        >
                             <Trash2 size={16} /> Sampah Proposal
                         </Link>
                     )}
-                    <Link to="/pkm/create"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-green-700 text-white rounded-md font-bold shadow hover:bg-green-800 transition-all text-sm">
+                    <Link
+                        to="/pkm/create"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-green-700 text-white rounded-md font-bold shadow hover:bg-green-800 transition-all text-sm"
+                    >
                         <Plus size={16} /> Ajukan PKM Baru
                     </Link>
                 </div>
             </div>
 
-            {/* Content */}
-            {loading ? (
-                <div className="flex items-center justify-center py-20 text-gray-400 bg-white shadow rounded-sm border border-gray-100">
-                    <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
-                </div>
-            ) : proposals.length === 0 ? (
-                <div className="text-center py-20 text-gray-400 bg-white rounded-sm border border-gray-100 shadow">
-                    <FileHeart size={48} className="mx-auto mb-4 opacity-30" />
-                    <p className="font-semibold text-gray-900">Belum ada proposal PKM.</p>
-                    <p className="text-sm mt-1">Klik "Ajukan PKM Baru" untuk memulai pengajuan.</p>
-                    <Link to="/pkm/create"
-                        className="inline-block mt-4 px-6 py-2 bg-green-700 text-white rounded-md text-sm font-bold hover:bg-green-800 transition-all">
-                        Ajukan Sekarang
-                    </Link>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {proposals.map(p => {
-                        const status = STATUS_MAP[p.status] || STATUS_MAP.draft;
-                        const stepPct = Math.min(100, Math.round(((p.current_step || 0) / STEP_LABELS.length) * 100));
-                        return (
-                            <div key={p.id}
-                                className="bg-white rounded-sm border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden border-l-4 border-green-500">
-                                <div className="p-5">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}>
-                                                    {status.label}
-                                                </span>
-                                                <span className="text-xs text-gray-400">#{p.id}</span>
-                                            </div>
-                                            <h3 className="font-bold text-gray-800 text-base leading-snug line-clamp-2">{p.title}</h3>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Link to={p.status === 'draft' ? `/pkm/create/${p.id}` : `/pkm/${p.id}`}
-                                                className="p-1.5 text-gray-400 hover:text-green-700 hover:bg-green-50 rounded-sm"
-                                                title="Lihat Detail">
-                                                <Eye size={18} />
-                                            </Link>
-                                            <button 
-                                                onClick={() => {
-                                                    setSelectedProposal(p);
-                                                    setIsPreviewOpen(true);
-                                                }}
-                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
-                                                title="Pratinjau PDF"
-                                            >
-                                                <FileHeart size={18} />
-                                            </button>
-                                            {p.status === 'accepted' && (
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedProposal(p);
-                                                        setIsReportOpen(true);
-                                                    }}
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-sm"
-                                                    title="Laporan Kemajuan/Akhir"
-                                                >
-                                                    <ClipboardCheck size={18} />
-                                                </button>
-                                            )}
-                                            {hasPermission && hasPermission('manage_pkm_trash') && (
-                                                <button 
-                                                    onClick={() => handleDelete(p.id)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm"
-                                                    title="Hapus (Soft Delete)"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Meta */}
-                                    <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar size={12} /> {p.fiscal_year?.year || '-'}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <DollarSign size={12} />
-                                            Rp {Number(p.budget || 0).toLocaleString('id-ID')}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={12} />
-                                            {new Date(p.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                        </span>
-                                    </div>
-
-                                    {/* Progress bar (for draft) */}
-                                    {p.status === 'draft' && (
-                                        <div className="mt-4">
-                                            <div className="flex items-center justify-between mb-1 text-xs text-gray-400">
-                                                <span>Progres Pengisian</span>
-                                                <span className="font-semibold text-green-700">
-                                                    Tahap {Math.min(p.current_step || 0, STEP_LABELS.length)}/{STEP_LABELS.length} — {stepPct}%
-                                                </span>
-                                            </div>
-                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-green-500 rounded-full transition-all"
-                                                    style={{ width: `${stepPct}%` }} />
-                                            </div>
-                                            <div className="flex mt-1 gap-0.5">
-                                                {STEP_LABELS.map((lbl, i) => (
-                                                    <div key={i} title={lbl}
-                                                        className={`flex-1 h-1 rounded-sm ${(p.current_step || 0) > i ? 'bg-green-400' : 'bg-gray-200'}`} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+            {/* Table Content */}
+            <div className="bg-white shadow rounded-sm border border-gray-100 p-6">
+                {loading ? (
+                    <div className="flex items-center justify-center py-16 text-gray-400">
+                        <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
+                    </div>
+                ) : (
+                    <DataTable
+                        data={proposals}
+                        columns={columns}
+                        options={{
+                            enableGlobalFilter: true,
+                            enableSorting: true,
+                            enablePagination: true,
+                            initialPageSize: 10,
+                            pageSizeOptions: [10, 25, 50, 100],
+                            searchPlaceholder: 'Cari judul, skema, pengusul, atau tahun...',
+                            emptyMessage: 'Belum ada proposal PKM.',
+                        }}
+                    />
+                )}
+            </div>
 
             <ReportModal
                 isOpen={isReportOpen}
@@ -199,7 +254,7 @@ export default function PkmIndex() {
                 type="pkm"
             />
 
-            <FullProposalPreviewModal 
+            <FullProposalPreviewModal
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}
                 proposalId={selectedProposal?.id}
