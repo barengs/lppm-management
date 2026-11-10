@@ -88,7 +88,12 @@ export default function PublicSidebar({ announcements = [], agendas = [], video 
                                 ></iframe>
                             ) : (
                                 <>
-                                    <img src={video.thumbnail || "https://source.unsplash.com/random/400x225?conference"} alt="Video Cover" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
+                                    <img
+                                        src={video.thumbnail || '/images/batik-pattern.png'}
+                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/batik-pattern.png'; }}
+                                        alt="Video Cover"
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity"
+                                    />
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                             <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>

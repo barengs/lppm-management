@@ -78,7 +78,8 @@ export default function PostCategory() {
                                         <div className="md:flex">
                                             <div className="md:w-1/3">
                                                 <img 
-                                                    src={post.thumbnail || `https://source.unsplash.com/random/400x300?${category}`} 
+                                                    src={post.thumbnail || '/images/batik-pattern.png'} 
+                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/batik-pattern.png'; }}
                                                     alt={post.title} 
                                                     className="h-48 w-full object-cover md:h-full"
                                                 />
