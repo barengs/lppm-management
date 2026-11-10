@@ -86,7 +86,12 @@ export default function PostDetail() {
                             ) : (
                                 post.thumbnail && (
                                     <div className="w-full h-64 md:h-[400px] bg-gray-200">
-                                        <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+                                        <img
+                                            src={post.thumbnail}
+                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/batik-pattern.png'; }}
+                                            alt={post.title}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
                                 )
                             )}

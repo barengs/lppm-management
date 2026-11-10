@@ -82,6 +82,7 @@ export default function CmsPostDetail() {
                     <div className="w-full h-80 bg-gray-100 relative">
                         <img 
                             src={post.thumbnail} 
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/batik-pattern.png'; }}
                             alt={post.title} 
                             className="w-full h-full object-cover"
                         />
