@@ -107,8 +107,8 @@ export default function Dashboard() {
                 {/* Participants Chart */}
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Peserta KKN per Periode</h3>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
+                    <div className="h-72 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height={288} minWidth={0}>
                             <BarChart data={stats.participants_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -124,8 +124,8 @@ export default function Dashboard() {
                 {/* Locations Chart */}
                 <div className="bg-white p-6 shadow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Lokasi KKN per Periode</h3>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" aspect={2} minHeight={288}>
+                    <div className="h-72 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height={288} minWidth={0}>
                             <BarChart data={stats.locations_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -141,8 +141,8 @@ export default function Dashboard() {
                 {/* Abmas Chart */}
                 <div className="bg-white p-6 shadow lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Jumlah Pengabdian Masyarakat (Abmas) per Periode</h3>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" aspect={4} minHeight={288}>
+                    <div className="h-72 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height={288} minWidth={0}>
                             <LineChart data={stats.abmas_per_period}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />

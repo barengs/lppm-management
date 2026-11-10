@@ -29,7 +29,13 @@ class KknParticipantsExport implements FromQuery, WithHeadings, WithMapping, Wit
         $query = KknRegistration::with([
             'student.mahasiswaProfile.faculty',
             'student.mahasiswaProfile.studyProgram',
+            'student.kknPostoMembers.posto.location',
+            'student.kknPostoMembers.posto.dpl',
             'location',
+            'kknPosto.location',
+            'kknPosto.dpl',
+            'postoMember.posto.location',
+            'postoMember.posto.dpl',
             'fiscalYear',
             'dpl',
         ])->orderBy('created_at', 'desc');
@@ -111,6 +117,9 @@ class KknParticipantsExport implements FromQuery, WithHeadings, WithMapping, Wit
         $fakultas = $profile?->faculty?->name ?? $profile?->fakultas ?? '-';
         $prodi    = $profile?->studyProgram?->name ?? $profile?->prodi ?? '-';
 
+        $effectivePosto = $row->getEffectivePosto();
+        $effectiveLocation = $row->getEffectiveLocation();
+
         return [
             $this->rowIndex++,
             $row->student?->name ?? '-',
@@ -126,8 +135,8 @@ class KknParticipantsExport implements FromQuery, WithHeadings, WithMapping, Wit
             $profile?->ips ?? '-',
             $profile?->jacket_size ?? '-',
             $registrationTypeMap[$row->registration_type] ?? $row->registration_type ?? '-',
-            $row->location?->name ?? '-',
-            $row->dpl?->name ?? '-',
+            $effectiveLocation?->name ?? '-',
+            $row->dpl?->name ?? $effectivePosto?->dpl?->name ?? '-',
             $row->fiscalYear?->year ?? '-',
             $statusMap[$row->status] ?? $row->status,
             $row->validation_notes ?? '-',

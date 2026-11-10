@@ -248,7 +248,6 @@ function App() {
                         <Route path="dashboard/kkn" element={<StudentKknDashboard />} />
                         <Route path="dashboard/kkn/register" element={<StudentKknRegistration />} />
                         <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
-                        <Route path="dashboard/kkn/status" element={<StudentKknStatusPage />} />
                         <Route path="dashboard/kkn/group" element={<StudentKknGroup />} />
                         <Route path="dashboard/kkn/guidance" element={<StudentKknGuidance />} />
                         <Route path="dashboard/kkn/reports" element={<StudentKknReports />} />
@@ -297,11 +296,9 @@ function App() {
                         {/* User Management */}
                         <Route path="admin/organization" element={<OrganizationAdminIndex />} />
                         <Route path="admin/roles" element={<RolesIndex />} />
-                        <Route path="admin/proposals" element={<AdminProposalDashboard />} />
                         <Route path="admin/pkm" element={<AdminPkmDashboard />} />
                         <Route path="admin/reports" element={<AdminReportDashboard />} />
                         <Route path="admin/menus" element={<MenuIndex />} />
-                        <Route path="admin/menus/:id" element={<MenuBuilder />} />
                         <Route path="admin/menus/:id" element={<MenuBuilder />} />
                         <Route path="admin/settings" element={<SystemSettingIndex />} />
 

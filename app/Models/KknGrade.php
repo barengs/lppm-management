@@ -86,8 +86,19 @@ class KknGrade extends Model
         $this->final_score   = $finalScore;
         $this->numeric_score = $finalScore ?? $this->numeric_score;
         $this->grade         = $finalScore !== null ? static::scoreToGrade($finalScore) : $this->grade;
+        if ($finalScore !== null) {
+            $this->is_finalized = true;
+        }
 
         $this->saveQuietly();
+    }
+
+    /**
+     * Determine whether this grade meets the requirements for certificate printing.
+     */
+    public function isCertificateEligible(): bool
+    {
+        return (bool) ($this->is_finalized || ($this->final_score !== null && $this->grade !== null));
     }
 
     /**

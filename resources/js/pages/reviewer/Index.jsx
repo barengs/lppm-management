@@ -48,7 +48,7 @@ export default function ReviewerProposalDashboard() {
 
     const filteredProposals = proposals.filter(p => 
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        p.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        (p.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const openPreview = (proposal) => {
@@ -124,9 +124,9 @@ export default function ReviewerProposalDashboard() {
                                     <h3 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">{p.title}</h3>
                                     <div className="flex items-center flex-wrap gap-3 mt-1.5">
                                         <p className="text-[11px] text-gray-500 flex items-center gap-1">
-                                            <User size={11} /> {p.user.name}
+                                            <User size={11} /> {p.user?.name || '-'}
                                         </p>
-                                        <p className="text-[11px] text-gray-400">#{p.id} • {p.scheme?.name || 'PKM'}</p>
+                                        <p className="text-[11px] text-gray-400">#{p.id} • {p.scheme?.name || 'Penelitian'}</p>
                                         {getStatusBadge(p.status)}
                                     </div>
                                 </div>
@@ -138,7 +138,7 @@ export default function ReviewerProposalDashboard() {
                                 >
                                     <FileText size={14} /> PDF
                                 </button>
-                                {p.reviews && p.reviews.length > 0 && p.reviews[0].decision ? (
+                                {p.reviews && p.reviews.length > 0 && p.reviews[0].decision && p.reviews[0].decision !== 'pending' ? (
                                     <Link 
                                         to={`/reviewer/proposals/${p.id}`}
                                         className="px-5 py-2 bg-blue-600 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-blue-700 transition-all"

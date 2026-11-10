@@ -126,6 +126,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(KknRegistration::class, 'student_id');
     }
 
+    public function kknPostoMembers()
+    {
+        return $this->hasMany(KknPostoMember::class, 'student_id');
+    }
+
     public function organizationMember()
     {
         return $this->hasOne(OrganizationMember::class);

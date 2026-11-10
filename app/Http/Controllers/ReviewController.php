@@ -20,9 +20,11 @@ class ReviewController extends Controller
             ->with(['reviews' => function($q) use ($user) {
                 $q->where('reviewer_id', $user->id);
             }])
-            ->where('status', 'submitted')
-            ->orWhereHas('reviews', function($q) use ($user) {
-                $q->where('reviewer_id', $user->id);
+            ->where(function ($q) use ($user) {
+                $q->where('status', 'submitted')
+                  ->orWhereHas('reviews', function($sq) use ($user) {
+                      $sq->where('reviewer_id', $user->id);
+                  });
             })
             ->orderBy('created_at', 'desc')
             ->get();

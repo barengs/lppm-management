@@ -157,7 +157,7 @@ export default function ReviewerPkmShow() {
                         </button>
                         <h1 className="text-xl font-black text-gray-900 leading-tight uppercase tracking-tighter max-w-2xl">{proposal.title}</h1>
                         <div className="flex flex-wrap items-center gap-3 mt-2">
-                            <span className="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-0.5 rounded-sm">PKM-{proposal.category || 'REGULER'}</span>
+                            <span className="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-0.5 rounded-sm">{proposal.scheme_group || 'PKM-REGULER'}</span>
                             <span className="text-gray-300">•</span>
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ketua: {proposal.user?.name}</span>
                         </div>
@@ -216,32 +216,32 @@ export default function ReviewerPkmShow() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 grayscale opacity-70">Tahun Usulan</p>
-                                        <p className="text-gray-800 font-bold">{proposal.fiscal_year?.fiscal_year_name || '-'}</p>
+                                        <p className="text-gray-800 font-bold">{proposal.fiscal_year?.year || '-'}</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-6">
-                            <SectionHeader icon={Users} title="Tim Mahasiswa" isOpen={openSections.personnel} onToggle={() => toggleSection('personnel')} />
+                            <SectionHeader icon={Users} title="Tim Pengusul & Mahasiswa" isOpen={openSections.personnel} onToggle={() => toggleSection('personnel')} />
                             {openSections.personnel && (
                                 <div className="space-y-4">
                                     <div className="pb-3 border-b border-dashed border-gray-100 mb-2">
-                                        <p className="text-[8px] font-black text-green-700 uppercase mb-1">Dosen Pendamping</p>
+                                        <p className="text-[8px] font-black text-green-700 uppercase mb-1">Ketua Pengusul</p>
                                         <p className="text-xs font-bold text-gray-800">{proposal.user?.name}</p>
-                                        <p className="text-[9px] text-gray-400">NIDN: {proposal.user?.nidn || '-'}</p>
+                                        <p className="text-[9px] text-gray-400">NIDN: {proposal.user?.dosen_profile?.nidn || '-'}</p>
                                     </div>
                                     {proposal.personnel?.map((p, idx) => (
                                         <div key={idx} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                                            <p className="text-xs font-bold text-gray-800 uppercase tracking-tight">{p.student_name}</p>
+                                            <p className="text-xs font-bold text-gray-800 uppercase tracking-tight">{p.user?.name || p.student_name || '-'}</p>
                                             <div className="flex justify-between items-center mt-1">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded-sm">{p.role}</span>
-                                                <span className="text-[9px] font-medium text-gray-500">NIM: {p.student_nim || '-'}</span>
+                                                <span className="text-[9px] font-medium text-gray-500">{p.type === 'dosen' ? `NIDN: ${p.user?.dosen_profile?.nidn || p.student_nim || '-'}` : `NIM: ${p.student_nim || '-'}`}</span>
                                             </div>
                                         </div>
                                     ))}
                                     {(!proposal.personnel || proposal.personnel.length === 0) && (
-                                        <p className="text-[10px] text-gray-400 italic">Belum ada anggota mahasiswa.</p>
+                                        <p className="text-[10px] text-gray-400 italic">Belum ada anggota tim.</p>
                                     )}
                                 </div>
                             )}
@@ -256,8 +256,9 @@ export default function ReviewerPkmShow() {
                                             <div key={i} className="flex items-start gap-3 p-2 bg-gray-50 rounded-sm">
                                                 <div className="shrink-0 w-5 h-5 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-[10px] font-bold">{i + 1}</div>
                                                 <div>
-                                                    <p className="font-bold text-gray-800">{m.name}</p>
-                                                    <p className="text-[10px] text-gray-500 italic">{m.address || 'Alamat tidak tersedia'}</p>
+                                                    <p className="font-bold text-gray-800">{m.partner_name || m.name || '-'}</p>
+                                                    {m.partner_category && <p className="text-[9px] text-green-700 font-bold uppercase">{m.partner_category}</p>}
+                                                    <p className="text-[10px] text-gray-500 italic">{m.address || [m.village, m.district, m.city, m.province].filter(Boolean).join(', ') || 'Alamat tidak tersedia'}</p>
                                                 </div>
                                             </div>
                                         ))
@@ -299,11 +300,19 @@ export default function ReviewerPkmShow() {
 
                                     {data.proposal.substance && (
                                         <div className="space-y-8">
-                                            <div className="p-5 bg-green-50/30 border-l-4 border-green-700 rounded-sm">
-                                                <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-2">Indikator Asta Cita</p>
-                                                <p className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-tighter leading-tight">{proposal.substance.asta_cita_indicator}</p>
-                                                <p className="text-xs text-gray-600 leading-relaxed italic">{proposal.substance.asta_cita_description}</p>
-                                            </div>
+                                            <ContentBlock label="Abstrak" html={proposal.substance.abstract} borderColor="border-green-700" />
+                                            <ContentBlock label="Latar Belakang / Analisis Situasi" html={proposal.substance.background} />
+                                            <ContentBlock label="Metode Pelaksanaan" html={proposal.substance.methodology} />
+                                            <ContentBlock label="Tujuan & Manfaat" html={proposal.substance.objectives} />
+                                            <ContentBlock label="Daftar Pustaka" html={proposal.substance.references} />
+
+                                            {proposal.substance.asta_cita_indicator && (
+                                                <div className="p-5 bg-green-50/30 border-l-4 border-green-700 rounded-sm">
+                                                    <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-2">Indikator Asta Cita</p>
+                                                    <p className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-tighter leading-tight">{proposal.substance.asta_cita_indicator}</p>
+                                                    <p className="text-xs text-gray-600 leading-relaxed italic">{proposal.substance.asta_cita_description}</p>
+                                                </div>
+                                            )}
 
                                             {proposal.substance.sdg_goals && (
                                                 <div>

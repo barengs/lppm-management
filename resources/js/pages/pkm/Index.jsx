@@ -15,7 +15,7 @@ const STATUS_MAP = {
 };
 
 const STEP_LABELS = [
-    'Identitas', 'Tim Pengusul', 'Mitra', 'Asta Cita', 'Bidang', 'Luaran', 'RAB', 'Dokumen',
+    'Identitas', 'Substansi', 'Tim Pengusul', 'Mitra', 'Jadwal', 'SDGs', 'Bidang', 'Luaran', 'RAB', 'Dokumen',
 ];
 
 export default function PkmIndex() {
@@ -93,7 +93,7 @@ export default function PkmIndex() {
                 <div className="space-y-4">
                     {proposals.map(p => {
                         const status = STATUS_MAP[p.status] || STATUS_MAP.draft;
-                        const stepPct = Math.min(100, Math.round(((p.current_step || 0) / 8) * 100));
+                        const stepPct = Math.min(100, Math.round(((p.current_step || 0) / STEP_LABELS.length) * 100));
                         return (
                             <div key={p.id}
                                 className="bg-white rounded-sm border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden border-l-4 border-green-500">
@@ -169,7 +169,7 @@ export default function PkmIndex() {
                                             <div className="flex items-center justify-between mb-1 text-xs text-gray-400">
                                                 <span>Progres Pengisian</span>
                                                 <span className="font-semibold text-green-700">
-                                                    Tahap {Math.min(p.current_step || 0, 8)}/8 — {stepPct}%
+                                                    Tahap {Math.min(p.current_step || 0, STEP_LABELS.length)}/{STEP_LABELS.length} — {stepPct}%
                                                 </span>
                                             </div>
                                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">

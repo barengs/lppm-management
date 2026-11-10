@@ -94,6 +94,16 @@ class ProposalController extends Controller
     public function saveStep(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
+        $user = auth('api')->user();
+
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengubah usulan ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft' && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Usulan yang sudah dikirim tidak dapat diubah.'], 422);
+        }
+
         $step = $request->input('step');
 
         try {
@@ -140,9 +150,13 @@ class ProposalController extends Controller
                         'students.min' => 'Wajib melibatkan minimal 2 mahasiswa sebagai anggota tim.',
                     ]);
 
-                    // Identify existing system member IDs (to avoid duplicate notifications)
-                    $oldMemberIds = ProposalPersonnel::where('proposal_id', $id)
+                    // Identify existing system member IDs and already-confirmed members
+                    $existingMembers = ProposalPersonnel::where('proposal_id', $id)
                         ->whereNotNull('user_id')
+                        ->get(['user_id', 'is_confirmed']);
+                    $oldMemberIds = $existingMembers->pluck('user_id')->toArray();
+                    $confirmedMemberIds = $existingMembers
+                        ->where('is_confirmed', true)
                         ->pluck('user_id')
                         ->toArray();
 
@@ -152,10 +166,11 @@ class ProposalController extends Controller
                     // 1. Process System Members (Doses/Staff)
                     if (isset($data['members'])) {
                         foreach ($data['members'] as $member) {
+                            $alreadyConfirmed = in_array($member['user_id'], $confirmedMemberIds);
                             $newPersonnel = ProposalPersonnel::create(array_merge($member, [
                                 'proposal_id' => $id,
                                 'type' => 'dosen',
-                                'is_confirmed' => false
+                                'is_confirmed' => $alreadyConfirmed
                             ]));
 
                             // Send notification to newly added members
@@ -276,6 +291,15 @@ class ProposalController extends Controller
     public function submit($id)
     {
         $proposal = Proposal::with(['personnel', 'identity'])->findOrFail($id);
+        $user = auth('api')->user();
+
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengirim usulan ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft') {
+            return response()->json(['message' => 'Proposal ini sudah pernah dikirim.'], 422);
+        }
 
         // Validasi Akhir (Step 7 is Preview/Submit)
         if ($proposal->current_step < 7) {
@@ -340,6 +364,11 @@ class ProposalController extends Controller
      */
     public function update(Request $request, Proposal $proposal)
     {
+        $user = auth('api')->user();
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengubah usulan ini.'], 403);
+        }
+
         $validated = $request->validate([
             'status' => 'sometimes|in:draft,submitted,review,accepted,rejected',
             'rejection_reason' => 'nullable|string',
@@ -366,6 +395,15 @@ class ProposalController extends Controller
      */
     public function destroy(Proposal $proposal)
     {
+        $user = auth('api')->user();
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk menghapus usulan ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft' && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Hanya proposal berstatus draft yang dapat dihapus.'], 422);
+        }
+
         $proposal->delete();
         return response()->json(['message' => 'Proposal deleted']);
     }

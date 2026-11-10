@@ -48,7 +48,7 @@ export default function ReviewerPkmIndex() {
 
     const filteredProposals = proposals.filter(p => 
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        p.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        (p.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const openPreview = (proposal) => {
@@ -112,9 +112,9 @@ export default function ReviewerPkmIndex() {
                                     <h3 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">{p.title}</h3>
                                     <div className="flex items-center flex-wrap gap-3 mt-1.5">
                                         <p className="text-[11px] text-gray-500 flex items-center gap-1">
-                                            <User size={11} /> {p.user.name}
+                                            <User size={11} /> {p.user?.name || '-'}
                                         </p>
-                                        <p className="text-[11px] text-gray-400">#{p.id} • {p.scheme?.name || 'PKM'}</p>
+                                        <p className="text-[11px] text-gray-400">#{p.id} • {p.scheme_group || 'PKM'}</p>
                                         {getStatusBadge(p.status)}
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@ export default function ReviewerPkmIndex() {
                                 >
                                     <FileText size={14} /> PDF
                                 </button>
-                                {p.pkm_reviews && p.pkm_reviews.length > 0 && p.pkm_reviews[0].decision ? (
+                                {p.pkm_reviews && p.pkm_reviews.length > 0 && p.pkm_reviews[0].decision && p.pkm_reviews[0].decision !== 'pending' ? (
                                     <Link 
                                         to={`/reviewer/pkm/${p.id}`}
                                         className="px-5 py-2 bg-blue-600 text-white rounded-sm text-xs font-bold flex items-center gap-2 shadow hover:bg-blue-700 transition-all"

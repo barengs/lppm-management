@@ -47,8 +47,8 @@ class ReviewerPkmController extends Controller
     {
         $user = auth('api')->user();
         $proposal = PkmProposal::with([
-            'fiscalYear', 'user', 'partners', 'focusArea',
-            'substance', 'outputs', 'budgetItems', 'documents', 'personnel.user.dosenProfile'
+            'fiscalYear', 'user.dosenProfile', 'partners', 'focusArea',
+            'substance', 'outputs', 'budgetItems', 'documents', 'schedules', 'personnel.user.dosenProfile'
         ])->findOrFail($id);
         
         // Find or create a PKM review record for this reviewer/proposal
@@ -83,6 +83,7 @@ class ReviewerPkmController extends Controller
         ]);
 
         try {
+            $proposal = PkmProposal::with('user')->findOrFail($id);
             $review = PkmReview::where('pkm_proposal_id', $id)
                 ->where('reviewer_id', $user->id)
                 ->first();
@@ -91,7 +92,8 @@ class ReviewerPkmController extends Controller
                 $review = PkmReview::create([
                     'pkm_proposal_id' => $id,
                     'reviewer_id' => $user->id,
-                    'status' => 'pending'
+                    'decision' => 'pending',
+                    'score' => 0,
                 ]);
             }
 
@@ -100,6 +102,15 @@ class ReviewerPkmController extends Controller
                 'comment' => $validated['comment'],
                 'decision' => $validated['decision']
             ]);
+
+            if ($validated['decision'] === 'revision' && !empty($validated['comment']) && $proposal->user) {
+                $proposal->user->notify(new \App\Notifications\ProposalNotification(
+                    $proposal,
+                    "Usulan PKM Anda '" . $proposal->title . "' memerlukan revisi dari reviewer.",
+                    "/pkm/{$proposal->id}",
+                    'Revisi Usulan PKM'
+                ));
+            }
 
             return response()->json(['message' => 'Penilaian PKM berhasil disimpan.', 'review' => $review]);
 

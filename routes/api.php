@@ -154,14 +154,16 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('pkm-master-data/{id}', [\App\Http\Controllers\PkmMasterDataController::class, 'destroy']);
 
     // Reviewer Portal
-    Route::group(['middleware' => ['role:reviewer|admin']], function () {
+    Route::group(['middleware' => ['role:reviewer|reviewer_penelitian|admin']], function () {
         // Review Penelitian
         Route::prefix('reviewer_proposals')->group(function () {
             Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'index']);
             Route::get('/{id}', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'show']);
             Route::post('/{id}/review', [\App\Http\Controllers\Reviewer\ReviewerProposalController::class, 'submitReview']);
         });
+    });
 
+    Route::group(['middleware' => ['role:reviewer|reviewer_pkm|admin']], function () {
         // Review PKM
         Route::prefix('reviewer_pkm')->group(function () {
             Route::get('/', [\App\Http\Controllers\Reviewer\ReviewerPkmController::class, 'index']);
@@ -195,8 +197,6 @@ Route::middleware(['auth:api'])->group(function () {
     
     Route::get('profile/me', [App\Http\Controllers\ProfileController::class, 'me']);
     Route::post('profile/update', [App\Http\Controllers\ProfileController::class, 'update']);
-    Route::post('profile/stats', [App\Http\Controllers\ProfileController::class, 'updateStats']);
-
     Route::post('profile/stats', [App\Http\Controllers\ProfileController::class, 'updateStats']);
 
     // Dashboard Stats
@@ -256,9 +256,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('journals/{id}/messages', [JournalConsultationController::class, 'storeMessage']);
     Route::put('journals/{id}/status', [JournalConsultationController::class, 'updateStatus']);
 
-    // KKN Registrations
-    Route::get('kkn-registrations', [KknRegistrationController::class, 'index']);
-    
     // Admin KKN Registration Management
     Route::prefix('admin/kkn-registrations')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\KknRegistrationController::class, 'index']);
@@ -336,22 +333,19 @@ Route::middleware(['auth:api'])->group(function () {
         // Legacy
         Route::post('/', [App\Http\Controllers\KknGradeController::class, 'store']);
 
-        // Student
+        // Student & Permitted Certificate Download
         Route::get('/my-grade', [App\Http\Controllers\KknGradeController::class, 'myGrade']);
         Route::get('/certificate/download', [App\Http\Controllers\KknGradeController::class, 'downloadCertificate']);
+        Route::get('/{id}/certificate', [App\Http\Controllers\KknGradeController::class, 'downloadStudentCertificate'])->whereNumber('id');
     });
 
 
     // Architecture Refinements
     Route::apiResource('reports', App\Http\Controllers\ReportController::class);
+    Route::get('reports/{id}/download', [\App\Http\Controllers\ReportController::class, 'download']);
     Route::apiResource('galleries', App\Http\Controllers\GalleryController::class);
     Route::apiResource('organization-members', App\Http\Controllers\OrganizationMemberController::class);
     Route::get('surveys', [App\Http\Controllers\SurveyController::class, 'index']);
-
-    // Report Submission (Researcher)
-    Route::get('reports', [\App\Http\Controllers\ReportController::class, 'index']);
-    Route::post('reports', [\App\Http\Controllers\ReportController::class, 'store']);
-    Route::get('reports/{id}/download', [\App\Http\Controllers\ReportController::class, 'download']);
 
     // Menu Management
     Route::post('system-settings', [App\Http\Controllers\SystemSettingController::class, 'update']); // Admin Update (Protected by Role check in FE/Controller)

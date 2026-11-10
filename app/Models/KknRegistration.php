@@ -135,4 +135,51 @@ class KknRegistration extends Model
     {
         return $this->belongsTo(KknPosto::class, 'kkn_posto_id');
     }
+
+    public function postoMember()
+    {
+        return $this->hasOne(KknPostoMember::class, 'kkn_registration_id');
+    }
+
+    /**
+     * Resolve effective Posko from direct relation, postoMember, or student's active posto memberships.
+     */
+    public function getEffectivePosto(): ?KknPosto
+    {
+        if ($this->kknPosto) {
+            return $this->kknPosto;
+        }
+
+        if ($this->postoMember && $this->postoMember->posto) {
+            return $this->postoMember->posto;
+        }
+
+        $members = $this->student?->kknPostoMembers;
+        if ($members && $members->isNotEmpty()) {
+            $matched = $members->first(function ($member) {
+                if ($member->status !== 'active' || !$member->posto) {
+                    return false;
+                }
+                if ($this->kkn_period_id && $member->posto->kkn_period_id) {
+                    return (int) $member->posto->kkn_period_id === (int) $this->kkn_period_id;
+                }
+                if ($this->fiscal_year_id && $member->posto->fiscal_year_id) {
+                    return (int) $member->posto->fiscal_year_id === (int) $this->fiscal_year_id;
+                }
+                return true;
+            });
+
+            return $matched?->posto ?? $members->firstWhere('status', 'active')?->posto;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve effective KKN location from direct registration location or assigned Posko.
+     */
+    public function getEffectiveLocation(): ?KknLocation
+    {
+        return $this->location ?? $this->getEffectivePosto()?->location;
+    }
 }

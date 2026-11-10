@@ -459,12 +459,8 @@ class KknPostoController extends Controller
             }
         }
 
-        // Find student's registration
-        $registration = KknRegistration::where('student_id', $validated['student_id'])
-            ->where('kkn_location_id', $posto->kkn_location_id)
-            ->where('fiscal_year_id', $posto->fiscal_year_id)
-            ->where('status', 'approved')
-            ->first();
+        // Find student's approved registration (without requiring pre-selected kkn_location_id)
+        $registration = $this->findApprovedRegistrationForPosto((int) $validated['student_id'], $posto);
 
         $member = KknPostoMember::create([
             'kkn_posto_id' => $posto->id,
@@ -475,9 +471,12 @@ class KknPostoController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        // Update registration with posto_id
+        // Update registration with posto_id and location_id if missing
         if ($registration) {
-            $registration->update(['kkn_posto_id' => $posto->id]);
+            $registration->update([
+                'kkn_posto_id' => $posto->id,
+                'kkn_location_id' => $registration->kkn_location_id ?? $posto->kkn_location_id,
+            ]);
         }
 
         // Auto-update posto status based on completeness
@@ -646,12 +645,8 @@ class KknPostoController extends Controller
                     continue;
                 }
 
-                // Find registration
-                $registration = KknRegistration::where('student_id', $studentData['student_id'])
-                    ->where('kkn_location_id', $posto->kkn_location_id)
-                    ->where('fiscal_year_id', $posto->fiscal_year_id)
-                    ->where('status', 'approved')
-                    ->first();
+                // Find approved registration (without requiring pre-selected kkn_location_id)
+                $registration = $this->findApprovedRegistrationForPosto((int) $studentData['student_id'], $posto);
 
                 if (!$registration) {
                     $errors[] = "Student ID {$studentData['student_id']} tidak memiliki registrasi approved";
@@ -667,8 +662,11 @@ class KknPostoController extends Controller
                     'joined_at' => now(),
                 ]);
 
-                // Update registration
-                $registration->update(['kkn_posto_id' => $posto->id]);
+                // Update registration with posto_id and location_id if missing
+                $registration->update([
+                    'kkn_posto_id' => $posto->id,
+                    'kkn_location_id' => $registration->kkn_location_id ?? $posto->kkn_location_id,
+                ]);
 
                 $assigned[] = $member->id;
             }
@@ -970,5 +968,29 @@ class KknPostoController extends Controller
         $posto->fieldMonitors()->detach($userId);
 
         return response()->noContent();
+    }
+
+    /**
+     * Find approved registration for a student matching the posto's period or fiscal year.
+     */
+    private function findApprovedRegistrationForPosto(int $studentId, KknPosto $posto): ?KknRegistration
+    {
+        $baseQuery = fn () => KknRegistration::where('student_id', $studentId)->where('status', 'approved');
+
+        if ($posto->kkn_period_id) {
+            $reg = $baseQuery()->where('kkn_period_id', $posto->kkn_period_id)->first();
+            if ($reg) {
+                return $reg;
+            }
+        }
+
+        if ($posto->fiscal_year_id) {
+            $reg = $baseQuery()->where('fiscal_year_id', $posto->fiscal_year_id)->first();
+            if ($reg) {
+                return $reg;
+            }
+        }
+
+        return $baseQuery()->latest()->first();
     }
 }

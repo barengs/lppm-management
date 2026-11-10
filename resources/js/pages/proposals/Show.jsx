@@ -176,7 +176,7 @@ export default function ProposalShow() {
             </div>
 
             {/* Ketua LPPM Action Card */}
-            {isKetuaLppm && proposal.status === 'submitted' && (
+            {isKetuaLppm && ['submitted', 'review'].includes(proposal.status) && proposal.lppm_approval_status !== 'approved' && (
                 <div className="bg-white border-2 border-green-700 rounded-sm shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="bg-green-700 p-4 flex items-center justify-between text-white">
                         <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">

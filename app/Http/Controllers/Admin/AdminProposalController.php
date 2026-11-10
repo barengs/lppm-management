@@ -60,7 +60,7 @@ class AdminProposalController extends Controller
             // Traditional explicit mapping if provided
             $review = Review::updateOrCreate(
                 ['proposal_id' => $id, 'reviewer_id' => $validated['reviewer_id']],
-                ['status' => 'pending']
+                ['decision' => 'pending']
             );
         }
 
@@ -100,15 +100,34 @@ class AdminProposalController extends Controller
 
         $proposal->update([
             'status' => $validated['status'],
+            'rejection_reason' => $validated['status'] === 'rejected' ? ($validated['notes'] ?? $proposal->rejection_reason) : $proposal->rejection_reason,
         ]);
 
-        // Send Notification if Accepted
-        if ($validated['status'] === 'accepted') {
-            $proposal->user->notify(new \App\Notifications\ProposalNotification(
-                $proposal,
-                "Selamat! Usulan Anda '" . $proposal->title . "' telah diterima oleh LPPM.",
-                "/proposals" // Redirect to proposals list
-            ));
+        if (!empty($validated['notes'])) {
+            $proposal->notes()->create([
+                'user_id' => auth('api')->id(),
+                'type' => 'admin',
+                'content' => $validated['notes'],
+            ]);
+        }
+
+        // Send Notification to Pengusul
+        if ($proposal->user) {
+            if ($validated['status'] === 'accepted') {
+                $proposal->user->notify(new \App\Notifications\ProposalNotification(
+                    $proposal,
+                    "Selamat! Usulan Anda '" . $proposal->title . "' telah diterima oleh LPPM.",
+                    "/proposals/{$proposal->id}",
+                    'Usulan Diterima'
+                ));
+            } else {
+                $proposal->user->notify(new \App\Notifications\ProposalNotification(
+                    $proposal,
+                    "Usulan Anda '" . $proposal->title . "' ditolak oleh LPPM.",
+                    "/proposals/{$proposal->id}",
+                    'Usulan Ditolak'
+                ));
+            }
         }
 
         return response()->json([
@@ -144,7 +163,7 @@ class AdminProposalController extends Controller
 
             Review::updateOrCreate(
                 ['proposal_id' => $proposal->id, 'reviewer_id' => $reviewer->id],
-                ['status' => 'pending']
+                ['decision' => 'pending']
             );
 
             $proposal->update(['status' => 'review']);
