@@ -336,26 +336,30 @@ export default function KknAssessment() {
 
     const handleDownloadCertificate = async (reg) => {
         setCertLoadingId(reg.id);
+        const pdfWindow = window.open('', '_blank');
+        if (pdfWindow) {
+            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
+        }
         try {
             const response = await fetch(`/api/kkn-grades/${reg.id}/certificate`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.message || 'Gagal mengunduh sertifikat.');
+                throw new Error(errData.message || 'Gagal membuka sertifikat.');
             }
-            const blob = await response.blob();
-            const npm = reg.student?.mahasiswaProfile?.npm || reg.student?.mahasiswa_profile?.npm || reg.student_id;
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Sertifikat-KKN-${npm}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(pdfBlob);
+            if (pdfWindow) {
+                pdfWindow.location.replace(url);
+            } else {
+                window.open(url, '_blank');
+            }
+            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
         } catch (err) {
-            toast.error(err.message || 'Gagal mengunduh sertifikat.');
+            if (pdfWindow) pdfWindow.close();
+            toast.error(err.message || 'Gagal membuka sertifikat.');
         } finally {
             setCertLoadingId(null);
         }

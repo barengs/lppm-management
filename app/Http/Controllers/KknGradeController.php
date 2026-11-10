@@ -407,7 +407,7 @@ class KknGradeController extends Controller
 
         $registration = KknRegistration::where('student_id', $user->id)
             ->where('status', 'approved')
-            ->with(['kknGrade', 'kknLocation', 'kknPosto.location', 'postoMember.posto.location', 'student.kknPostoMembers.posto.location', 'student.mahasiswaProfile'])
+            ->with($this->certificateRelations())
             ->firstOrFail();
 
         if (!$registration->kknGrade || !$registration->kknGrade->isCertificateEligible()) {
@@ -429,14 +429,7 @@ class KknGradeController extends Controller
             return response()->json(['message' => 'Anda tidak memiliki izin untuk mencetak sertifikat KKN.'], 403);
         }
 
-        $registration = KknRegistration::with([
-            'kknGrade',
-            'kknLocation',
-            'kknPosto.location',
-            'postoMember.posto.location',
-            'student.kknPostoMembers.posto.location',
-            'student.mahasiswaProfile',
-        ])->findOrFail($id);
+        $registration = KknRegistration::with($this->certificateRelations())->findOrFail($id);
 
         $isOwner = (int) $registration->student_id === (int) $user->id;
         $canViewGrades = $user->can('kkn_grades.view') || $user->can('kkn_grades.edit');
@@ -458,27 +451,110 @@ class KknGradeController extends Controller
         return $this->renderCertificatePdf($registration);
     }
 
+    private function certificateRelations(): array
+    {
+        return [
+            'kknGrade',
+            'kknLocation.village',
+            'kknLocation.district',
+            'kknLocation.city',
+            'kknPosto.location.village',
+            'kknPosto.location.district',
+            'kknPosto.location.city',
+            'postoMember.posto.location.village',
+            'postoMember.posto.location.district',
+            'postoMember.posto.location.city',
+            'student.kknPostoMembers.posto.location.village',
+            'student.kknPostoMembers.posto.location.district',
+            'student.kknPostoMembers.posto.location.city',
+            'kknPeriod',
+            'fiscalYear',
+            'student.mahasiswaProfile.studyProgram',
+            'student.mahasiswaProfile.faculty',
+        ];
+    }
+
     private function renderCertificatePdf(KknRegistration $registration)
     {
         $location = $registration->getEffectiveLocation();
+        $posto = $registration->getEffectivePosto();
         $grade = $registration->kknGrade;
-        $npm = $registration->student?->mahasiswaProfile?->npm ?? '-';
+        $profile = $registration->student?->mahasiswaProfile;
+        $npm = $profile?->npm ?? '-';
         $certNumber = $grade->certificate_number ?: ('KKN-' . date('Y') . '-' . ($npm !== '-' ? $npm : $registration->student_id));
+
+        $villageRaw = is_object($location?->village)
+            ? $location->village->name
+            : (is_string($location?->village) && !str_starts_with(trim($location->village), '{') ? $location->village : null);
+        $districtRaw = is_object($location?->district) ? $location->district->name : null;
+        $cityRaw = is_object($location?->city) ? $location->city->name : null;
+
+        $formatArea = fn (?string $val) => $val ? \Illuminate\Support\Str::title(mb_strtolower(trim($val))) : null;
+
+        $setting = \App\Models\SystemSetting::first();
+        $logoDataUri = $this->resolveLogoDataUri($setting?->logo_path);
+
+        $ketuaMember = \App\Models\OrganizationMember::with('user.dosenProfile')
+            ->where('position', 'like', '%Ketua%')
+            ->orderBy('level')
+            ->orderBy('order_index')
+            ->first()
+            ?? \App\Models\OrganizationMember::with('user.dosenProfile')
+                ->where('level', 1)
+                ->orderBy('order_index')
+                ->first();
+
+        $rawScore = $grade->final_score ?? $grade->numeric_score;
+        $formattedScore = $rawScore !== null ? rtrim(rtrim(number_format((float) $rawScore, 2, '.', ''), '0'), '.') : '-';
 
         $data = [
             'name'               => $registration->student?->name ?? '-',
             'npm'                => $npm,
-            'location'           => $location?->name ?? '-',
-            'village'            => $location?->village ?? '-',
+            'prodi'              => $profile?->studyProgram?->name ?? $profile?->prodi ?? '-',
+            'faculty'            => $profile?->faculty?->name ?? $profile?->fakultas ?? '-',
+            'location'           => $formatArea($location?->name) ?? '-',
+            'village'            => $formatArea($villageRaw),
+            'district'           => $formatArea($districtRaw),
+            'city'               => $formatArea($cityRaw),
+            'posto_name'         => $posto?->name,
+            'year'               => $registration->kknPeriod?->year ?? $registration->fiscalYear?->year ?? date('Y'),
+            'period_name'        => $registration->kknPeriod?->name,
             'grade'              => $grade->grade,
-            'score'              => $grade->final_score ?? $grade->numeric_score,
+            'score'              => $formattedScore,
             'certificate_number' => $certNumber,
             'date'               => now()->translatedFormat('d F Y'),
+            'university_name'    => $setting?->university_name ?: 'Universitas Islam Madura',
+            'lppm_address'       => $setting?->address ?: 'Jl. Pondok Pesantren Miftahul Ulum Bettet, Pamekasan, Jawa Timur',
+            'logo_data_uri'      => $logoDataUri,
+            'ketua_title'        => $ketuaMember?->position ?: 'Ketua LPPM',
+            'ketua_name'         => $ketuaMember?->user?->name ?: 'Ketua LPPM',
+            'ketua_nidn'         => $ketuaMember?->user?->dosenProfile?->nidn,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.certificate', $data);
         $pdf->setPaper('A4', 'landscape');
         return $pdf->stream('Sertifikat-KKN-' . ($npm !== '-' ? $npm : $registration->student_id) . '.pdf');
+    }
+
+    private function resolveLogoDataUri(?string $logoPath): ?string
+    {
+        $candidates = [];
+        if ($logoPath) {
+            $candidates[] = storage_path('app/public/' . ltrim($logoPath, '/'));
+        }
+        $candidates[] = public_path('images/uim-logo.png');
+
+        foreach ($candidates as $file) {
+            if ($file && file_exists($file) && is_readable($file)) {
+                $mime = mime_content_type($file) ?: 'image/png';
+                $content = file_get_contents($file);
+                if ($content !== false) {
+                    return 'data:' . $mime . ';base64,' . base64_encode($content);
+                }
+            }
+        }
+
+        return null;
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────

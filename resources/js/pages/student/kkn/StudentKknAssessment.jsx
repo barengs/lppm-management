@@ -38,22 +38,28 @@ export default function StudentKknAssessment() {
         // OR better: use axios with blob type.
     };
     
-    // Improved Download Handler using Axios Blob
+    // Improved Handler: Open PDF in New Tab using Authenticated Blob
     const downloadBlob = async () => {
+        const pdfWindow = window.open('', '_blank');
+        if (pdfWindow) {
+            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
+        }
         try {
             const response = await axios.get('/api/kkn-grades/certificate/download', {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob'
             });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Sertifikat-KKN-${data.student_id}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(pdfBlob);
+            if (pdfWindow) {
+                pdfWindow.location.replace(url);
+            } else {
+                window.open(url, '_blank');
+            }
+            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
         } catch (error) {
-            alert("Gagal mengunduh sertifikat.");
+            if (pdfWindow) pdfWindow.close();
+            alert("Gagal membuka sertifikat.");
         }
     };
 

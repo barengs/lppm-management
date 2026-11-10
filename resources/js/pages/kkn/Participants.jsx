@@ -760,25 +760,30 @@ function EnhancedRegistrationDetailModal({ registration, canDownloadCertificate,
 
     const handleDownloadCertificate = async () => {
         setIsDownloadingCert(true);
+        const pdfWindow = window.open('', '_blank');
+        if (pdfWindow) {
+            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
+        }
         try {
             const response = await fetch(`/api/kkn-grades/${registration.id}/certificate`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                throw new Error(err.message || 'Gagal mengunduh sertifikat.');
+                throw new Error(err.message || 'Gagal membuka sertifikat.');
             }
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Sertifikat-KKN-${profile.npm || registration.student_id}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(pdfBlob);
+            if (pdfWindow) {
+                pdfWindow.location.replace(url);
+            } else {
+                window.open(url, '_blank');
+            }
+            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
         } catch (err) {
-            alert(err.message || 'Gagal mengunduh sertifikat.');
+            if (pdfWindow) pdfWindow.close();
+            alert(err.message || 'Gagal membuka sertifikat.');
         } finally {
             setIsDownloadingCert(false);
         }
