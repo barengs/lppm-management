@@ -1,0 +1,105 @@
+name: Deploy to Production (VPS Docker)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Memungkinkan trigger manual dari tab Actions di GitHub
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build Frontend & Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 3. Install Dependencies & Build Frontend (Vite + React)
+        run: |
+          npm ci
+          npm run build
+
+      - name: 4. Pull Latest Code on VPS
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            PROJECT_PATH="${{ secrets.VPS_PROJECT_PATH || '/var/www/lppm' }}"
+            echo "🚀 Memulai proses update kode di Host VPS ($PROJECT_PATH)..."
+            cd "$PROJECT_PATH"
+
+            # Ambil update terbaru dari branch main.
+            # Catatan: git reset --hard TIDAK menghapus file/folder untracked seperti:
+            # .env, docker-compose.yml, Dockerfile, nginx.conf, mysql/, dan storage/app/public/
+            git fetch origin main
+            git reset --hard origin/main
+
+      - name: 5. Upload Fresh Frontend Build (public/build) to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: "public/build/*"
+          target: "${{ secrets.VPS_PROJECT_PATH || '/var/www/lppm' }}"
+          overwrite: true
+
+      - name: 6. Execute Composer & Laravel Artisan inside lppm-php-fpm
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            CONTAINER="${{ secrets.DOCKER_CONTAINER_NAME || 'lppm-php-fpm' }}"
+            WORKDIR="/var/www/lppm"
+            echo "🐳 Menjalankan perintah di dalam container: $CONTAINER (workdir: $WORKDIR)"
+
+            # Aktifkan mode maintenance singkat (abaikan jika sudah down)
+            docker exec -w $WORKDIR $CONTAINER php artisan down --retry=60 || true
+
+            # Install dependency PHP production
+            docker exec -w $WORKDIR $CONTAINER composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+            # Jalankan migrasi database baru secara aman (ke container lppm-db-mariadb)
+            docker exec -w $WORKDIR $CONTAINER php artisan migrate --force
+
+            # Pastikan symbolic link storage tersedia (menggunakan relative link agar cocok di host & container)
+            docker exec -w $WORKDIR $CONTAINER php artisan storage:link --relative || docker exec -w $WORKDIR $CONTAINER php artisan storage:link || true
+
+            # Bersihkan dan perbarui cache konfigurasi/route/view
+            docker exec -w $WORKDIR $CONTAINER php artisan optimize:clear
+            docker exec -w $WORKDIR $CONTAINER php artisan config:cache
+            docker exec -w $WORKDIR $CONTAINER php artisan route:cache
+            docker exec -w $WORKDIR $CONTAINER php artisan view:cache
+
+            # Restart queue worker jika ada
+            docker exec -w $WORKDIR $CONTAINER php artisan queue:restart || true
+
+            # Pastikan permission & ownership storage dan cache dimiliki oleh www-data (PHP-FPM)
+            docker exec -w $WORKDIR $CONTAINER chown -R www-data:www-data storage bootstrap/cache || true
+            docker exec -w $WORKDIR $CONTAINER chmod -R 775 storage bootstrap/cache || true
+
+            # Matikan mode maintenance (aplikasi kembali online)
+            docker exec -w $WORKDIR $CONTAINER php artisan up
+
+            echo "✅ Deployment ke Production berhasil diselesaikan!"
+
