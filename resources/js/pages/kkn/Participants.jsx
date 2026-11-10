@@ -249,7 +249,10 @@ export default function KknParticipants() {
                 header: 'Lokasi KKN',
                 cell: ({ row }) => (
                     <div className="text-sm text-gray-900">
-                        {row.original.location?.name || '-'}
+                        <div>{row.original.location?.name || '-'}</div>
+                        {row.original.kkn_posto?.name && (
+                            <div className="text-xs text-gray-500">{row.original.kkn_posto.name}</div>
+                        )}
                     </div>
                 ),
             },
@@ -965,6 +968,9 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                         <div>
                                             <label className="text-sm font-medium text-gray-600">Lokasi KKN</label>
                                             <p className="text-gray-900 font-semibold">{registration.location?.name || 'Belum dipilih'}</p>
+                                            {registration.kkn_posto?.name && (
+                                                <p className="text-xs text-gray-600 mt-0.5">Posko: {registration.kkn_posto.name}</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="text-sm font-medium text-gray-600">Tahun Akademik</label>

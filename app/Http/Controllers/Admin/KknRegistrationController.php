@@ -20,8 +20,14 @@ class KknRegistrationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = KknRegistration::with(['student', 'location', 'fiscalYear', 'reviewer'])
-            ->orderBy('created_at', 'desc');
+        $query = KknRegistration::with([
+            'student.kknPostoMembers.posto.location',
+            'location',
+            'kknPosto.location',
+            'postoMember.posto.location',
+            'fiscalYear',
+            'reviewer',
+        ])->orderBy('created_at', 'desc');
 
         // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
@@ -44,6 +50,7 @@ class KknRegistrationController extends Controller
         }
 
         $registrations = $query->paginate($request->per_page ?? 10);
+        $registrations->getCollection()->transform(fn ($reg) => $this->hydrateEffectiveLocationAndPosto($reg));
 
         return response()->json($registrations);
     }
@@ -56,7 +63,10 @@ class KknRegistrationController extends Controller
         $registration = KknRegistration::with([
             'student.mahasiswaProfile.faculty',
             'student.mahasiswaProfile.studyProgram',
+            'student.kknPostoMembers.posto.location',
             'location',
+            'kknPosto.location',
+            'postoMember.posto.location',
             'fiscalYear',
             'dpl',
             'reviewer',
@@ -64,7 +74,7 @@ class KknRegistrationController extends Controller
             'kknRegistrationDocuments'
         ])->findOrFail($id);
 
-        return response()->json($registration);
+        return response()->json($this->hydrateEffectiveLocationAndPosto($registration));
     }
 
     /**
@@ -281,7 +291,14 @@ class KknRegistrationController extends Controller
      */
     public function statistics()
     {
-        $registrations = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram', 'location'])->get();
+        $registrations = KknRegistration::with([
+            'student.mahasiswaProfile.faculty',
+            'student.mahasiswaProfile.studyProgram',
+            'student.kknPostoMembers.posto.location',
+            'location',
+            'kknPosto.location',
+            'postoMember.posto.location',
+        ])->get();
 
         $stats = [
             'total' => $registrations->count(),
@@ -316,8 +333,9 @@ class KknRegistrationController extends Controller
             $jacket = ($profile && $profile->jacket_size) ? $profile->jacket_size : 'Tidak Diketahui';
             $byJacketSize[$jacket] = ($byJacketSize[$jacket] ?? 0) + 1;
 
-            // Location
-            $locationName = $reg->location ? $reg->location->name : 'Belum Ditentukan';
+            // Location (fallback to assigned Posko's location)
+            $effectiveLocation = $reg->getEffectiveLocation();
+            $locationName = $effectiveLocation ? $effectiveLocation->name : 'Belum Ditentukan';
             $byLocation[$locationName] = ($byLocation[$locationName] ?? 0) + 1;
         }
 
@@ -355,8 +373,15 @@ class KknRegistrationController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $query = KknRegistration::with(['student.mahasiswaProfile.faculty', 'student.mahasiswaProfile.studyProgram', 'location', 'fiscalYear'])
-            ->orderBy('created_at', 'desc');
+        $query = KknRegistration::with([
+            'student.mahasiswaProfile.faculty',
+            'student.mahasiswaProfile.studyProgram',
+            'student.kknPostoMembers.posto.location',
+            'location',
+            'kknPosto.location',
+            'postoMember.posto.location',
+            'fiscalYear',
+        ])->orderBy('created_at', 'desc');
 
         // Apply same filters as Index
         if ($request->has('status') && $request->status !== 'all') {
@@ -376,7 +401,7 @@ class KknRegistrationController extends Controller
             });
         }
 
-        $registrations = $query->get();
+        $registrations = $query->get()->map(fn ($reg) => $this->hydrateEffectiveLocationAndPosto($reg));
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.kkn_registrations', [
             'registrations' => $registrations,
@@ -416,5 +441,25 @@ class KknRegistrationController extends Controller
     {
         $filename = 'Rekap-Jenis-Kelamin-KKN-' . now()->format('Ymd-His') . '.xlsx';
         return Excel::download(new KknGenderExport($request), $filename);
+    }
+
+    /**
+     * Hydrate location and kknPosto relations when location is inherited from assigned Posko.
+     */
+    private function hydrateEffectiveLocationAndPosto(KknRegistration $registration): KknRegistration
+    {
+        $effectivePosto = $registration->getEffectivePosto();
+        if ($effectivePosto && !$registration->relationLoaded('kknPosto')) {
+            $registration->setRelation('kknPosto', $effectivePosto);
+        } elseif ($effectivePosto && !$registration->kknPosto) {
+            $registration->setRelation('kknPosto', $effectivePosto);
+        }
+
+        $effectiveLocation = $registration->getEffectiveLocation();
+        if ($effectiveLocation && !$registration->location) {
+            $registration->setRelation('location', $effectiveLocation);
+        }
+
+        return $registration;
     }
 }
