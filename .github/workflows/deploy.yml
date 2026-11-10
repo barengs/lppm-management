@@ -76,14 +76,18 @@ jobs:
             WORKDIR="/var/www/lppm"
             echo "🐳 Menjalankan perintah di dalam container: $CONTAINER (workdir: $WORKDIR)"
 
+            # Pengaman otomatis: pastikan aplikasi SELALU kembali online (artisan up) meskipun ada step yang error
+            trap 'docker exec -w $WORKDIR $CONTAINER php artisan up || true' EXIT
+
             # Pastikan git di dalam container juga mengizinkan direktori kerja
             docker exec -w $WORKDIR $CONTAINER git config --global --add safe.directory $WORKDIR || true
 
             # Aktifkan mode maintenance singkat (abaikan jika sudah down)
             docker exec -w $WORKDIR $CONTAINER php artisan down --retry=60 || true
 
-            # Install dependency PHP production
-            docker exec -w $WORKDIR $CONTAINER composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+            # Install dependency PHP production (fallback ke composer update jika composer.lock belum sinkron)
+            docker exec -w $WORKDIR $CONTAINER composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader || \
+            docker exec -w $WORKDIR $CONTAINER composer update --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
             # Jalankan migrasi database baru secara aman (ke container lppm-db-mariadb)
             docker exec -w $WORKDIR $CONTAINER php artisan migrate --force
