@@ -402,18 +402,20 @@ class KknGradeController extends Controller
         $user = auth()->user();
         $registration = KknRegistration::where('student_id', $user->id)
             ->where('status', 'approved')
-            ->with(['kknGrade', 'kknLocation', 'student.mahasiswaProfile'])
+            ->with(['kknGrade', 'kknLocation', 'kknPosto.location', 'student.mahasiswaProfile'])
             ->firstOrFail();
 
         if (!$registration->kknGrade || !$registration->kknGrade->is_finalized) {
             return response()->json(['message' => 'Nilai belum dirilis atau belum final.'], 400);
         }
 
+        $location = $registration->kknLocation ?? $registration->kknPosto?->location;
+
         $data = [
             'name'               => $user->name,
-            'npm'                => $registration->student->mahasiswaProfile->npm,
-            'location'           => $registration->kknLocation->name,
-            'village'            => $registration->kknLocation->village,
+            'npm'                => $registration->student?->mahasiswaProfile?->npm ?? '-',
+            'location'           => $location?->name ?? '-',
+            'village'            => $location?->village ?? '-',
             'grade'              => $registration->kknGrade->grade,
             'score'              => $registration->kknGrade->final_score,
             'certificate_number' => $registration->kknGrade->certificate_number,

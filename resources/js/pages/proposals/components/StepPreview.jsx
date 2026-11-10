@@ -51,7 +51,7 @@ export default function StepPreview({ proposalId, token, onBack, initialData }) 
                         Dashboard Usulan
                     </button>
                     <button 
-                        onClick={() => window.open(`/api/proposals/${proposalId}/endorsement?token=${token}`, '_blank')}
+                        onClick={() => window.open(`/api/proposals/${proposalId}/download-endorsement?token=${token}`, '_blank')}
                         className="px-8 py-3 border border-gray-300 rounded-sm text-xs font-bold uppercase tracking-widest text-gray-700 hover:bg-gray-50 flex items-center"
                     >
                         <Printer size={18} className="mr-2 text-green-700" /> Cetak Lembar Pengesahan

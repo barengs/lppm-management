@@ -59,7 +59,7 @@ class AdminPkmController extends Controller
             // Traditional explicit mapping if provided
             $review = PkmReview::updateOrCreate(
                 ['pkm_proposal_id' => $id, 'reviewer_id' => $validated['reviewer_id']],
-                ['status' => 'pending']
+                ['decision' => 'pending']
             );
         }
 
@@ -92,12 +92,31 @@ class AdminPkmController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:accepted,rejected',
+            'notes' => 'nullable|string',
         ]);
 
         $proposal = PkmProposal::findOrFail($id);
         $proposal->update([
             'status' => $validated['status'],
         ]);
+
+        if ($proposal->user) {
+            if ($validated['status'] === 'accepted') {
+                $proposal->user->notify(new \App\Notifications\ProposalNotification(
+                    $proposal,
+                    "Selamat! Usulan PKM Anda '" . $proposal->title . "' telah diterima oleh LPPM.",
+                    "/pkm/{$proposal->id}",
+                    'Usulan PKM Diterima'
+                ));
+            } else {
+                $proposal->user->notify(new \App\Notifications\ProposalNotification(
+                    $proposal,
+                    "Usulan PKM Anda '" . $proposal->title . "' ditolak oleh LPPM.",
+                    "/pkm/{$proposal->id}",
+                    'Usulan PKM Ditolak'
+                ));
+            }
+        }
 
         return response()->json([
             'message' => 'Status proposal PKM berhasil diupdate menjadi ' . $validated['status'],
@@ -132,7 +151,7 @@ class AdminPkmController extends Controller
 
             PkmReview::updateOrCreate(
                 ['pkm_proposal_id' => $proposal->id, 'reviewer_id' => $reviewer->id],
-                ['status' => 'pending']
+                ['decision' => 'pending']
             );
 
             $proposal->update(['status' => 'review']);

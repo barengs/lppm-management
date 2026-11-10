@@ -96,6 +96,16 @@ class PkmProposalController extends Controller
     public function saveStep(Request $request, $id)
     {
         $proposal = PkmProposal::findOrFail($id);
+        $user = auth('api')->user();
+
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengubah proposal PKM ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft' && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Proposal PKM yang sudah dikirim tidak dapat diubah.'], 422);
+        }
+
         $step = (int) $request->input('step');
 
         try {
@@ -325,6 +335,15 @@ class PkmProposalController extends Controller
     public function uploadDocument(Request $request, $id)
     {
         $proposal = PkmProposal::findOrFail($id);
+        $user = auth('api')->user();
+
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengunggah dokumen pada proposal ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft' && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Proposal PKM yang sudah dikirim tidak dapat diubah.'], 422);
+        }
 
         $request->validate([
             'document_type' => 'required|string',
@@ -359,10 +378,19 @@ class PkmProposalController extends Controller
     public function submit($id)
     {
         $proposal = PkmProposal::with('personnel')->findOrFail($id);
+        $user = auth('api')->user();
 
-        if ($proposal->current_step < 8) {
+        if ($proposal->user_id !== $user->id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Anda tidak memiliki akses untuk mengirim proposal PKM ini.'], 403);
+        }
+
+        if ($proposal->status !== 'draft') {
+            return response()->json(['message' => 'Proposal PKM ini sudah pernah dikirim.'], 422);
+        }
+
+        if ($proposal->current_step < 10) {
             return response()->json([
-                'message' => 'Harap selesaikan seluruh 9 tahap pengisian sebelum mengirim PKM.'
+                'message' => 'Harap selesaikan seluruh 10 tahap pengisian sebelum mengirim PKM.'
             ], 422);
         }
 

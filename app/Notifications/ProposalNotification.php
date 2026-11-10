@@ -13,15 +13,17 @@ class ProposalNotification extends Notification
     protected $proposal;
     protected $message;
     protected $actionUrl;
+    protected $title;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($proposal, $message, $actionUrl = '/proposals')
+    public function __construct($proposal, $message, $actionUrl = '/proposals', $title = 'Revisi Usulan')
     {
         $this->proposal = $proposal;
         $this->message = $message;
         $this->actionUrl = $actionUrl;
+        $this->title = $title;
     }
 
     /**
@@ -43,7 +45,7 @@ class ProposalNotification extends Notification
     {
         return [
             'proposal_id' => $this->proposal->id,
-            'title' => 'Revisi Usulan',
+            'title' => $this->title,
             'body' => $this->message,
             'action_url' => $this->actionUrl,
             'icon' => 'AlertCircle'
