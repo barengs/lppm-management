@@ -26,6 +26,12 @@ jobs:
           cache: 'npm'
 
       - name: 3. Install Dependencies & Build Frontend (Vite + React)
+        env:
+          VITE_APP_NAME: ${{ secrets.VITE_APP_NAME || 'LPPM UIM' }}
+          VITE_PUSHER_APP_KEY: ${{ secrets.VITE_PUSHER_APP_KEY }}
+          VITE_PUSHER_APP_CLUSTER: ${{ secrets.VITE_PUSHER_APP_CLUSTER || 'ap1' }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
         run: |
           npm ci
           npm run build
