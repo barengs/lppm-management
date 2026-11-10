@@ -16,11 +16,11 @@ class MenuController extends Controller
 
     public function show($idOrLocation)
     {
-        // Allow fetching by ID or Location string
-        $menu = Menu::where('id', $idOrLocation)
-                    ->orWhere('location', $idOrLocation)
-                    ->firstOrFail();
-        
+        // Allow fetching by numeric ID or Location string without implicit integer casting
+        $menu = is_numeric($idOrLocation)
+            ? Menu::findOrFail($idOrLocation)
+            : Menu::where('location', $idOrLocation)->firstOrFail();
+
         return response()->json([
             'menu' => $menu,
             'items' => $menu->tree()
