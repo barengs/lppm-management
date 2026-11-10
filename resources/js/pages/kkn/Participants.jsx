@@ -48,7 +48,8 @@ const STATUS_CONFIG = {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#F87171', '#60A5FA', '#34D399', '#FBBF24'];
 
 export default function KknParticipants() {
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
+    const canDownloadCertificate = hasPermission('kkn_grades.download_certificate');
     const [filters, setFilters] = useState({
         status: 'all',
         search: '',
@@ -726,6 +727,8 @@ export default function KknParticipants() {
             {showDetailModal && selectedRegistration && (
                 <EnhancedRegistrationDetailModal
                     registration={selectedRegistration}
+                    canDownloadCertificate={canDownloadCertificate}
+                    token={token}
                     onClose={() => setShowDetailModal(false)}
                     onApprove={handleApprove}
                     onReject={handleReject}
@@ -737,16 +740,49 @@ export default function KknParticipants() {
 }
 
 // Enhanced Registration Detail Modal Component
-function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onReject, onRequestRevision }) {
+function EnhancedRegistrationDetailModal({ registration, canDownloadCertificate, token, onClose, onApprove, onReject, onRequestRevision }) {
     const [note, setNote] = useState('');
     const [activeTab, setActiveTab] = useState('profile'); // profile, documents, timeline
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewTitle, setPreviewTitle] = useState('');
     const [isEditingType, setIsEditingType] = useState(false);
     const [editedType, setEditedType] = useState(registration.registration_type || 'reguler');
+    const [isDownloadingCert, setIsDownloadingCert] = useState(false);
     const [updateRegistration, { isLoading: isUpdating }] = useUpdateRegistrationMutation();
 
     const profile = registration.student?.mahasiswa_profile || {};
+    const grade = registration.kkn_grade;
+    const isCertificateEligible = Boolean(
+        registration.status === 'approved' &&
+        grade &&
+        (grade.is_finalized || (grade.final_score !== null && grade.final_score !== undefined && grade.grade))
+    );
+
+    const handleDownloadCertificate = async () => {
+        setIsDownloadingCert(true);
+        try {
+            const response = await fetch(`/api/kkn-grades/${registration.id}/certificate`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || 'Gagal mengunduh sertifikat.');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Sertifikat-KKN-${profile.npm || registration.student_id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert(err.message || 'Gagal mengunduh sertifikat.');
+        } finally {
+            setIsDownloadingCert(false);
+        }
+    };
 
     const handleSaveType = async () => {
         try {
@@ -980,6 +1016,19 @@ function EnhancedRegistrationDetailModal({ registration, onClose, onApprove, onR
                                             <div>
                                                 <label className="text-sm font-medium text-gray-600">Direview oleh</label>
                                                 <p className="text-gray-900">{registration.reviewer.name}</p>
+                                            </div>
+                                        )}
+                                        {canDownloadCertificate && isCertificateEligible && (
+                                            <div className="col-span-2 pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDownloadCertificate}
+                                                    disabled={isDownloadingCert}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm disabled:opacity-50 transition-colors"
+                                                >
+                                                    <Award size={16} />
+                                                    {isDownloadingCert ? 'Mengunduh Sertifikat...' : 'Cetak Sertifikat KKN'}
+                                                </button>
                                             </div>
                                         )}
                                     </div>

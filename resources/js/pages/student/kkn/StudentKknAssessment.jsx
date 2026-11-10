@@ -4,10 +4,11 @@ import { useAuth } from '../../../hooks/useAuth';
 import { Award, Download, DownloadCloud, AlertCircle } from 'lucide-react';
 
 export default function StudentKknAssessment() {
-    const { token } = useAuth();
+    const { token, hasPermission } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const canDownloadCertificate = hasPermission('kkn_grades.download_certificate');
 
     useEffect(() => {
         const fetchGrade = async () => {
@@ -69,6 +70,11 @@ export default function StudentKknAssessment() {
     }
 
     const { kkn_grade } = data;
+    const isEligibleForCertificate = Boolean(
+        data.status === 'approved' &&
+        kkn_grade &&
+        (kkn_grade.is_finalized || (kkn_grade.final_score !== null && kkn_grade.final_score !== undefined && kkn_grade.grade))
+    );
 
     return (
         <div className="max-w-4xl mx-auto mt-8 space-y-6">
@@ -81,7 +87,7 @@ export default function StudentKknAssessment() {
                                 <Award className="w-12 h-12 text-green-600" />
                             </div>
                         </div>
-                        {kkn_grade && (
+                        {canDownloadCertificate && isEligibleForCertificate && (
                             <button 
                                 onClick={downloadBlob}
                                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition shadow"
@@ -98,7 +104,7 @@ export default function StudentKknAssessment() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div className="bg-gray-50 p-6 rounded-lg text-center border">
                                 <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">Nilai Angka</p>
-                                <p className="text-4xl font-bold text-gray-800">{kkn_grade.numeric_score}</p>
+                                <p className="text-4xl font-bold text-gray-800">{kkn_grade.final_score ?? kkn_grade.numeric_score ?? '-'}</p>
                              </div>
                              <div className="bg-green-50 p-6 rounded-lg text-center border border-green-100">
                                 <p className="text-sm text-green-600 uppercase tracking-wide mb-1">Predikat / Nilai Huruf</p>

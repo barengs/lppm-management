@@ -399,32 +399,86 @@ class KknGradeController extends Controller
 
     public function downloadCertificate()
     {
-        $user = auth()->user();
-        $registration = KknRegistration::where('student_id', $user->id)
-            ->where('status', 'approved')
-            ->with(['kknGrade', 'kknLocation', 'kknPosto.location', 'student.mahasiswaProfile'])
-            ->firstOrFail();
+        $user = auth('api')->user() ?? auth()->user();
 
-        if (!$registration->kknGrade || !$registration->kknGrade->is_finalized) {
-            return response()->json(['message' => 'Nilai belum dirilis atau belum final.'], 400);
+        if (!$user || !$user->can('kkn_grades.download_certificate')) {
+            return response()->json(['message' => 'Anda tidak memiliki izin untuk mencetak sertifikat KKN.'], 403);
         }
 
-        $location = $registration->kknLocation ?? $registration->kknPosto?->location;
+        $registration = KknRegistration::where('student_id', $user->id)
+            ->where('status', 'approved')
+            ->with(['kknGrade', 'kknLocation', 'kknPosto.location', 'postoMember.posto.location', 'student.kknPostoMembers.posto.location', 'student.mahasiswaProfile'])
+            ->firstOrFail();
+
+        if (!$registration->kknGrade || !$registration->kknGrade->isCertificateEligible()) {
+            return response()->json(['message' => 'Nilai belum dirilis atau belum memenuhi syarat sertifikat.'], 400);
+        }
+
+        return $this->renderCertificatePdf($registration);
+    }
+
+    /**
+     * GET /kkn-grades/{id}/certificate
+     * Download certificate for a specific registration (permission-based, no hardcoded roles).
+     */
+    public function downloadStudentCertificate($id)
+    {
+        $user = auth('api')->user() ?? auth()->user();
+
+        if (!$user || !$user->can('kkn_grades.download_certificate')) {
+            return response()->json(['message' => 'Anda tidak memiliki izin untuk mencetak sertifikat KKN.'], 403);
+        }
+
+        $registration = KknRegistration::with([
+            'kknGrade',
+            'kknLocation',
+            'kknPosto.location',
+            'postoMember.posto.location',
+            'student.kknPostoMembers.posto.location',
+            'student.mahasiswaProfile',
+        ])->findOrFail($id);
+
+        $isOwner = (int) $registration->student_id === (int) $user->id;
+        $canViewGrades = $user->can('kkn_grades.view') || $user->can('kkn_grades.edit');
+        $effectivePosto = $registration->getEffectivePosto();
+        $isAssignedDpl = $effectivePosto && (int) $effectivePosto->dpl_id === (int) $user->id;
+
+        if (!$isOwner && !$canViewGrades && !$isAssignedDpl) {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke sertifikat mahasiswa ini.'], 403);
+        }
+
+        if ($registration->status !== 'approved') {
+            return response()->json(['message' => 'Pendaftaran KKN mahasiswa belum disetujui.'], 400);
+        }
+
+        if (!$registration->kknGrade || !$registration->kknGrade->isCertificateEligible()) {
+            return response()->json(['message' => 'Mahasiswa belum memenuhi syarat sertifikat (nilai akhir belum lengkap).'], 400);
+        }
+
+        return $this->renderCertificatePdf($registration);
+    }
+
+    private function renderCertificatePdf(KknRegistration $registration)
+    {
+        $location = $registration->getEffectiveLocation();
+        $grade = $registration->kknGrade;
+        $npm = $registration->student?->mahasiswaProfile?->npm ?? '-';
+        $certNumber = $grade->certificate_number ?: ('KKN-' . date('Y') . '-' . ($npm !== '-' ? $npm : $registration->student_id));
 
         $data = [
-            'name'               => $user->name,
-            'npm'                => $registration->student?->mahasiswaProfile?->npm ?? '-',
+            'name'               => $registration->student?->name ?? '-',
+            'npm'                => $npm,
             'location'           => $location?->name ?? '-',
             'village'            => $location?->village ?? '-',
-            'grade'              => $registration->kknGrade->grade,
-            'score'              => $registration->kknGrade->final_score,
-            'certificate_number' => $registration->kknGrade->certificate_number,
+            'grade'              => $grade->grade,
+            'score'              => $grade->final_score ?? $grade->numeric_score,
+            'certificate_number' => $certNumber,
             'date'               => now()->translatedFormat('d F Y'),
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.certificate', $data);
         $pdf->setPaper('A4', 'landscape');
-        return $pdf->stream('Sertifikat-KKN.pdf');
+        return $pdf->stream('Sertifikat-KKN-' . ($npm !== '-' ? $npm : $registration->student_id) . '.pdf');
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────

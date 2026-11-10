@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown, Upload, X, Loader2 } from 'lucide-react';
+import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown, Upload, X, Loader2, Award } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import {
@@ -79,6 +79,9 @@ export default function KknAssessment() {
     const canArticle = isAdmin;
     // DPL or admin can input field scores
     const canField   = isDpl || isAdmin;
+    // Permission-based certificate printing (no hardcoded roles)
+    const canDownloadCertificate = hasPermission('kkn_grades.download_certificate');
+    const [certLoadingId, setCertLoadingId] = useState(null);
 
     // Excel Import State
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -328,6 +331,33 @@ export default function KknAssessment() {
         } finally {
             setExportLoading(null);
             setExportOpen(false);
+        }
+    };
+
+    const handleDownloadCertificate = async (reg) => {
+        setCertLoadingId(reg.id);
+        try {
+            const response = await fetch(`/api/kkn-grades/${reg.id}/certificate`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || 'Gagal mengunduh sertifikat.');
+            }
+            const blob = await response.blob();
+            const npm = reg.student?.mahasiswaProfile?.npm || reg.student?.mahasiswa_profile?.npm || reg.student_id;
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Sertifikat-KKN-${npm}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            toast.error(err.message || 'Gagal mengunduh sertifikat.');
+        } finally {
+            setCertLoadingId(null);
         }
     };
 
@@ -584,12 +614,27 @@ export default function KknAssessment() {
                                                 <Save size={11} />
                                                 {isSaving ? '...' : 'Simpan Nilai'}
                                             </button>
-                                        ) : savedGrade?.final_score ? (
-                                            <span title="Nilai tersimpan" className="flex items-center justify-center gap-1 text-[10px] text-green-600 font-bold">
-                                                <CheckCircle size={14} /> Tersimpan
-                                            </span>
                                         ) : (
-                                            <span className="text-[10px] text-gray-300 italic">—</span>
+                                            <div className="flex flex-col items-center gap-1">
+                                                {canDownloadCertificate && reg.status === 'approved' && (savedGrade?.is_finalized || (savedGrade?.final_score !== null && savedGrade?.final_score !== undefined && savedGrade?.grade)) ? (
+                                                    <button
+                                                        type="button"
+                                                        disabled={certLoadingId === reg.id}
+                                                        onClick={() => handleDownloadCertificate(reg)}
+                                                        className="px-2.5 py-1.5 bg-blue-600 text-white rounded-sm text-[10px] font-black uppercase tracking-wider hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm flex items-center gap-1 mx-auto"
+                                                        title="Cetak Sertifikat KKN"
+                                                    >
+                                                        {certLoadingId === reg.id ? <Loader2 size={11} className="animate-spin" /> : <Award size={11} />}
+                                                        {certLoadingId === reg.id ? 'Mengunduh...' : 'Sertifikat'}
+                                                    </button>
+                                                ) : savedGrade?.final_score !== null && savedGrade?.final_score !== undefined ? (
+                                                    <span title="Nilai tersimpan" className="flex items-center justify-center gap-1 text-[10px] text-green-600 font-bold">
+                                                        <CheckCircle size={14} /> Tersimpan
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-300 italic">—</span>
+                                                )}
+                                            </div>
                                         )}
                                     </td>
                                 </tr>

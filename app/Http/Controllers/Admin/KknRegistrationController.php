@@ -67,6 +67,7 @@ class KknRegistrationController extends Controller
             'location',
             'kknPosto.location',
             'postoMember.posto.location',
+            'kknGrade',
             'fiscalYear',
             'dpl',
             'reviewer',
