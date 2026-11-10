@@ -98,8 +98,8 @@ jobs:
             # Jalankan migrasi database baru secara aman (ke container lppm-db-mariadb)
             docker exec -w $WORKDIR $CONTAINER php artisan migrate --force
 
-            # Pastikan symbolic link storage tersedia (menggunakan relative link agar cocok di host & container)
-            docker exec -w $WORKDIR $CONTAINER php artisan storage:link --relative || docker exec -w $WORKDIR $CONTAINER php artisan storage:link || true
+            # Pastikan symbolic link storage selalu valid di host & container (relative + force)
+            docker exec -w $WORKDIR $CONTAINER php artisan storage:link --relative --force || docker exec -w $WORKDIR $CONTAINER php artisan storage:link --force || true
 
             # Bersihkan dan perbarui cache konfigurasi/route/view
             docker exec -w $WORKDIR $CONTAINER php artisan optimize:clear
@@ -111,8 +111,10 @@ jobs:
             docker exec -w $WORKDIR $CONTAINER php artisan queue:restart || true
 
             # Pastikan permission & ownership storage dan cache dimiliki oleh www-data (PHP-FPM)
+            # serta dapat dibaca oleh container nginx:alpine
             docker exec -w $WORKDIR $CONTAINER chown -R www-data:www-data storage bootstrap/cache || true
             docker exec -w $WORKDIR $CONTAINER chmod -R 775 storage bootstrap/cache || true
+            docker exec -w $WORKDIR $CONTAINER chmod -R a+rX storage/app/public || true
 
             # Matikan mode maintenance (aplikasi kembali online)
             docker exec -w $WORKDIR $CONTAINER php artisan up
