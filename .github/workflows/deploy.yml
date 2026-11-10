@@ -43,6 +43,9 @@ jobs:
             echo "🚀 Memulai proses update kode di Host VPS ($PROJECT_PATH)..."
             cd "$PROJECT_PATH"
 
+            # Izinkan Git membaca direktori meskipun owner folder berbeda (misal www-data vs root)
+            git config --global --add safe.directory "$PROJECT_PATH"
+
             # Ambil update terbaru dari branch main.
             # Catatan: git reset --hard TIDAK menghapus file/folder untracked seperti:
             # .env, docker-compose.yml, Dockerfile, nginx.conf, mysql/, dan storage/app/public/
@@ -72,6 +75,9 @@ jobs:
             CONTAINER="${{ secrets.DOCKER_CONTAINER_NAME || 'lppm-php-fpm' }}"
             WORKDIR="/var/www/lppm"
             echo "🐳 Menjalankan perintah di dalam container: $CONTAINER (workdir: $WORKDIR)"
+
+            # Pastikan git di dalam container juga mengizinkan direktori kerja
+            docker exec -w $WORKDIR $CONTAINER git config --global --add safe.directory $WORKDIR || true
 
             # Aktifkan mode maintenance singkat (abaikan jika sudah down)
             docker exec -w $WORKDIR $CONTAINER php artisan down --retry=60 || true
