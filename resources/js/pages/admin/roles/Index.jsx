@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
-import { Shield, Plus, Trash2, CheckSquare, Search, Sidebar as SidebarIcon } from 'lucide-react';
+import { Shield, Plus, Trash2, CheckSquare, Square, Search, Sidebar as SidebarIcon } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 
 const MODULE_LABELS = {
@@ -602,8 +602,8 @@ export default function RolesIndex() {
                                                                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                                                                     Modul & Menu Sidebar
                                                                 </th>
-                                                                <th className="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                                                    Lihat
+                                                                <th className="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                                                    Lihat / Akses
                                                                 </th>
                                                                 <th className="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                                                                     Tambah
@@ -623,15 +623,17 @@ export default function RolesIndex() {
                                                             {section.modules.map((mod) => {
                                                                 const findPerm = (action) =>
                                                                     mod.perms.find((p) => p.action === action);
-                                                                const viewPerm = findPerm('view');
+                                                                const viewPerm = findPerm('view') || findPerm('register');
                                                                 const createPerm = findPerm('create');
                                                                 const editPerm = findPerm('edit');
                                                                 const deletePerm = findPerm('delete');
+                                                                const mainPermNames = new Set(
+                                                                    [viewPerm, createPerm, editPerm, deletePerm]
+                                                                        .filter(Boolean)
+                                                                        .map((p) => p.name)
+                                                                );
                                                                 const otherPerms = mod.perms.filter(
-                                                                    (p) =>
-                                                                        !['view', 'create', 'edit', 'delete'].includes(
-                                                                            p.action
-                                                                        )
+                                                                    (p) => !mainPermNames.has(p.name)
                                                                 );
                                                                 const rowPermNames = mod.perms.map((p) => p.name);
                                                                 const allRowSelected = rowPermNames.every((p) =>
@@ -651,15 +653,36 @@ export default function RolesIndex() {
                                                                                     </div>
                                                                                     {mod.menus.length > 0 && (
                                                                                         <div className="flex flex-wrap gap-1 mt-1">
-                                                                                            {mod.menus.map((m, idx) => (
-                                                                                                <span
-                                                                                                    key={`${m.url}-${idx}`}
-                                                                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
-                                                                                                    title={`URL: ${m.url} | Izin: ${m.permissionName}`}
-                                                                                                >
-                                                                                                    Menu: {m.title}
-                                                                                                </span>
-                                                                                            ))}
+                                                                                            {mod.menus.map((m, idx) => {
+                                                                                                const isMenuEnabled =
+                                                                                                    selectedPermissions.includes(
+                                                                                                        m.permissionName
+                                                                                                    );
+                                                                                                return (
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        key={`${m.url}-${idx}`}
+                                                                                                        onClick={() =>
+                                                                                                            togglePermission(
+                                                                                                                m.permissionName
+                                                                                                            )
+                                                                                                        }
+                                                                                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+                                                                                                            isMenuEnabled
+                                                                                                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                                                                                                                : 'bg-gray-50 text-gray-400 border-gray-200 line-through hover:bg-gray-100'
+                                                                                                        }`}
+                                                                                                        title={`Klik untuk aktif/nonaktifkan menu sidebar "${m.title}" (${m.permissionName})`}
+                                                                                                    >
+                                                                                                        {isMenuEnabled ? (
+                                                                                                            <CheckSquare size={10} />
+                                                                                                        ) : (
+                                                                                                            <Square size={10} />
+                                                                                                        )}
+                                                                                                        Menu: {m.title}
+                                                                                                    </button>
+                                                                                                );
+                                                                                            })}
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
@@ -717,15 +740,20 @@ export default function RolesIndex() {
                                                                                                           .join(', ')}`
                                                                                                     : p.name
                                                                                             }
-                                                                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer border transition-colors ${
+                                                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer border transition-colors ${
                                                                                                 isChecked
                                                                                                     ? 'bg-green-100 text-green-800 border-green-300'
-                                                                                                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                                                                                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
                                                                                             }`}
                                                                                         >
+                                                                                            {isChecked ? (
+                                                                                                <CheckSquare size={12} />
+                                                                                            ) : (
+                                                                                                <Square size={12} />
+                                                                                            )}
                                                                                             {label}
                                                                                             {linkedMenus.length > 0 && (
-                                                                                                <span className="ml-1 text-[10px] opacity-75">
+                                                                                                <span className="ml-0.5 text-[10px] opacity-75">
                                                                                                     • Menu
                                                                                                 </span>
                                                                                             )}
