@@ -53,8 +53,9 @@ class RoleController extends Controller
                 $role = Role::firstOrCreate(['name' => $validated['name'], 'guard_name' => $guard]);
                 
                 if (!empty($validated['permissions'])) {
-                    // Sync permissions
-                    // Ensure we only sync permissions that exist for this guard or created universally
+                    foreach ($validated['permissions'] as $permName) {
+                        Permission::firstOrCreate(['name' => $permName, 'guard_name' => $guard]);
+                    }
                     $role->syncPermissions($validated['permissions']);
                 }
 
@@ -113,6 +114,9 @@ class RoleController extends Controller
 
                 // Sync Permissions
                 if (isset($validated['permissions'])) {
+                    foreach ($validated['permissions'] as $permName) {
+                        Permission::firstOrCreate(['name' => $permName, 'guard_name' => $role->guard_name]);
+                    }
                     $role->syncPermissions($validated['permissions']);
                 }
             }

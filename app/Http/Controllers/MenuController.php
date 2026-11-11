@@ -43,6 +43,8 @@ class MenuController extends Controller
             'title' => 'required|string',
             'url' => 'nullable|string',
             'target' => 'nullable|string',
+            'icon' => 'nullable|string',
+            'permission_name' => 'nullable|string',
             'parent_id' => 'nullable|exists:menu_items,id'
         ]);
 
@@ -57,7 +59,7 @@ class MenuController extends Controller
     public function updateItem(Request $request, $id)
     {
         $item = MenuItem::findOrFail($id);
-        $item->update($request->only(['title', 'url', 'target', 'icon', 'order', 'parent_id']));
+        $item->update($request->only(['title', 'url', 'target', 'icon', 'permission_name', 'order', 'parent_id']));
         return response()->json($item);
     }
 

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\MenuPermissionCatalog;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -10,109 +11,13 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        // 1 & 2 & 3. Reset cache, generate canonical permissions across web & api guards, and sync Admin
+        MenuPermissionCatalog::syncPermissions(false);
 
-        // 2. Configuration: Modules & Actions
-        // Standard Access: view, create, edit, delete
-        $modules = [
-            'users', 
-            'roles', 
-            'permissions',
-            'menus',
-            'faculties',     // Prev: master.faculties
-            'study_programs',// Prev: master.study-programs
-            'fiscal_years',  // Prev: master.fiscal-years
-            'schemes',       // Prev: master.schemes
-            'posts', 
-            'documents', 
-            'galleries',
-            'proposals',
-            'pkm_proposals',
-            'pkm_master_data',
-            'admin_proposals',
-            'admin_pkm',
-            'reports',
-            'kkn_locations', // Prev: kkn.manage-locations
-            'kkn_registrations', // Prev: kkn.manage-registrations
-            'kkn_reports',
-            'kkn_guidance',
-            'kkn_grades', // New: for Assessment
-            'kkn_postos',
-            'organization',
-            'master_science_clusters',
-            'master_research_priorities',
-            'master_selections',
-            'kkn_field_monitorings',
-            'journal_consultations',
-            'pages',
-            'settings',
-            'kkn_periods',
-            'kkn_monitor_team', // Tim Monitoring: assign evaluators to postos
-        ];
-
-        // Custom/Extra Actions per module
-        $extraActions = [
-            'posts' => ['publish'],
-            'documents' => ['publish'],
-            'proposals' => ['review', 'approve', 'reject'],
-            'pkm_proposals' => ['submit', 'review', 'approve', 'reject'],
-            'kkn_registrations' => ['verify', 'approve', 'reject'], 
-            'kkn_reports' => ['review', 'approve', 'reject', 'revise'],
-            'kkn_guidance' => ['reply', 'close'],
-            'kkn_participants' => ['view', 'manage'],
-            'kkn_grades' => ['download_certificate', 'settings'], 
-            'kkn_postos' => ['view', 'manage_members'],
-            'journal_consultations' => ['manage'],
-            'reports' => ['view_all'],
-        ];
-
-        // 3. Generate Permissions
-        $allPermissions = [];
         $guards = ['web', 'api'];
-        
+
+        // 4. Create/update default roles and permissions
         foreach ($guards as $guard) {
-            foreach ($modules as $module) {
-                // Add Standard Actions
-                $actions = ['view', 'create', 'edit', 'delete'];
-                
-                // Merge Extra Actions
-                if (isset($extraActions[$module])) {
-                    $actions = array_unique(array_merge($actions, $extraActions[$module]));
-                }
-
-                foreach ($actions as $action) {
-                    $permissionName = "{$module}.{$action}";
-                    Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => $guard]);
-                    if ($guard === 'web') {
-                        $allPermissions[] = $permissionName; // Collect primarily for web admin
-                    }
-                }
-            }
-
-            // Special / Manual Permissions (if any that don't fit the pattern)
-            $manualPermissions = [
-                'kkn.register', // Unique action for students
-                'dashboard.view',
-                'dashboard_kkn.view',
-                'kkn_group.view',
-                'lecturer_stats.view',
-            ];
-
-            foreach ($manualPermissions as $perm) {
-                Permission::firstOrCreate(['name' => $perm, 'guard_name' => $guard]);
-            }
-        }
-
-        // 4. Create Roles and assign permissions
-        
-        foreach ($guards as $guard) {
-            // ADMIN: All Access
-            $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => $guard]);
-            // Sync all permissions to ensure admin has everything current
-            // We need to fetch permissions specifically for this guard
-            $guardPermissions = Permission::where('guard_name', $guard)->get();
-            $roleAdmin->syncPermissions($guardPermissions);
 
             // DOSEN: Focus on Proposals & Reports
             $roleDosen = Role::firstOrCreate(['name' => 'dosen', 'guard_name' => $guard]);
@@ -183,9 +88,13 @@ class RolePermissionSeeder extends Seeder
             // Use syncPermissions to update existing
             $roleStaffKkn->syncPermissions([
                 'dashboard.view',
-                // KKN Registration
+                // KKN Registration & Participants
                 'kkn_registrations.view', 'kkn_registrations.create', 'kkn_registrations.edit', 'kkn_registrations.delete',
                 'kkn_registrations.verify', 'kkn_registrations.approve', 'kkn_registrations.reject',
+                'kkn_participants.view', 'kkn_participants.manage',
+                'kkn_periods.view',
+                'kkn_document_templates.view', 'kkn_document_templates.create', 'kkn_document_templates.edit', 'kkn_document_templates.delete',
+                'students.view',
                 // KKN Locations
                 'kkn_locations.view', 'kkn_locations.create', 'kkn_locations.edit', 'kkn_locations.delete',
                 // KKN Grades
