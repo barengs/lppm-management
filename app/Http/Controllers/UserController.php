@@ -188,8 +188,19 @@ class UserController extends Controller
             $user->save();
             
             if (isset($validated['role'])) {
-                // Pass string directly, Spatie handles guard resolution
                 $user->syncRoles($validated['role']);
+
+                // Clean up any stale guard-specific role assignments (e.g. legacy 'api' rows) not in the updated list
+                $staleRoleIds = \Spatie\Permission\Models\Role::whereNotIn('name', $validated['role'])->pluck('id');
+                if ($staleRoleIds->isNotEmpty()) {
+                    \Illuminate\Support\Facades\DB::table('model_has_roles')
+                        ->where('model_type', User::class)
+                        ->where('model_id', $user->id)
+                        ->whereIn('role_id', $staleRoleIds)
+                        ->delete();
+                }
+
+                app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
             }
 
             // Handle Avatar Logic

@@ -111,7 +111,7 @@ function parsePermission(perm) {
 }
 
 export default function RolesIndex() {
-    const { token } = useAuth();
+    const { token, fetchUser } = useAuth();
     const [roles, setRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
     const [sidebarGroups, setSidebarGroups] = useState([]);
@@ -360,7 +360,7 @@ export default function RolesIndex() {
                 });
             }
             setShowModal(false);
-            fetchRoles();
+            await Promise.all([fetchRoles(), fetchUser()]);
         } catch (error) {
             console.error(error);
             alert('Failed to save role.');

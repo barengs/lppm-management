@@ -264,13 +264,15 @@ class MenuPermissionCatalog
                 $item->order = $itemOrder++;
                 $item->save();
 
+                // Clean up any duplicate sidebar items with the same URL so stale un-permissioned copies never remain
+                MenuItem::where('menu_id', $sidebar->id)
+                    ->where('url', $itemData['url'])
+                    ->where('id', '!=', $item->id)
+                    ->delete();
+
                 $validItemIds[] = $item->id;
             }
         }
-
-        // Remove stale sidebar items only if orphaned duplicates exist under canonical URLs/groups?
-        // Actually leave custom admin-added items untouched? Wait: if old URLs or leftover seed entries exist,
-        // keeping custom items intact unless duplicate is safest — all canonical items are updated in-place!
     }
 }
 
