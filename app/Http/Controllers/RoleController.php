@@ -66,6 +66,7 @@ class RoleController extends Controller
             }
 
             \Illuminate\Support\Facades\DB::commit();
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
             // Return web role if exists, otherwise the first created one
             return response()->json(($createdWebRole ?? $firstRole)->load('permissions'), 201);
@@ -103,10 +104,10 @@ class RoleController extends Controller
         try {
             \Illuminate\Support\Facades\DB::beginTransaction();
 
-            // Apply updates to ALL roles with the same name (e.g. web and api)
-            $roles = Role::where('name', $originalName)->get();
+            // Apply updates to ALL roles with the same name across both web and api guards
+            foreach (['web', 'api'] as $guard) {
+                $role = Role::firstOrCreate(['name' => $originalName, 'guard_name' => $guard]);
 
-            foreach ($roles as $role) {
                 // Update Name if changed
                 if ($validated['name'] !== $originalName) {
                     $role->update(['name' => $validated['name']]);
@@ -115,13 +116,14 @@ class RoleController extends Controller
                 // Sync Permissions
                 if (isset($validated['permissions'])) {
                     foreach ($validated['permissions'] as $permName) {
-                        Permission::firstOrCreate(['name' => $permName, 'guard_name' => $role->guard_name]);
+                        Permission::firstOrCreate(['name' => $permName, 'guard_name' => $guard]);
                     }
                     $role->syncPermissions($validated['permissions']);
                 }
             }
 
             \Illuminate\Support\Facades\DB::commit();
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
             return response()->json($targetRole->refresh()->load('permissions'));
         } catch (\Exception $e) {
@@ -145,7 +147,8 @@ class RoleController extends Controller
 
         // Delete ALL roles with this name (web and api)
         Role::where('name', $roleName)->delete();
-        
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         return response()->noContent();
     }
 }

@@ -31,7 +31,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function getGrantedPermissionsAttribute()
     {
-        return $this->getAllPermissions()->pluck('name');
+        return $this->getAllPermissions()->pluck('name')->unique()->values();
     }
 
     // Accessor for avatar to fetch from profile

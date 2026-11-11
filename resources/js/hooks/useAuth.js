@@ -118,9 +118,11 @@ export const useAuth = () => {
      * @returns {boolean}
      */
     const hasPermission = useCallback((permissionName) => {
-        // Also check if admin has it by default if they have the 'admin' role
-        if (hasRole('admin')) return true; // assuming admin has all permissions or we check explicitly
-        return user?.granted_permissions?.includes(permissionName) || false;
+        if (Array.isArray(user?.granted_permissions)) {
+            return user.granted_permissions.includes(permissionName);
+        }
+        if (hasRole('admin')) return true;
+        return false;
     }, [hasRole, user]);
 
     return {
