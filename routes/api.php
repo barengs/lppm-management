@@ -333,8 +333,10 @@ Route::middleware(['auth:api'])->group(function () {
         // Legacy
         Route::post('/', [App\Http\Controllers\KknGradeController::class, 'store']);
 
-        // Student & Permitted Certificate Download
+        // Student & Permitted Certificate Download / Data
         Route::get('/my-grade', [App\Http\Controllers\KknGradeController::class, 'myGrade']);
+        Route::get('/certificate/data', [App\Http\Controllers\KknGradeController::class, 'certificateData']);
+        Route::get('/{id}/certificate-data', [App\Http\Controllers\KknGradeController::class, 'studentCertificateData'])->whereNumber('id');
         Route::get('/certificate/download', [App\Http\Controllers\KknGradeController::class, 'downloadCertificate']);
         Route::get('/{id}/certificate', [App\Http\Controllers\KknGradeController::class, 'downloadStudentCertificate'])->whereNumber('id');
     });
