@@ -18,6 +18,7 @@ import {
 } from '../../store/api/kknApi';
 import { useGetStudyProgramsQuery } from '../../store/api/masterDataApi';
 import { useAuth } from '../../hooks/useAuth';
+import { openCertificatePdf } from '../../utils/openCertificatePdf';
 import DocumentPreview, { DocumentCard } from '../../components/DocumentPreview';
 import ActivityTimeline from '../../components/ActivityTimeline';
 import DataTable from '../../components/DataTable';
@@ -760,30 +761,12 @@ function EnhancedRegistrationDetailModal({ registration, canDownloadCertificate,
 
     const handleDownloadCertificate = async () => {
         setIsDownloadingCert(true);
-        const pdfWindow = window.open('', '_blank');
-        if (pdfWindow) {
-            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
-        }
         try {
-            const response = await fetch(`/api/kkn-grades/${registration.id}/certificate`, {
-                headers: { Authorization: `Bearer ${token}` },
+            await openCertificatePdf({
+                endpoint: `/api/kkn-grades/${registration.id}/certificate-data`,
+                token,
+                onError: (msg) => alert(msg),
             });
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.message || 'Gagal membuka sertifikat.');
-            }
-            const arrayBuffer = await response.arrayBuffer();
-            const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(pdfBlob);
-            if (pdfWindow) {
-                pdfWindow.location.replace(url);
-            } else {
-                window.open(url, '_blank');
-            }
-            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
-        } catch (err) {
-            if (pdfWindow) pdfWindow.close();
-            alert(err.message || 'Gagal membuka sertifikat.');
         } finally {
             setIsDownloadingCert(false);
         }

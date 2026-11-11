@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Save, Download, CheckCircle, AlertCircle, RefreshCw, FileText, Sheet, ChevronDown, Upload, X, Loader2, Award } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { openCertificatePdf } from '../../utils/openCertificatePdf';
 import {
     useGetKknGradesQuery,
     useGetDplKknGradesQuery,
@@ -336,30 +337,12 @@ export default function KknAssessment() {
 
     const handleDownloadCertificate = async (reg) => {
         setCertLoadingId(reg.id);
-        const pdfWindow = window.open('', '_blank');
-        if (pdfWindow) {
-            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
-        }
         try {
-            const response = await fetch(`/api/kkn-grades/${reg.id}/certificate`, {
-                headers: { Authorization: `Bearer ${token}` },
+            await openCertificatePdf({
+                endpoint: `/api/kkn-grades/${reg.id}/certificate-data`,
+                token,
+                onError: (msg) => toast.error(msg),
             });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.message || 'Gagal membuka sertifikat.');
-            }
-            const arrayBuffer = await response.arrayBuffer();
-            const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(pdfBlob);
-            if (pdfWindow) {
-                pdfWindow.location.replace(url);
-            } else {
-                window.open(url, '_blank');
-            }
-            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
-        } catch (err) {
-            if (pdfWindow) pdfWindow.close();
-            toast.error(err.message || 'Gagal membuka sertifikat.');
         } finally {
             setCertLoadingId(null);
         }

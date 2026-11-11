@@ -399,22 +399,12 @@ class KknGradeController extends Controller
 
     public function downloadCertificate()
     {
-        $user = auth('api')->user() ?? auth()->user();
-
-        if (!$user || !$user->can('kkn_grades.download_certificate')) {
-            return response()->json(['message' => 'Anda tidak memiliki izin untuk mencetak sertifikat KKN.'], 403);
+        $resolved = $this->resolveAuthorizedCertificateRegistration();
+        if ($resolved instanceof \Illuminate\Http\JsonResponse) {
+            return $resolved;
         }
 
-        $registration = KknRegistration::where('student_id', $user->id)
-            ->where('status', 'approved')
-            ->with($this->certificateRelations())
-            ->firstOrFail();
-
-        if (!$registration->kknGrade || !$registration->kknGrade->isCertificateEligible()) {
-            return response()->json(['message' => 'Nilai belum dirilis atau belum memenuhi syarat sertifikat.'], 400);
-        }
-
-        return $this->renderCertificatePdf($registration);
+        return $this->renderCertificatePdf($resolved);
     }
 
     /**
@@ -423,13 +413,64 @@ class KknGradeController extends Controller
      */
     public function downloadStudentCertificate($id)
     {
+        $resolved = $this->resolveAuthorizedCertificateRegistration((int) $id);
+        if ($resolved instanceof \Illuminate\Http\JsonResponse) {
+            return $resolved;
+        }
+
+        return $this->renderCertificatePdf($resolved);
+    }
+
+    /**
+     * GET /kkn-grades/certificate/data
+     * Return JSON certificate payload for client-side PDF generation (current student).
+     */
+    public function certificateData()
+    {
+        $resolved = $this->resolveAuthorizedCertificateRegistration();
+        if ($resolved instanceof \Illuminate\Http\JsonResponse) {
+            return $resolved;
+        }
+
+        return response()->json($this->buildCertificateData($resolved));
+    }
+
+    /**
+     * GET /kkn-grades/{id}/certificate-data
+     * Return JSON certificate payload for client-side PDF generation (permitted user/student).
+     */
+    public function studentCertificateData($id)
+    {
+        $resolved = $this->resolveAuthorizedCertificateRegistration((int) $id);
+        if ($resolved instanceof \Illuminate\Http\JsonResponse) {
+            return $resolved;
+        }
+
+        return response()->json($this->buildCertificateData($resolved));
+    }
+
+    private function resolveAuthorizedCertificateRegistration(?int $registrationId = null): KknRegistration|\Illuminate\Http\JsonResponse
+    {
         $user = auth('api')->user() ?? auth()->user();
 
         if (!$user || !$user->can('kkn_grades.download_certificate')) {
             return response()->json(['message' => 'Anda tidak memiliki izin untuk mencetak sertifikat KKN.'], 403);
         }
 
-        $registration = KknRegistration::with($this->certificateRelations())->findOrFail($id);
+        if ($registrationId === null) {
+            $registration = KknRegistration::where('student_id', $user->id)
+                ->where('status', 'approved')
+                ->with($this->certificateRelations())
+                ->firstOrFail();
+
+            if (!$registration->kknGrade || !$registration->kknGrade->isCertificateEligible()) {
+                return response()->json(['message' => 'Nilai belum dirilis atau belum memenuhi syarat sertifikat.'], 400);
+            }
+
+            return $registration;
+        }
+
+        $registration = KknRegistration::with($this->certificateRelations())->findOrFail($registrationId);
 
         $isOwner = (int) $registration->student_id === (int) $user->id;
         $canViewGrades = $user->can('kkn_grades.view') || $user->can('kkn_grades.edit');
@@ -448,13 +489,16 @@ class KknGradeController extends Controller
             return response()->json(['message' => 'Mahasiswa belum memenuhi syarat sertifikat (nilai akhir belum lengkap).'], 400);
         }
 
-        return $this->renderCertificatePdf($registration);
+        return $registration;
     }
 
     private function certificateRelations(): array
     {
         return [
             'kknGrade',
+            'location.village',
+            'location.district',
+            'location.city',
             'kknLocation.village',
             'kknLocation.district',
             'kknLocation.city',
@@ -474,7 +518,7 @@ class KknGradeController extends Controller
         ];
     }
 
-    private function renderCertificatePdf(KknRegistration $registration)
+    private function buildCertificateData(KknRegistration $registration): array
     {
         $location = $registration->getEffectiveLocation();
         $posto = $registration->getEffectivePosto();
@@ -492,7 +536,6 @@ class KknGradeController extends Controller
         $formatArea = fn (?string $val) => $val ? \Illuminate\Support\Str::title(mb_strtolower(trim($val))) : null;
 
         $setting = \App\Models\SystemSetting::first();
-        $logoDataUri = $this->resolveLogoDataUri($setting?->logo_path);
 
         $ketuaMember = \App\Models\OrganizationMember::with('user.dosenProfile')
             ->where('position', 'like', '%Ketua%')
@@ -507,7 +550,9 @@ class KknGradeController extends Controller
         $rawScore = $grade->final_score ?? $grade->numeric_score;
         $formattedScore = $rawScore !== null ? rtrim(rtrim(number_format((float) $rawScore, 2, '.', ''), '0'), '.') : '-';
 
-        $data = [
+        $logoUrl = $setting?->logo_path ? ('/storage/' . ltrim($setting->logo_path, '/')) : '/images/uim-logo.png';
+
+        return [
             'name'               => $registration->student?->name ?? '-',
             'npm'                => $npm,
             'prodi'              => $profile?->studyProgram?->name ?? $profile?->prodi ?? '-',
@@ -525,14 +570,23 @@ class KknGradeController extends Controller
             'date'               => now()->translatedFormat('d F Y'),
             'university_name'    => $setting?->university_name ?: 'Universitas Islam Madura',
             'lppm_address'       => $setting?->address ?: 'Jl. Pondok Pesantren Miftahul Ulum Bettet, Pamekasan, Jawa Timur',
-            'logo_data_uri'      => $logoDataUri,
+            'logo_path'          => $setting?->logo_path,
+            'logo_url'           => $logoUrl,
+            'fallback_logo_url'  => '/images/uim-logo.png',
             'ketua_title'        => $ketuaMember?->position ?: 'Ketua LPPM',
             'ketua_name'         => $ketuaMember?->user?->name ?: 'Ketua LPPM',
             'ketua_nidn'         => $ketuaMember?->user?->dosenProfile?->nidn,
         ];
+    }
+
+    private function renderCertificatePdf(KknRegistration $registration)
+    {
+        $data = $this->buildCertificateData($registration);
+        $data['logo_data_uri'] = $this->resolveLogoDataUri($data['logo_path'] ?? null);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.certificate', $data);
         $pdf->setPaper('A4', 'landscape');
+        $npm = $data['npm'] ?? '-';
         return $pdf->stream('Sertifikat-KKN-' . ($npm !== '-' ? $npm : $registration->student_id) . '.pdf');
     }
 
@@ -545,8 +599,23 @@ class KknGradeController extends Controller
         $candidates[] = public_path('images/uim-logo.png');
 
         foreach ($candidates as $file) {
-            if ($file && file_exists($file) && is_readable($file)) {
-                $mime = mime_content_type($file) ?: 'image/png';
+            if (!$file || !file_exists($file) || !is_readable($file)) {
+                continue;
+            }
+
+            $mime = $this->detectImageMimeType($file);
+
+            // DomPDF converts webp/gif/bmp to PNG via GD imagecreatefrom*; convert here or fall back if GD lacks support
+            if (in_array($mime, ['image/webp', 'image/gif', 'image/bmp', 'image/x-ms-bmp'], true)) {
+                $pngContent = $this->convertImageToPngBytes($file, $mime);
+                if ($pngContent !== null) {
+                    return 'data:image/png;base64,' . base64_encode($pngContent);
+                }
+
+                continue;
+            }
+
+            if (in_array($mime, ['image/png', 'image/jpeg'], true)) {
                 $content = file_get_contents($file);
                 if ($content !== false) {
                     return 'data:' . $mime . ';base64,' . base64_encode($content);
@@ -555,6 +624,59 @@ class KknGradeController extends Controller
         }
 
         return null;
+    }
+
+    private function detectImageMimeType(string $file): string
+    {
+        if (function_exists('mime_content_type')) {
+            $detected = mime_content_type($file);
+            if ($detected) {
+                return strtolower($detected === 'image/jpg' ? 'image/jpeg' : $detected);
+            }
+        }
+
+        return match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            default => 'application/octet-stream',
+        };
+    }
+
+    private function convertImageToPngBytes(string $file, string $mime): ?string
+    {
+        $loader = match ($mime) {
+            'image/webp' => 'imagecreatefromwebp',
+            'image/gif' => 'imagecreatefromgif',
+            'image/bmp', 'image/x-ms-bmp' => 'imagecreatefrombmp',
+            default => null,
+        };
+
+        if (!$loader || !function_exists($loader) || !function_exists('imagepng')) {
+            return null;
+        }
+
+        $image = @$loader($file);
+        if (!$image) {
+            return null;
+        }
+
+        if (function_exists('imagepalettetotruecolor')) {
+            @imagepalettetotruecolor($image);
+        }
+        if (function_exists('imagealphablending') && function_exists('imagesavealpha')) {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+        }
+
+        ob_start();
+        $ok = imagepng($image);
+        $pngContent = ob_get_clean();
+        imagedestroy($image);
+
+        return ($ok && $pngContent !== false && $pngContent !== '') ? $pngContent : null;
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────

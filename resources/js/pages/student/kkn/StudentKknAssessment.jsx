@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../hooks/useAuth';
 import { Award, Download, DownloadCloud, AlertCircle } from 'lucide-react';
+import { openCertificatePdf } from '../../../utils/openCertificatePdf';
 
 export default function StudentKknAssessment() {
     const { token, hasPermission } = useAuth();
@@ -30,37 +31,13 @@ export default function StudentKknAssessment() {
         fetchGrade();
     }, [token]);
 
-    const handleDownload = () => {
-        // Direct download link
-        window.open(`/api/kkn-grades/certificate/download?token=${token}`, '_blank');
-        // Note: For API auth with token in header, we usually need blob handling. 
-        // But for simplicity in PDF stream, we can pass token in query if API allows, 
-        // OR better: use axios with blob type.
-    };
-    
-    // Improved Handler: Open PDF in New Tab using Authenticated Blob
+    // Generate PDF in browser and open in a new tab
     const downloadBlob = async () => {
-        const pdfWindow = window.open('', '_blank');
-        if (pdfWindow) {
-            pdfWindow.document.write('<p style="font-family:sans-serif;padding:24px;color:#374151;">Memuat sertifikat KKN...</p>');
-        }
-        try {
-            const response = await axios.get('/api/kkn-grades/certificate/download', {
-                headers: { Authorization: `Bearer ${token}` },
-                responseType: 'blob'
-            });
-            const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(pdfBlob);
-            if (pdfWindow) {
-                pdfWindow.location.replace(url);
-            } else {
-                window.open(url, '_blank');
-            }
-            setTimeout(() => window.URL.revokeObjectURL(url), 60000);
-        } catch (error) {
-            if (pdfWindow) pdfWindow.close();
-            alert("Gagal membuka sertifikat.");
-        }
+        await openCertificatePdf({
+            endpoint: '/api/kkn-grades/certificate/data',
+            token,
+            onError: (msg) => alert(msg),
+        });
     };
 
     if (loading) return <div className="p-8 text-center">Loading...</div>;
