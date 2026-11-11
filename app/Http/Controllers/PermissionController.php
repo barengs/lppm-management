@@ -12,7 +12,13 @@ class PermissionController extends Controller
      */
     public function index()
     {
-        return response()->json(Permission::orderBy('name')->get());
+        $permissions = Permission::orderByRaw("CASE WHEN guard_name = 'web' THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get()
+            ->unique('name')
+            ->values();
+
+        return response()->json($permissions);
     }
 
     /**
@@ -24,9 +30,15 @@ class PermissionController extends Controller
             'name' => 'required|string|unique:permissions,name',
         ]);
 
-        $permission = Permission::create(['name' => $validated['name']]);
+        $webPerm = null;
+        foreach (['web', 'api'] as $guard) {
+            $perm = Permission::firstOrCreate(['name' => $validated['name'], 'guard_name' => $guard]);
+            if ($guard === 'web') {
+                $webPerm = $perm;
+            }
+        }
 
-        return response()->json($permission, 201);
+        return response()->json($webPerm, 201);
     }
 
     /**
@@ -43,14 +55,21 @@ class PermissionController extends Controller
     public function update(Request $request, string $id)
     {
         $permission = Permission::findOrFail($id);
+        $oldName = $permission->name;
 
         $validated = $request->validate([
-            'name' => 'required|string|unique:permissions,name,' . $id,
+            'name' => [
+                'required',
+                'string',
+                \Illuminate\Validation\Rule::unique('permissions', 'name')->where(
+                    fn ($q) => $q->where('name', '!=', $oldName)
+                ),
+            ],
         ]);
 
-        $permission->update(['name' => $validated['name']]);
+        Permission::where('name', $oldName)->update(['name' => $validated['name']]);
 
-        return response()->json($permission);
+        return response()->json($permission->refresh());
     }
 
     /**
@@ -59,7 +78,7 @@ class PermissionController extends Controller
     public function destroy(string $id)
     {
         $permission = Permission::findOrFail($id);
-        $permission->delete();
+        Permission::where('name', $permission->name)->delete();
 
         return response()->noContent();
     }

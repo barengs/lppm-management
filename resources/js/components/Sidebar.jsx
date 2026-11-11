@@ -94,7 +94,7 @@ export default function Sidebar() {
                             <div className="space-y-1">
                                 {group.items.map((item, itemIndex) => {
                                     const isActive = (path) => {
-                                        if (path === '/dashboard') return location.pathname === '/dashboard';
+                                        if (path === '/dashboard' || path === '/dashboard/kkn') return location.pathname === path;
                                         return location.pathname.startsWith(path);
                                     };
                                     const active = isActive(item.url);
